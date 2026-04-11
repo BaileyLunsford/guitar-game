@@ -534,7 +534,7 @@ const FEATURES = [
   {
     icon: '🎸', title: 'Chord Play',
     desc: 'Chord diagrams, voicings & strumming patterns',
-    hash: '#chord-play', pro: false,
+    hash: '#chord-play', pro: true,
   },
   {
     icon: '⏱', title: 'Metronome',

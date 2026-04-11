@@ -181,8 +181,9 @@ function btn(active = false, disabled = false) {
 
 // ─── ChordPlay component ─────────────────────────────────────────────────────
 export default function ChordPlay() {
-  const [idx,     setIdx]     = useState(0);
-  const [playing, setPlaying] = useState(false);
+  const [idx,        setIdx]        = useState(0);
+  const [playing,    setPlaying]    = useState(false);
+  const [activeNote, setActiveNote] = useState(null); // note string currently highlighted
 
   const chord   = CHORDS[idx];
   const atStart = idx === 0;
@@ -200,13 +201,22 @@ export default function ChordPlay() {
     setTimeout(() => setPlaying(false), chord.notes.length * 40 + 600);
   }
 
+  function handleNotepill(note) {
+    guitarSampler.resume();
+    guitarSampler.playNote(note, { volume: 0.9 });
+    setActiveNote(note);
+    setTimeout(() => setActiveNote(null), 600);
+  }
+
   function handlePrev() {
     setPlaying(false);
+    setActiveNote(null);
     setIdx(i => Math.max(i - 1, 0));
   }
 
   function handleNext() {
     setPlaying(false);
+    setActiveNote(null);
     setIdx(i => Math.min(i + 1, CHORDS.length - 1));
   }
 
@@ -268,14 +278,25 @@ export default function ChordPlay() {
           <p style={{ fontSize: 11, color: M.muted, letterSpacing: '0.08em',
             textTransform: 'uppercase', marginBottom: 6 }}>Notes</p>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-            {chord.notes.map((note, i) => (
-              <span key={i} style={{
-                fontSize: 12, fontWeight: 700,
-                color: M.hi, background: 'rgba(196,100,40,0.12)',
-                border: `1px solid ${M.border}`,
-                borderRadius: 8, padding: '3px 10px',
-              }}>{note}</span>
-            ))}
+            {chord.notes.map((note, i) => {
+              const lit = activeNote === note;
+              return (
+                <button
+                  key={i}
+                  onClick={() => handleNotepill(note)}
+                  style={{
+                    fontSize: 12, fontWeight: 700,
+                    color:       lit ? '#4ade80' : M.hi,
+                    background:  lit ? 'rgba(74,222,128,0.15)' : 'rgba(196,100,40,0.12)',
+                    border:      `1px solid ${lit ? '#4ade80' : M.border}`,
+                    borderRadius: 8, padding: '3px 10px',
+                    cursor: 'pointer', transition: 'all 0.1s',
+                    fontFamily: "Georgia,'Times New Roman',serif",
+                    userSelect: 'none',
+                  }}
+                >{note}</button>
+              );
+            })}
           </div>
         </div>
 
