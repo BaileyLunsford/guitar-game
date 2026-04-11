@@ -508,7 +508,7 @@ const FEATURES = [
     hash: '#tab-test', pro: false,
   },
   {
-    icon: '🎚', title: 'Tuner',
+    icon: '🎸', title: 'Tuner',
     desc: 'Chromatic pitch detection for EADGBE tuning',
     hash: '#tuner', pro: false,
   },

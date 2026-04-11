@@ -326,7 +326,7 @@ export default function Tuner({ strings = [], theme = {}, title = 'Tune Your Ins
           }}
         >← Back</button>
         <div style={{ flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 800, color: T.amber }}>
-          🎚 Tuner
+          🎸 Tuner
         </div>
         <div style={{ width: 56 }} />
       </div>
