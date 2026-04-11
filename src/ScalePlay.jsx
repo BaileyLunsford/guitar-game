@@ -41,14 +41,38 @@ const SCALES = [
     difficulty: 'Beginner',
     pro: false,
     notes: [
-      { string: 6, fret: 3,  noteName: 'G3',  root: true  },
-      { string: 6, fret: 5,  noteName: 'A3',  root: false },
-      { string: 5, fret: 2,  noteName: 'B3',  root: false },
-      { string: 5, fret: 3,  noteName: 'C4',  root: false },
-      { string: 5, fret: 5,  noteName: 'D4',  root: false },
-      { string: 4, fret: 2,  noteName: 'E4',  root: false },
-      { string: 4, fret: 4,  noteName: 'F#4', root: false },
-      { string: 4, fret: 5,  noteName: 'G4',  root: true  },
+      // Up
+      { string: 6, fret: 3, noteName: 'G3',  root: true  },
+      { string: 6, fret: 5, noteName: 'A3',  root: false },
+      { string: 5, fret: 2, noteName: 'B3',  root: false },
+      { string: 5, fret: 3, noteName: 'C4',  root: false },
+      { string: 5, fret: 5, noteName: 'D4',  root: false },
+      { string: 4, fret: 2, noteName: 'E4',  root: false },
+      { string: 4, fret: 4, noteName: 'F#4', root: false },
+      { string: 4, fret: 5, noteName: 'G4',  root: true  },
+      { string: 3, fret: 2, noteName: 'A4',  root: false },
+      { string: 3, fret: 4, noteName: 'B4',  root: false },
+      { string: 2, fret: 1, noteName: 'C5',  root: false },
+      { string: 2, fret: 3, noteName: 'D5',  root: false },
+      { string: 2, fret: 5, noteName: 'E5',  root: false },
+      { string: 1, fret: 2, noteName: 'F#5', root: false },
+      { string: 1, fret: 3, noteName: 'G5',  root: true  },
+      // Down
+      { string: 1, fret: 3, noteName: 'G5',  root: true  },
+      { string: 1, fret: 2, noteName: 'F#5', root: false },
+      { string: 2, fret: 5, noteName: 'E5',  root: false },
+      { string: 2, fret: 3, noteName: 'D5',  root: false },
+      { string: 2, fret: 1, noteName: 'C5',  root: false },
+      { string: 3, fret: 4, noteName: 'B4',  root: false },
+      { string: 3, fret: 2, noteName: 'A4',  root: false },
+      { string: 4, fret: 5, noteName: 'G4',  root: true  },
+      { string: 4, fret: 4, noteName: 'F#4', root: false },
+      { string: 4, fret: 2, noteName: 'E4',  root: false },
+      { string: 5, fret: 5, noteName: 'D4',  root: false },
+      { string: 5, fret: 3, noteName: 'C4',  root: false },
+      { string: 5, fret: 2, noteName: 'B3',  root: false },
+      { string: 6, fret: 5, noteName: 'A3',  root: false },
+      { string: 6, fret: 3, noteName: 'G3',  root: true  },
     ],
   },
   {
@@ -59,14 +83,38 @@ const SCALES = [
     difficulty: 'Beginner',
     pro: false,
     notes: [
-      { string: 6, fret: 5,  noteName: 'A3',  root: true  },
-      { string: 5, fret: 2,  noteName: 'B3',  root: false },
-      { string: 5, fret: 3,  noteName: 'C4',  root: false },
-      { string: 5, fret: 5,  noteName: 'D4',  root: false },
-      { string: 4, fret: 2,  noteName: 'E4',  root: false },
-      { string: 4, fret: 3,  noteName: 'F4',  root: false },
-      { string: 4, fret: 5,  noteName: 'G4',  root: false },
-      { string: 3, fret: 2,  noteName: 'A4',  root: true  },
+      // Up
+      { string: 6, fret: 5, noteName: 'A3',  root: true  },
+      { string: 5, fret: 2, noteName: 'B3',  root: false },
+      { string: 5, fret: 3, noteName: 'C4',  root: false },
+      { string: 5, fret: 5, noteName: 'D4',  root: false },
+      { string: 4, fret: 2, noteName: 'E4',  root: false },
+      { string: 4, fret: 3, noteName: 'F4',  root: false },
+      { string: 4, fret: 5, noteName: 'G4',  root: false },
+      { string: 3, fret: 2, noteName: 'A4',  root: true  },
+      { string: 3, fret: 4, noteName: 'B4',  root: false },
+      { string: 2, fret: 1, noteName: 'C5',  root: false },
+      { string: 2, fret: 3, noteName: 'D5',  root: false },
+      { string: 2, fret: 5, noteName: 'E5',  root: false },
+      { string: 1, fret: 1, noteName: 'F5',  root: false },
+      { string: 1, fret: 3, noteName: 'G5',  root: false },
+      { string: 1, fret: 5, noteName: 'A5',  root: true  },
+      // Down
+      { string: 1, fret: 5, noteName: 'A5',  root: true  },
+      { string: 1, fret: 3, noteName: 'G5',  root: false },
+      { string: 1, fret: 1, noteName: 'F5',  root: false },
+      { string: 2, fret: 5, noteName: 'E5',  root: false },
+      { string: 2, fret: 3, noteName: 'D5',  root: false },
+      { string: 2, fret: 1, noteName: 'C5',  root: false },
+      { string: 3, fret: 4, noteName: 'B4',  root: false },
+      { string: 3, fret: 2, noteName: 'A4',  root: true  },
+      { string: 4, fret: 5, noteName: 'G4',  root: false },
+      { string: 4, fret: 3, noteName: 'F4',  root: false },
+      { string: 4, fret: 2, noteName: 'E4',  root: false },
+      { string: 5, fret: 5, noteName: 'D4',  root: false },
+      { string: 5, fret: 3, noteName: 'C4',  root: false },
+      { string: 5, fret: 2, noteName: 'B3',  root: false },
+      { string: 6, fret: 5, noteName: 'A3',  root: true  },
     ],
   },
   {
@@ -77,12 +125,30 @@ const SCALES = [
     difficulty: 'Beginner',
     pro: false,
     notes: [
-      { string: 6, fret: 3,  noteName: 'G3',  root: true  },
-      { string: 6, fret: 5,  noteName: 'A3',  root: false },
-      { string: 5, fret: 2,  noteName: 'B3',  root: false },
-      { string: 5, fret: 5,  noteName: 'D4',  root: false },
-      { string: 4, fret: 2,  noteName: 'E4',  root: false },
-      { string: 4, fret: 5,  noteName: 'G4',  root: true  },
+      // Up
+      { string: 6, fret: 3, noteName: 'G3',  root: true  },
+      { string: 6, fret: 5, noteName: 'A3',  root: false },
+      { string: 5, fret: 2, noteName: 'B3',  root: false },
+      { string: 5, fret: 5, noteName: 'D4',  root: false },
+      { string: 4, fret: 2, noteName: 'E4',  root: false },
+      { string: 4, fret: 5, noteName: 'G4',  root: true  },
+      { string: 3, fret: 2, noteName: 'A4',  root: false },
+      { string: 3, fret: 4, noteName: 'B4',  root: false },
+      { string: 2, fret: 3, noteName: 'D5',  root: false },
+      { string: 2, fret: 5, noteName: 'E5',  root: false },
+      { string: 1, fret: 3, noteName: 'G5',  root: true  },
+      // Down
+      { string: 1, fret: 3, noteName: 'G5',  root: true  },
+      { string: 2, fret: 5, noteName: 'E5',  root: false },
+      { string: 2, fret: 3, noteName: 'D5',  root: false },
+      { string: 3, fret: 4, noteName: 'B4',  root: false },
+      { string: 3, fret: 2, noteName: 'A4',  root: false },
+      { string: 4, fret: 5, noteName: 'G4',  root: true  },
+      { string: 4, fret: 2, noteName: 'E4',  root: false },
+      { string: 5, fret: 5, noteName: 'D4',  root: false },
+      { string: 5, fret: 2, noteName: 'B3',  root: false },
+      { string: 6, fret: 5, noteName: 'A3',  root: false },
+      { string: 6, fret: 3, noteName: 'G3',  root: true  },
     ],
   },
   // ── PRO — Major ──────────────────────────────────────────────────────────
@@ -304,10 +370,22 @@ const DIFFICULTY_COLOR = {
   Advanced:     { bg: 'rgba(196,60,40,0.18)',   border: 'rgba(196,60,40,0.5)',    color: '#E06040' },
 };
 
+// ─── Deduplicate notes for diagram (same string+fret → keep root:true if any) ─
+function uniquePositions(notes) {
+  const seen = new Map();
+  for (const n of notes) {
+    const key = `${n.string}-${n.fret}`;
+    if (!seen.has(key)) seen.set(key, { ...n });
+    else if (n.root) seen.get(key).root = true;
+  }
+  return Array.from(seen.values());
+}
+
 // ─── Fretboard pattern SVG ────────────────────────────────────────────────────
 // Shows strings 1-6 (top = string 1 = high e), frets 0–maxFret
 // Dots: amber for root, cream for other notes
 function FretboardDiagram({ notes }) {
+  notes = uniquePositions(notes);
   const allFrets  = notes.map(n => n.fret);
   const minFret   = Math.min(...allFrets.filter(f => f > 0), 1);
   const maxFret   = Math.max(...allFrets, 5);
@@ -654,7 +732,7 @@ export default function ScalePlay() {
             </div>
 
             <div style={{ fontSize: 11, color: M.muted, marginBottom: 14 }}>
-              {notes.length} notes · strings {Math.max(...notes.map(n=>n.string))}–{Math.min(...notes.map(n=>n.string))}
+              {uniquePositions(notes).length} positions · {notes.length} notes up &amp; down · strings {Math.max(...notes.map(n=>n.string))}–{Math.min(...notes.map(n=>n.string))}
             </div>
 
             {/* Fretboard diagram */}
