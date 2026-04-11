@@ -79,10 +79,11 @@ export default function SongLearnEngine({ song }) {
     });
   }
 
-  // Duration of a measure in ms based on its highest beat number
+  // Duration of a measure in ms — uses beat + (duration-1) so half notes
+  // (duration:2 on beat 3) correctly extend the measure to beat 4.
   function measureMs(idx) {
     const m = measures[idx] ?? [];
-    const beats = m.length > 0 ? Math.max(...m.map(n => n.beat)) : 4;
+    const beats = m.length > 0 ? Math.max(...m.map(n => n.beat + (n.duration ?? 1) - 1)) : 4;
     return Math.round(beats * (60_000 / bpm));
   }
 

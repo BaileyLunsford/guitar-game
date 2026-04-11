@@ -29,9 +29,11 @@ const GUITAR_THEME = { bg: '#120A04', card: '#2A1208', amber: '#E8A050', accent:
 // #7B9E6B  sage green          (correct feedback)
 // #C4603A  ember               (wrong feedback)
 
-// ─── Song-learn data: Twinkle Twinkle — 6 measures, strings 1-2 ─────────────
+// ─── Song-learn data: Twinkle Twinkle — 14 measures, strings 1-2 ─────────────
 // String 1 = high E (E4 open): fret0=E4, fret1=F4, fret3=G4, fret5=A4
 // String 2 = B (B3 open):      fret1=C4, fret3=D4
+// duration:2 = half note (occupies beats 3-4); measureMs uses max beat,
+// so a half note on beat 3 with duration:2 correctly spans to beat 4.
 const TWINKLE_SONG = {
   title: 'Twinkle Twinkle Little Star',
   bpm: 80,
@@ -43,7 +45,7 @@ const TWINKLE_SONG = {
       { string: 1, fret: 3, beat: 3, noteName: 'G4' },
       { string: 1, fret: 3, beat: 4, noteName: 'G4' },
     ],
-    // M2: A A G G (G is half note, fill beat 4)
+    // M2: A A G G
     [
       { string: 1, fret: 5, beat: 1, noteName: 'A4' },
       { string: 1, fret: 5, beat: 2, noteName: 'A4' },
@@ -57,11 +59,11 @@ const TWINKLE_SONG = {
       { string: 1, fret: 0, beat: 3, noteName: 'E4' },
       { string: 1, fret: 0, beat: 4, noteName: 'E4' },
     ],
-    // M4: D D C (half note)
+    // M4: D D C(half)
     [
       { string: 2, fret: 3, beat: 1, noteName: 'D4' },
       { string: 2, fret: 3, beat: 2, noteName: 'D4' },
-      { string: 2, fret: 1, beat: 3, noteName: 'C4' },
+      { string: 2, fret: 1, beat: 3, noteName: 'C4', duration: 2 },
     ],
     // M5: G G F F
     [
@@ -70,11 +72,63 @@ const TWINKLE_SONG = {
       { string: 1, fret: 1, beat: 3, noteName: 'F4' },
       { string: 1, fret: 1, beat: 4, noteName: 'F4' },
     ],
-    // M6: E E D (half note)
+    // M6: E E D(half)
     [
       { string: 1, fret: 0, beat: 1, noteName: 'E4' },
       { string: 1, fret: 0, beat: 2, noteName: 'E4' },
-      { string: 2, fret: 3, beat: 3, noteName: 'D4' },
+      { string: 2, fret: 3, beat: 3, noteName: 'D4', duration: 2 },
+    ],
+    // M7: G G F F
+    [
+      { string: 1, fret: 3, beat: 1, noteName: 'G4' },
+      { string: 1, fret: 3, beat: 2, noteName: 'G4' },
+      { string: 1, fret: 1, beat: 3, noteName: 'F4' },
+      { string: 1, fret: 1, beat: 4, noteName: 'F4' },
+    ],
+    // M8: E E D(half)
+    [
+      { string: 1, fret: 0, beat: 1, noteName: 'E4' },
+      { string: 1, fret: 0, beat: 2, noteName: 'E4' },
+      { string: 2, fret: 3, beat: 3, noteName: 'D4', duration: 2 },
+    ],
+    // M9: G G F F
+    [
+      { string: 1, fret: 3, beat: 1, noteName: 'G4' },
+      { string: 1, fret: 3, beat: 2, noteName: 'G4' },
+      { string: 1, fret: 1, beat: 3, noteName: 'F4' },
+      { string: 1, fret: 1, beat: 4, noteName: 'F4' },
+    ],
+    // M10: E E D(half)
+    [
+      { string: 1, fret: 0, beat: 1, noteName: 'E4' },
+      { string: 1, fret: 0, beat: 2, noteName: 'E4' },
+      { string: 2, fret: 3, beat: 3, noteName: 'D4', duration: 2 },
+    ],
+    // M11: C C G G  (Twinkle twinkle reprise)
+    [
+      { string: 2, fret: 1, beat: 1, noteName: 'C4' },
+      { string: 2, fret: 1, beat: 2, noteName: 'C4' },
+      { string: 1, fret: 3, beat: 3, noteName: 'G4' },
+      { string: 1, fret: 3, beat: 4, noteName: 'G4' },
+    ],
+    // M12: A A G(half)
+    [
+      { string: 1, fret: 5, beat: 1, noteName: 'A4' },
+      { string: 1, fret: 5, beat: 2, noteName: 'A4' },
+      { string: 1, fret: 3, beat: 3, noteName: 'G4', duration: 2 },
+    ],
+    // M13: F F E E
+    [
+      { string: 1, fret: 1, beat: 1, noteName: 'F4' },
+      { string: 1, fret: 1, beat: 2, noteName: 'F4' },
+      { string: 1, fret: 0, beat: 3, noteName: 'E4' },
+      { string: 1, fret: 0, beat: 4, noteName: 'E4' },
+    ],
+    // M14: D D C(half)
+    [
+      { string: 2, fret: 3, beat: 1, noteName: 'D4' },
+      { string: 2, fret: 3, beat: 2, noteName: 'D4' },
+      { string: 2, fret: 1, beat: 3, noteName: 'C4', duration: 2 },
     ],
   ],
 };
@@ -264,7 +318,7 @@ function SongPlayScreen({ song }) {
 
   function measureMs(idx) {
     const m = measures[idx] ?? [];
-    const beats = m.length > 0 ? Math.max(...m.map(n => n.beat)) : 4;
+    const beats = m.length > 0 ? Math.max(...m.map(n => n.beat + (n.duration ?? 1) - 1)) : 4;
     return Math.round(beats * (60_000 / bpm));
   }
 
