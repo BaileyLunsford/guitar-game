@@ -8,6 +8,7 @@ import SongLearnEngine from './SongLearnEngine';
 import Tuner from './Tuner';
 import Metronome from './Metronome';
 import ChordPlay from './ChordPlay';
+import ScalePlay from './ScalePlay';
 import { guitarSampler } from './guitarSampler';
 
 const GUITAR_STRINGS = [
@@ -644,8 +645,7 @@ export default function App() {
   if (hash === '#song-learn') return <SongLearnEngine song={TWINKLE_SONG} />;
   if (hash === '#song-play')  return <SongPlayScreen  song={TWINKLE_SONG} />;
   if (hash === '#tuner')      return <Tuner strings={GUITAR_STRINGS} theme={GUITAR_THEME} title="Tune Your Guitar" />;
-  if (hash === '#scale-play') return <StubScreen icon="🎹" title="Scale Play"
-    description="Interactive scale patterns across the fretboard. Coming soon." />;
+  if (hash === '#scale-play') return <ScalePlay />;
   if (hash === '#chord-play') return <ChordPlay />;
   if (hash === '#metronome')  return <Metronome theme={GUITAR_THEME} title="Guitar Metronome" />;
   return <Home />;
