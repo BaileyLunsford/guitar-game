@@ -1,8 +1,8 @@
 /**
  * ChordPlay.jsx — Guitar Audition Game
- * Chord diagram viewer with audio playback via guitarSampler.
+ * Chord diagram viewer organised by key, with audio playback.
  *
- * Props: none (self-contained with built-in chord library)
+ * Props: none (self-contained)
  */
 
 import React, { useState } from 'react';
@@ -20,144 +20,128 @@ const M = {
   text:    '#F5E8D8',
   border:  'rgba(196,100,40,0.25)',
   borderHi:'rgba(232,131,58,0.55)',
+  free:    '#7B9E6B',
 };
 
 // ─── Chord library ───────────────────────────────────────────────────────────
-// frets: 6-element array [str6, str5, str4, str3, str2, str1] (low E → high E)
+// frets: [str6, str5, str4, str3, str2, str1]  low E → high E
 //   -1 = muted (X)   0 = open (O)   n = fret number
-// notes: note names passed to guitarSampler — muted strings excluded
-const CHORDS = [
+const CL = {
+  G:  { name:'G',  full:'G Major', frets:[3,2,0,0,0,3],    notes:['G2','B2','D3','G3','B3','G4'] },
+  C:  { name:'C',  full:'C Major', frets:[-1,3,2,0,1,0],   notes:['C3','E3','G3','C4','E4'] },
+  D:  { name:'D',  full:'D Major', frets:[-1,-1,0,2,3,2],  notes:['D3','A3','D4','F#4'] },
+  Em: { name:'Em', full:'E Minor', frets:[0,2,2,0,0,0],    notes:['E2','B2','E3','G3','B3','E4'] },
+  A:  { name:'A',  full:'A Major', frets:[-1,0,2,2,2,0],   notes:['A2','E3','A3','C#4','E4'] },
+  E:  { name:'E',  full:'E Major', frets:[0,2,2,1,0,0],    notes:['E2','B2','E3','G#3','B3','E4'] },
+  B7: { name:'B7', full:'B7',      frets:[-1,2,1,2,0,2],   notes:['B2','D#3','A3','B3','F#4'] },
+  F:  { name:'F',  full:'F Major', frets:[1,3,3,2,1,1],    notes:['F2','C3','F3','A3','C4','F4'] },
+};
+
+// ─── Keys ─────────────────────────────────────────────────────────────────────
+// Each chord entry spreads the chord data and adds a roman-numeral degree label.
+const KEYS = [
   {
-    name: 'G',
-    full: 'G Major',
-    frets: [3, 2, 0, 0, 0, 3],
-    notes: ['G2', 'B2', 'D3', 'G3', 'B3', 'G4'],
+    label: 'G', pro: false,
+    chords: [
+      { ...CL.G,  degree: 'I'  },
+      { ...CL.C,  degree: 'IV' },
+      { ...CL.D,  degree: 'V'  },
+    ],
   },
   {
-    name: 'C',
-    full: 'C Major',
-    frets: [-1, 3, 2, 0, 1, 0],
-    notes: ['C3', 'E3', 'G3', 'C4', 'E4'],
+    label: 'D', pro: true,
+    chords: [
+      { ...CL.D,  degree: 'I'  },
+      { ...CL.G,  degree: 'IV' },
+      { ...CL.A,  degree: 'V'  },
+    ],
   },
   {
-    name: 'D',
-    full: 'D Major',
-    frets: [-1, -1, 0, 2, 3, 2],
-    notes: ['D3', 'A3', 'D4', 'F#4'],
+    label: 'A', pro: true,
+    chords: [
+      { ...CL.A,  degree: 'I'  },
+      { ...CL.D,  degree: 'IV' },
+      { ...CL.E,  degree: 'V'  },
+    ],
   },
   {
-    name: 'Em',
-    full: 'E Minor',
-    frets: [0, 2, 2, 0, 0, 0],
-    notes: ['E2', 'B2', 'E3', 'G3', 'B3', 'E4'],
+    label: 'E', pro: true,
+    chords: [
+      { ...CL.E,  degree: 'I'  },
+      { ...CL.A,  degree: 'IV' },
+      { ...CL.B7, degree: 'V'  },
+    ],
   },
   {
-    name: 'A',
-    full: 'A Major',
-    frets: [-1, 0, 2, 2, 2, 0],
-    notes: ['A2', 'E3', 'A3', 'C#4', 'E4'],
-  },
-  {
-    name: 'E',
-    full: 'E Major',
-    frets: [0, 2, 2, 1, 0, 0],
-    notes: ['E2', 'B2', 'E3', 'G#3', 'B3', 'E4'],
+    label: 'C', pro: true,
+    chords: [
+      { ...CL.C,  degree: 'I'  },
+      { ...CL.F,  degree: 'IV' },
+      { ...CL.G,  degree: 'V'  },
+    ],
   },
 ];
 
-// ─── Chord diagram SVG ───────────────────────────────────────────────────────
-// Layout:
-//   6 vertical string lines, left=low E, right=high E
-//   6 horizontal fret lines (nut + 5 frets)
-//   Amber dots for finger positions
-//   O / × above nut for open / muted strings
-//   String labels E A D G B e below grid
-const STR_GAP  = 30;   // px between strings
-const FRET_GAP = 32;   // px between fret lines
-const LEFT     = 20;   // x of string 6 (low E)
-const TOP      = 46;   // y of nut line
-const FRETS    = 5;    // number of fret spaces shown
-const RIGHT    = LEFT + 5 * STR_GAP;   // x of string 1 (high E) = 170
-const BOTTOM   = TOP  + FRETS * FRET_GAP;  // y of last fret line = 206
-const SVG_W    = RIGHT + LEFT;         // 190
-const SVG_H    = BOTTOM + 24;          // 230
+// ─── SVG chord diagram ────────────────────────────────────────────────────────
+const STR_GAP = 30;
+const FRET_GAP = 32;
+const LEFT   = 20;
+const TOP    = 46;
+const FRETS  = 5;
+const RIGHT  = LEFT + 5 * STR_GAP;   // 170
+const BOTTOM = TOP  + FRETS * FRET_GAP; // 206
+const SVG_W  = RIGHT + LEFT;          // 190
+const SVG_H  = BOTTOM + 24;           // 230
 
-const strX  = (si) => LEFT + si * STR_GAP;       // si: 0=low E … 5=high E
-const fretY = (fi) => TOP  + fi * FRET_GAP;       // fi: 0=nut … 5=bottom
-const dotY  = (fret) => TOP + (fret - 0.5) * FRET_GAP; // centre of fret space
+const strX = (si) => LEFT + si * STR_GAP;
+const fretY = (fi) => TOP  + fi * FRET_GAP;
+const dotY  = (fret) => TOP + (fret - 0.5) * FRET_GAP;
 
 function ChordDiagram({ frets, playing }) {
   return (
     <svg
       viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-      style={{ width: '100%', maxWidth: 240, display: 'block', margin: '0 auto' }}
+      style={{ width:'100%', maxWidth:240, display:'block', margin:'0 auto' }}
     >
-      {/* ── String lines ── */}
+      {/* String lines */}
       {[0,1,2,3,4,5].map(si => (
-        <line key={`str${si}`}
-          x1={strX(si)} y1={TOP}
-          x2={strX(si)} y2={BOTTOM}
-          stroke="rgba(245,232,216,0.35)" strokeWidth={1.5}
-        />
+        <line key={`s${si}`}
+          x1={strX(si)} y1={TOP} x2={strX(si)} y2={BOTTOM}
+          stroke="rgba(245,232,216,0.35)" strokeWidth={1.5} />
       ))}
 
-      {/* ── Fret lines (nut = thick) ── */}
+      {/* Fret lines — nut is thick */}
       {[0,1,2,3,4,5].map(fi => (
-        <line key={`fret${fi}`}
-          x1={LEFT} y1={fretY(fi)}
-          x2={RIGHT} y2={fretY(fi)}
+        <line key={`f${fi}`}
+          x1={LEFT} y1={fretY(fi)} x2={RIGHT} y2={fretY(fi)}
           stroke={fi === 0 ? 'rgba(245,232,216,0.85)' : 'rgba(245,232,216,0.3)'}
-          strokeWidth={fi === 0 ? 4 : 1.5}
-        />
+          strokeWidth={fi === 0 ? 4 : 1.5} />
       ))}
 
-      {/* ── X / O labels above nut ── */}
+      {/* X / O labels above nut */}
       {frets.map((f, si) => {
-        if (f === 0) {
-          return (
-            <text key={`lbl${si}`}
-              x={strX(si)} y={TOP - 10}
-              textAnchor="middle"
-              fill="rgba(245,232,216,0.75)"
-              fontSize={13} fontFamily="Georgia,'Times New Roman',serif" fontWeight="700"
-            >O</text>
-          );
-        }
-        if (f === -1) {
-          return (
-            <text key={`lbl${si}`}
-              x={strX(si)} y={TOP - 10}
-              textAnchor="middle"
-              fill={M.muted}
-              fontSize={14} fontFamily="Georgia,'Times New Roman',serif" fontWeight="700"
-            >×</text>
-          );
-        }
+        if (f === 0)  return <text key={`lbl${si}`} x={strX(si)} y={TOP-10}
+          textAnchor="middle" fill="rgba(245,232,216,0.75)"
+          fontSize={13} fontFamily="Georgia,'Times New Roman',serif" fontWeight="700">O</text>;
+        if (f === -1) return <text key={`lbl${si}`} x={strX(si)} y={TOP-10}
+          textAnchor="middle" fill={M.muted}
+          fontSize={14} fontFamily="Georgia,'Times New Roman',serif" fontWeight="700">×</text>;
         return null;
       })}
 
-      {/* ── Finger dots ── */}
-      {frets.map((f, si) => {
-        if (f <= 0) return null;
-        return (
-          <circle key={`dot${si}`}
-            cx={strX(si)} cy={dotY(f)} r={10}
-            fill={playing ? M.hi : M.accent}
-            style={{ transition: 'fill 0.1s' }}
-          />
-        );
-      })}
+      {/* Finger dots */}
+      {frets.map((f, si) => f > 0 ? (
+        <circle key={`d${si}`}
+          cx={strX(si)} cy={dotY(f)} r={10}
+          fill={playing ? M.hi : M.accent}
+          style={{ transition:'fill 0.1s' }} />
+      ) : null)}
 
-      {/* ── Fret numbers on right side (optional, all open-pos for now) ── */}
-
-      {/* ── String labels below grid ── */}
+      {/* String labels */}
       {['E','A','D','G','B','e'].map((label, si) => (
-        <text key={`slbl${si}`}
-          x={strX(si)} y={BOTTOM + 16}
-          textAnchor="middle"
-          fill={M.muted}
-          fontSize={10} fontFamily="Georgia,'Times New Roman',serif"
-        >{label}</text>
+        <text key={`sl${si}`} x={strX(si)} y={BOTTOM+16}
+          textAnchor="middle" fill={M.muted}
+          fontSize={10} fontFamily="Georgia,'Times New Roman',serif">{label}</text>
       ))}
     </svg>
   );
@@ -166,176 +150,229 @@ function ChordDiagram({ frets, playing }) {
 // ─── Button style ─────────────────────────────────────────────────────────────
 function btn(active = false, disabled = false) {
   return {
-    padding: '10px 20px', borderRadius: 12,
-    border: `1px solid ${active ? M.borderHi : M.border}`,
+    padding:'10px 20px', borderRadius:12,
+    border:`1px solid ${active ? M.borderHi : M.border}`,
     background: active ? 'rgba(232,131,58,0.22)' : 'rgba(196,100,40,0.1)',
     color: disabled ? M.muted : (active ? M.hi : M.text),
-    fontFamily: "Georgia,'Times New Roman',serif",
-    fontWeight: 700, fontSize: 14,
+    fontFamily:"Georgia,'Times New Roman',serif",
+    fontWeight:700, fontSize:14,
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.45 : 1,
-    transition: 'all 0.15s',
-    userSelect: 'none',
+    transition:'all 0.15s', userSelect:'none',
   };
 }
 
-// ─── ChordPlay component ─────────────────────────────────────────────────────
+// ─── ChordPlay ────────────────────────────────────────────────────────────────
 export default function ChordPlay() {
-  const [idx,        setIdx]        = useState(0);
+  const [keyIdx,     setKeyIdx]     = useState(0);
+  const [chordIdx,   setChordIdx]   = useState(0);
   const [playing,    setPlaying]    = useState(false);
-  const [activeNote, setActiveNote] = useState(null); // note string currently highlighted
+  const [activeNote, setActiveNote] = useState(null);
 
-  const chord   = CHORDS[idx];
-  const atStart = idx === 0;
-  const atEnd   = idx >= CHORDS.length - 1;
+  const currentKey   = KEYS[keyIdx];
+  const currentChord = currentKey.chords[chordIdx];
+  const atStart      = chordIdx === 0;
+  const atEnd        = chordIdx >= currentKey.chords.length - 1;
+
+  function handleKeySelect(i) {
+    setKeyIdx(i);
+    setChordIdx(0);
+    setPlaying(false);
+    setActiveNote(null);
+  }
 
   function handleHear() {
     if (playing) return;
     setPlaying(true);
     guitarSampler.resume();
-    // Strum low → high with 40ms between strings for a natural feel
-    chord.notes.forEach((note, i) => {
-      setTimeout(() => guitarSampler.playNote(note, { volume: 0.85 }), i * 40);
+    currentChord.notes.forEach((note, i) => {
+      setTimeout(() => guitarSampler.playNote(note, { volume:0.85 }), i * 40);
     });
-    // Light up the diagram briefly
-    setTimeout(() => setPlaying(false), chord.notes.length * 40 + 600);
+    setTimeout(() => setPlaying(false), currentChord.notes.length * 40 + 600);
   }
 
   function handleNotepill(note) {
     guitarSampler.resume();
-    guitarSampler.playNote(note, { volume: 0.9 });
+    guitarSampler.playNote(note, { volume:0.9 });
     setActiveNote(note);
     setTimeout(() => setActiveNote(null), 600);
   }
 
   function handlePrev() {
-    setPlaying(false);
-    setActiveNote(null);
-    setIdx(i => Math.max(i - 1, 0));
+    setPlaying(false); setActiveNote(null);
+    setChordIdx(i => Math.max(i - 1, 0));
   }
 
   function handleNext() {
-    setPlaying(false);
-    setActiveNote(null);
-    setIdx(i => Math.min(i + 1, CHORDS.length - 1));
+    setPlaying(false); setActiveNote(null);
+    setChordIdx(i => Math.min(i + 1, currentKey.chords.length - 1));
   }
 
   return (
     <div style={{
-      minHeight: '100vh', background: M.bg, color: M.text,
-      fontFamily: "Georgia,'Times New Roman',serif", padding: '24px 16px',
+      minHeight:'100vh', background:M.bg, color:M.text,
+      fontFamily:"Georgia,'Times New Roman',serif", padding:'24px 16px',
     }}>
-      <div style={{ maxWidth: 400, margin: '0 auto' }}>
+      <div style={{ maxWidth:400, margin:'0 auto' }}>
 
         {/* ── Header ── */}
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <div style={{ fontSize: 36, marginBottom: 6,
-            filter: 'drop-shadow(0 2px 8px rgba(196,100,40,0.4))' }}>🎸</div>
+        <div style={{ textAlign:'center', marginBottom:20 }}>
+          <div style={{ fontSize:36, marginBottom:6,
+            filter:'drop-shadow(0 2px 8px rgba(196,100,40,0.4))' }}>🎸</div>
           <h1 style={{
-            fontSize: 20, fontWeight: 800, marginBottom: 2, letterSpacing: '-0.01em',
-            background: 'linear-gradient(135deg,#E8833A,#F5A65B,#C46428)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            fontSize:20, fontWeight:800, marginBottom:2, letterSpacing:'-0.01em',
+            background:'linear-gradient(135deg,#E8833A,#F5A65B,#C46428)',
+            WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
           }}>Chord Play</h1>
-          <p style={{ fontSize: 12, color: M.muted }}>Open position chords</p>
+          <p style={{ fontSize:12, color:M.muted }}>Open position chords</p>
         </div>
 
-        {/* ── Chord name ── */}
-        <div style={{ textAlign: 'center', marginBottom: 16 }}>
-          <div style={{
-            fontSize: 48, fontWeight: 800, lineHeight: 1,
-            color: playing ? M.hi : M.accent,
-            transition: 'color 0.15s',
-          }}>{chord.name}</div>
-          <div style={{ fontSize: 14, color: M.muted, marginTop: 4 }}>{chord.full}</div>
-        </div>
-
-        {/* ── Chord diagram ── */}
+        {/* ── Key selector ── */}
         <div style={{
-          background: M.surface, borderRadius: 16, padding: '20px 16px',
-          border: `1px solid ${playing ? M.borderHi : M.border}`,
-          marginBottom: 20, transition: 'border-color 0.15s',
+          display:'flex', gap:8, overflowX:'auto', justifyContent:'center',
+          paddingBottom:4, marginBottom:20,
+          // hide scrollbar on iOS/WebKit
+          WebkitOverflowScrolling:'touch',
         }}>
-          <ChordDiagram frets={chord.frets} playing={playing} />
+          {KEYS.map((k, i) => {
+            const active = i === keyIdx;
+            return (
+              <button key={i} onClick={() => handleKeySelect(i)} style={{
+                flexShrink:0,
+                padding:'7px 16px', borderRadius:20,
+                border:`1px solid ${active ? M.borderHi : M.border}`,
+                background: active ? 'rgba(232,131,58,0.22)' : 'rgba(196,100,40,0.08)',
+                color: active ? M.hi : k.pro ? M.muted : M.text,
+                fontFamily:"Georgia,'Times New Roman',serif",
+                fontWeight:800, fontSize:15,
+                cursor:'pointer', transition:'all 0.15s', userSelect:'none',
+                display:'flex', alignItems:'center', gap:5,
+              }}>
+                {k.label}
+                {k.pro
+                  ? <span style={{ fontSize:11, opacity:0.8 }}>🔒</span>
+                  : <span style={{
+                      fontSize:8, fontWeight:800, color:M.free,
+                      letterSpacing:'0.08em', textTransform:'uppercase',
+                    }}>FREE</span>
+                }
+              </button>
+            );
+          })}
         </div>
 
-        {/* ── Hear Chord button ── */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-          <button
-            onClick={handleHear}
-            disabled={playing}
-            style={{
-              ...btn(playing, playing),
-              fontSize: 16, paddingLeft: 32, paddingRight: 32, paddingTop: 14, paddingBottom: 14,
-              boxShadow: playing ? '0 0 20px rgba(232,131,58,0.25)' : 'none',
-            }}
-          >
-            {playing ? '🎸 Playing…' : '🎸 Hear Chord'}
-          </button>
-        </div>
-
-        {/* ── Notes label ── */}
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <p style={{ fontSize: 11, color: M.muted, letterSpacing: '0.08em',
-            textTransform: 'uppercase', marginBottom: 6 }}>Notes</p>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-            {chord.notes.map((note, i) => {
-              const lit = activeNote === note;
-              return (
-                <button
-                  key={i}
-                  onClick={() => handleNotepill(note)}
-                  style={{
-                    fontSize: 12, fontWeight: 700,
-                    color:       lit ? '#4ade80' : M.hi,
-                    background:  lit ? 'rgba(74,222,128,0.15)' : 'rgba(196,100,40,0.12)',
-                    border:      `1px solid ${lit ? '#4ade80' : M.border}`,
-                    borderRadius: 8, padding: '3px 10px',
-                    cursor: 'pointer', transition: 'all 0.1s',
-                    fontFamily: "Georgia,'Times New Roman',serif",
-                    userSelect: 'none',
-                  }}
-                >{note}</button>
-              );
-            })}
+        {/* ── PRO gate ── */}
+        {currentKey.pro ? (
+          <div style={{
+            textAlign:'center', padding:'52px 20px 48px',
+            background:M.surface, borderRadius:16,
+            border:`1px solid ${M.border}`, marginBottom:32,
+          }}>
+            <div style={{ fontSize:48, marginBottom:14 }}>🔒</div>
+            <div style={{
+              fontSize:18, fontWeight:800, color:M.accent, marginBottom:8,
+            }}>Key of {currentKey.label} — PRO</div>
+            <p style={{ fontSize:13, color:M.muted, lineHeight:1.7, marginBottom:0 }}>
+              Unlock all 5 keys and 8 chords<br/>by upgrading to PRO.
+            </p>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* ── Chord name + degree ── */}
+            <div style={{ textAlign:'center', marginBottom:16 }}>
+              <div style={{
+                fontSize:48, fontWeight:800, lineHeight:1,
+                color: playing ? M.hi : M.accent,
+                transition:'color 0.15s',
+              }}>{currentChord.name}</div>
+              <div style={{ fontSize:13, color:M.muted, marginTop:5 }}>
+                {currentChord.full} —{' '}
+                <span style={{ color:M.accent, fontWeight:700 }}>
+                  {currentChord.degree} chord
+                </span>
+              </div>
+            </div>
 
-        {/* ── Navigation ── */}
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 12 }}>
-          <button onClick={handlePrev} disabled={atStart} style={btn(false, atStart)}>
-            ← Prev
-          </button>
+            {/* ── Chord diagram ── */}
+            <div style={{
+              background:M.surface, borderRadius:16, padding:'20px 16px',
+              border:`1px solid ${playing ? M.borderHi : M.border}`,
+              marginBottom:20, transition:'border-color 0.15s',
+            }}>
+              <ChordDiagram frets={currentChord.frets} playing={playing} />
+            </div>
 
-          {/* Chord selector dots */}
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            {CHORDS.map((c, i) => (
+            {/* ── Hear Chord ── */}
+            <div style={{ display:'flex', justifyContent:'center', marginBottom:20 }}>
               <button
-                key={i}
-                onClick={() => { setPlaying(false); setIdx(i); }}
-                title={c.full}
+                onClick={handleHear}
+                disabled={playing}
                 style={{
-                  width: i === idx ? 24 : 10, height: 10,
-                  borderRadius: 5, border: 'none', padding: 0,
-                  background: i === idx ? M.accent : i < idx ? M.primary : M.surface,
-                  cursor: 'pointer', transition: 'all 0.2s ease',
+                  ...btn(playing, playing),
+                  fontSize:16, paddingLeft:32, paddingRight:32,
+                  paddingTop:14, paddingBottom:14,
+                  boxShadow: playing ? '0 0 20px rgba(232,131,58,0.25)' : 'none',
                 }}
-              />
-            ))}
-          </div>
+              >
+                {playing ? '🎸 Playing…' : '🎸 Hear Chord'}
+              </button>
+            </div>
 
-          <button onClick={handleNext} disabled={atEnd} style={btn(false, atEnd)}>
-            Next →
-          </button>
-        </div>
+            {/* ── Note pills ── */}
+            <div style={{ textAlign:'center', marginBottom:24 }}>
+              <p style={{ fontSize:11, color:M.muted, letterSpacing:'0.08em',
+                textTransform:'uppercase', marginBottom:6 }}>Notes</p>
+              <div style={{ display:'flex', gap:8, justifyContent:'center', flexWrap:'wrap' }}>
+                {currentChord.notes.map((note, i) => {
+                  const lit = activeNote === note;
+                  return (
+                    <button key={i} onClick={() => handleNotepill(note)} style={{
+                      fontSize:12, fontWeight:700,
+                      color:      lit ? '#4ade80' : M.hi,
+                      background: lit ? 'rgba(74,222,128,0.15)' : 'rgba(196,100,40,0.12)',
+                      border:     `1px solid ${lit ? '#4ade80' : M.border}`,
+                      borderRadius:8, padding:'3px 10px',
+                      cursor:'pointer', transition:'all 0.1s',
+                      fontFamily:"Georgia,'Times New Roman',serif",
+                      userSelect:'none',
+                    }}>{note}</button>
+                  );
+                })}
+              </div>
+            </div>
 
-        {/* ── Chord index label ── */}
-        <p style={{ textAlign: 'center', fontSize: 12, color: M.muted, marginBottom: 32 }}>
-          Chord <strong style={{ color: M.hi }}>{idx + 1}</strong> of {CHORDS.length}
-        </p>
+            {/* ── Navigation ── */}
+            <div style={{ display:'flex', gap:10, justifyContent:'center', marginBottom:12 }}>
+              <button onClick={handlePrev} disabled={atStart} style={btn(false, atStart)}>
+                ← Prev
+              </button>
+              <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                {currentKey.chords.map((_, i) => (
+                  <button key={i}
+                    onClick={() => { setPlaying(false); setChordIdx(i); }}
+                    style={{
+                      width: i === chordIdx ? 24 : 10, height:10,
+                      borderRadius:5, border:'none', padding:0,
+                      background: i === chordIdx ? M.accent : i < chordIdx ? M.primary : M.surface,
+                      cursor:'pointer', transition:'all 0.2s ease',
+                    }} />
+                ))}
+              </div>
+              <button onClick={handleNext} disabled={atEnd} style={btn(false, atEnd)}>
+                Next →
+              </button>
+            </div>
+
+            {/* ── Chord index ── */}
+            <p style={{ textAlign:'center', fontSize:12, color:M.muted, marginBottom:32 }}>
+              Chord <strong style={{ color:M.hi }}>{chordIdx + 1}</strong> of {currentKey.chords.length}
+            </p>
+          </>
+        )}
 
         {/* ── Back link ── */}
-        <div style={{ textAlign: 'center', paddingBottom: 40 }}>
-          <a href="#" style={{ color: M.muted, fontSize: 13, textDecoration: 'none' }}>
+        <div style={{ textAlign:'center', paddingBottom:40 }}>
+          <a href="#" style={{ color:M.muted, fontSize:13, textDecoration:'none' }}>
             ← Back to home
           </a>
         </div>
