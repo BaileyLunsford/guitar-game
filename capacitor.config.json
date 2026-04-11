@@ -1,0 +1,17 @@
+{
+  "appId": "com.orchestraaudition.guitar",
+  "appName": "Guitar Audition",
+  "webDir": "build",
+  "server": {
+    "androidScheme": "https"
+  },
+  "ios": {
+    "contentInset": "automatic"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1000,
+      "backgroundColor": "#120A04"
+    }
+  }
+}
