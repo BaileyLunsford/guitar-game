@@ -307,6 +307,7 @@ function SongPlayScreen({ song }) {
 
   const [measureIdx, setMeasureIdx] = React.useState(0);
   const [playing,    setPlaying]    = React.useState(false);
+  const [activeNote, setActiveNote] = React.useState(null); // index into current measure
 
   const timerRef      = React.useRef(null);
   const noteTimersRef = React.useRef([]);
@@ -314,6 +315,7 @@ function SongPlayScreen({ song }) {
   function clearNoteTimers() {
     noteTimersRef.current.forEach(t => clearTimeout(t));
     noteTimersRef.current = [];
+    setActiveNote(null);
   }
 
   function measureMs(idx) {
@@ -325,11 +327,22 @@ function SongPlayScreen({ song }) {
   function playMeasureNotes(measure) {
     clearNoteTimers();
     guitarSampler.resume();
-    measure.forEach(note => {
-      const ms = Math.round((note.beat - 1) * (60_000 / bpm));
-      const t = setTimeout(() => guitarSampler.playNote(note.noteName), ms);
+    const beatMs = 60_000 / bpm;
+    measure.forEach((note, idx) => {
+      const ms = Math.round((note.beat - 1) * beatMs);
+      const t = setTimeout(() => {
+        guitarSampler.playNote(note.noteName);
+        setActiveNote(idx);
+      }, ms);
       noteTimersRef.current.push(t);
     });
+    // Clear highlight after last note finishes
+    if (measure.length > 0) {
+      const last = measure[measure.length - 1];
+      const clearMs = Math.round((last.beat - 1 + (last.duration ?? 1)) * beatMs);
+      const tc = setTimeout(() => setActiveNote(null), clearMs);
+      noteTimersRef.current.push(tc);
+    }
   }
 
   function stop() {
@@ -409,7 +422,7 @@ function SongPlayScreen({ song }) {
         <div style={{ background:M.surface, borderRadius:14,
           padding:'16px 12px', border:`1px solid ${M.border}`,
           marginBottom:24 }}>
-          <TabNotationDisplay notes={measures[measureIdx] ?? []} />
+          <TabNotationDisplay notes={measures[measureIdx] ?? []} currentNote={activeNote} />
         </div>
 
         {/* Big play/pause button */}

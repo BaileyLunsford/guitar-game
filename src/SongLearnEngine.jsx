@@ -56,6 +56,7 @@ export default function SongLearnEngine({ song }) {
   const [bpm,        setBpm]        = useState(song?.bpm ?? 80);
   const [loop,       setLoop]       = useState(false);
   const [loopTick,   setLoopTick]   = useState(0); // bumped each cycle to re-arm loop
+  const [activeNote, setActiveNote] = useState(null); // index into currentMeasure
 
   const loopTimerRef  = useRef(null);
   const noteTimersRef = useRef([]);
@@ -67,16 +68,28 @@ export default function SongLearnEngine({ song }) {
   function clearNoteTimers() {
     noteTimersRef.current.forEach(t => clearTimeout(t));
     noteTimersRef.current = [];
+    setActiveNote(null);
   }
 
   function playMeasureNotes(measure, bpmValue) {
     clearNoteTimers();
     guitarSampler.resume();
-    measure.forEach(note => {
-      const ms = Math.round((note.beat - 1) * (60_000 / bpmValue));
-      const t = setTimeout(() => guitarSampler.playNote(note.noteName), ms);
+    const beatMs = 60_000 / bpmValue;
+    measure.forEach((note, idx) => {
+      const ms = Math.round((note.beat - 1) * beatMs);
+      const t = setTimeout(() => {
+        guitarSampler.playNote(note.noteName);
+        setActiveNote(idx);
+      }, ms);
       noteTimersRef.current.push(t);
     });
+    // Clear highlight after last note finishes
+    if (measure.length > 0) {
+      const last = measure[measure.length - 1];
+      const clearMs = Math.round((last.beat - 1 + (last.duration ?? 1)) * beatMs);
+      const tc = setTimeout(() => setActiveNote(null), clearMs);
+      noteTimersRef.current.push(tc);
+    }
   }
 
   // Duration of a measure in ms — uses beat + (duration-1) so half notes
@@ -212,7 +225,7 @@ export default function SongLearnEngine({ song }) {
           padding: '16px 12px', border: `1px solid ${M.border}`,
           marginBottom: 20,
         }}>
-          <TabNotationDisplay notes={currentMeasure} />
+          <TabNotationDisplay notes={currentMeasure} currentNote={activeNote} />
         </div>
 
         {/* ── Navigation: Prev / Repeat / Next ─────────────────────────── */}
