@@ -1,9 +1,14 @@
 /**
  * SongLearnEngine.jsx — Guitar Audition Game
- * Displays a song measure-by-measure with playback controls and BPM adjustment.
+ * Displays a song measure-by-measure with navigation, loop, and BPM controls.
  *
  * Props:
  *   song  { title, bpm, measures: Array<Array<{string, fret, noteName, beat}>> }
+ *
+ * Playback model:
+ *   - Repeat  : plays the current measure's notes once, no looping
+ *   - Loop    : standalone toggle — loops the current measure until turned off
+ *   - Play FS : navigates to #song-play (separate full-song screen)
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -44,27 +49,26 @@ function btnStyle(active = false, disabled = false) {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function SongLearnEngine({ song }) {
-  const measures   = song?.measures ?? [];
-  const total      = measures.length;
+  const measures = song?.measures ?? [];
+  const total    = measures.length;
 
   const [measureIdx, setMeasureIdx] = useState(0);
   const [bpm,        setBpm]        = useState(song?.bpm ?? 80);
   const [loop,       setLoop]       = useState(false);
-  const [playing,    setPlaying]    = useState(false);
-  const [loopTick,   setLoopTick]   = useState(0); // bumped to re-arm timer when looping
+  const [loopTick,   setLoopTick]   = useState(0); // bumped each cycle to re-arm loop
 
-  const timerRef      = useRef(null);
+  const loopTimerRef  = useRef(null);
   const noteTimersRef = useRef([]);
 
   const currentMeasure = measures[measureIdx] ?? [];
 
-  // Cancel any scheduled note sounds
+  // ── Audio helpers ─────────────────────────────────────────────────────────
+
   function clearNoteTimers() {
     noteTimersRef.current.forEach(t => clearTimeout(t));
     noteTimersRef.current = [];
   }
 
-  // Play every note in a measure at the correct beat offset
   function playMeasureNotes(measure, bpmValue) {
     clearNoteTimers();
     guitarSampler.resume();
@@ -75,78 +79,71 @@ export default function SongLearnEngine({ song }) {
     });
   }
 
-  // Duration of the current measure in ms (based on highest beat number in measure)
+  // Duration of a measure in ms based on its highest beat number
   function measureMs(idx) {
     const m = measures[idx] ?? [];
     const beats = m.length > 0 ? Math.max(...m.map(n => n.beat)) : 4;
     return Math.round(beats * (60_000 / bpm));
   }
 
-  // Stop auto-play
-  function stop() {
-    clearTimeout(timerRef.current);
-    timerRef.current = null;
-    setPlaying(false);
-  }
-
-  // Auto-advance timer while playing
+  // ── Loop effect ───────────────────────────────────────────────────────────
+  // Standalone measure loop — independent of Play Full Song.
+  // When loop=true: play notes now, then schedule the next cycle via loopTick.
+  // When loop=false: cancel any pending cycle immediately.
   useEffect(() => {
-    if (!playing) return;
+    if (!loop) {
+      clearTimeout(loopTimerRef.current);
+      loopTimerRef.current = null;
+      return;
+    }
+    playMeasureNotes(currentMeasure, bpm);
     const dur = measureMs(measureIdx);
-    timerRef.current = setTimeout(() => {
-      if (loop) {
-        // Stay on current measure — bump loopTick to re-arm this effect
-        setLoopTick(t => t + 1);
-      } else if (measureIdx >= total - 1) {
-        setPlaying(false);          // reached end
-      } else {
-        setMeasureIdx(i => i + 1); // advance
-      }
-    }, dur);
-    return () => clearTimeout(timerRef.current);
-  }, [playing, measureIdx, bpm, loop, loopTick]); // eslint-disable-line
+    loopTimerRef.current = setTimeout(() => setLoopTick(t => t + 1), dur);
+    return () => clearTimeout(loopTimerRef.current);
+  }, [loop, measureIdx, bpm, loopTick]); // eslint-disable-line
 
-  // Play notes whenever the displayed measure changes, or when loopTick fires
+  // ── Navigation note-play effect ───────────────────────────────────────────
+  // Fires when the displayed measure changes due to Prev / Next / dot tap.
+  // Skipped when loop is active (loop effect owns audio then).
   useEffect(() => {
+    if (loop) return;
     playMeasureNotes(currentMeasure, bpm);
     return () => clearNoteTimers();
-  }, [measureIdx, loopTick]); // eslint-disable-line
+  }, [measureIdx]); // eslint-disable-line
 
-  // Clean up on unmount
+  // ── Cleanup on unmount ────────────────────────────────────────────────────
   useEffect(() => () => {
-    clearTimeout(timerRef.current);
+    clearTimeout(loopTimerRef.current);
     clearNoteTimers();
   }, []);
 
   // ── Controls ──────────────────────────────────────────────────────────────
+
   function handlePrev() {
-    stop();
+    setLoop(false); // stop any active loop; navigation note-play effect takes over
     setMeasureIdx(i => Math.max(i - 1, 0));
   }
 
+  // Replay current measure once — no looping, no auto-advance
   function handleRepeat() {
-    stop();
+    setLoop(false);
     playMeasureNotes(currentMeasure, bpm);
   }
 
   function handleNext() {
-    stop();
+    setLoop(false);
     setMeasureIdx(i => Math.min(i + 1, total - 1));
   }
 
-  function handlePlayPause() {
-    if (playing) { stop(); return; }
-    // Start from beginning if we're at the end (and not looping)
-    if (measureIdx >= total - 1 && !loop) {
-      setMeasureIdx(0);
-    }
-    setLoopTick(0);
-    setPlaying(true);
+  // Navigate to the full-song playback screen
+  function handlePlaySong() {
+    setLoop(false);
+    window.location.hash = '#song-play';
   }
 
   const atStart = measureIdx === 0;
   const atEnd   = measureIdx >= total - 1;
-  const pct     = total > 1 ? ((measureIdx) / (total - 1)) * 100 : 100;
+  const pct     = total > 1 ? (measureIdx / (total - 1)) * 100 : 100;
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -179,7 +176,7 @@ export default function SongLearnEngine({ song }) {
             {measures.map((_, i) => (
               <button
                 key={i}
-                onClick={() => { stop(); setMeasureIdx(i); }}
+                onClick={() => { setLoop(false); setMeasureIdx(i); }}
                 title={`Measure ${i + 1}`}
                 style={{
                   width: i === measureIdx ? 22 : 10,
@@ -224,7 +221,7 @@ export default function SongLearnEngine({ song }) {
           <button onClick={handlePrev} disabled={atStart} style={btnStyle(false, atStart)}>
             ← Prev
           </button>
-          <button onClick={handleRepeat} disabled={playing} style={btnStyle(false, playing)}>
+          <button onClick={handleRepeat} style={btnStyle(false, false)}>
             ↺ Repeat
           </button>
           <button onClick={handleNext} disabled={atEnd} style={btnStyle(false, atEnd)}>
@@ -237,13 +234,10 @@ export default function SongLearnEngine({ song }) {
           display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 20,
         }}>
           <button
-            onClick={handlePlayPause}
-            style={{
-              ...btnStyle(playing, false),
-              paddingLeft: 26, paddingRight: 26,
-            }}
+            onClick={handlePlaySong}
+            style={{ ...btnStyle(false, false), paddingLeft: 26, paddingRight: 26 }}
           >
-            {playing ? '⏹ Stop' : '▶ Play Full Song'}
+            ▶ Play Full Song
           </button>
           <button
             onClick={() => setLoop(l => !l)}

@@ -245,6 +245,158 @@ function TabTest() {
   );
 }
 
+// ─── Song play screen ────────────────────────────────────────────────────────
+function SongPlayScreen({ song }) {
+  const measures = song?.measures ?? [];
+  const total    = measures.length;
+  const bpm      = song?.bpm ?? 80;
+
+  const [measureIdx, setMeasureIdx] = React.useState(0);
+  const [playing,    setPlaying]    = React.useState(false);
+
+  const timerRef      = React.useRef(null);
+  const noteTimersRef = React.useRef([]);
+
+  function clearNoteTimers() {
+    noteTimersRef.current.forEach(t => clearTimeout(t));
+    noteTimersRef.current = [];
+  }
+
+  function measureMs(idx) {
+    const m = measures[idx] ?? [];
+    const beats = m.length > 0 ? Math.max(...m.map(n => n.beat)) : 4;
+    return Math.round(beats * (60_000 / bpm));
+  }
+
+  function playMeasureNotes(measure) {
+    clearNoteTimers();
+    guitarSampler.resume();
+    measure.forEach(note => {
+      const ms = Math.round((note.beat - 1) * (60_000 / bpm));
+      const t = setTimeout(() => guitarSampler.playNote(note.noteName), ms);
+      noteTimersRef.current.push(t);
+    });
+  }
+
+  function stop() {
+    clearTimeout(timerRef.current);
+    timerRef.current = null;
+    clearNoteTimers();
+    setPlaying(false);
+  }
+
+  // Play current measure's notes, then advance after its duration
+  React.useEffect(() => {
+    if (!playing) return;
+    playMeasureNotes(measures[measureIdx] ?? []);
+    const dur = measureMs(measureIdx);
+    timerRef.current = setTimeout(() => {
+      if (measureIdx >= total - 1) {
+        setPlaying(false); // end of song
+      } else {
+        setMeasureIdx(i => i + 1);
+      }
+    }, dur);
+    return () => clearTimeout(timerRef.current);
+  }, [playing, measureIdx]); // eslint-disable-line
+
+  React.useEffect(() => () => {
+    clearTimeout(timerRef.current);
+    clearNoteTimers();
+  }, []);
+
+  function handlePlayPause() {
+    if (playing) { stop(); return; }
+    setMeasureIdx(0);
+    setPlaying(true);
+  }
+
+  const pct = total > 1 ? (measureIdx / (total - 1)) * 100 : 0;
+  const M = { bg:'#120A04', surface:'#2A1208', panel:'#1E0D06',
+    primary:'#C46428', accent:'#E8833A', hi:'#F5A65B', muted:'#A0785A',
+    text:'#F5E8D8', border:'rgba(196,100,40,0.25)', borderHi:'rgba(232,131,58,0.55)' };
+
+  return (
+    <div style={{ minHeight:'100vh', background:M.bg, color:M.text,
+      fontFamily:"Georgia,'Times New Roman',serif", padding:'24px 16px' }}>
+      <div style={{ maxWidth:520, margin:'0 auto' }}>
+
+        {/* Header */}
+        <div style={{ textAlign:'center', marginBottom:28 }}>
+          <div style={{ fontSize:36, marginBottom:6,
+            filter:'drop-shadow(0 2px 8px rgba(196,100,40,0.4))' }}>🎸</div>
+          <p style={{ fontSize:11, color:M.muted, textTransform:'uppercase',
+            letterSpacing:'0.1em', marginBottom:6 }}>Now Playing</p>
+          <h1 style={{ fontSize:20, fontWeight:800, marginBottom:4, letterSpacing:'-0.01em',
+            background:'linear-gradient(135deg,#E8833A,#F5A65B,#C46428)',
+            WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
+            {song?.title ?? 'Song'}
+          </h1>
+          <p style={{ fontSize:13, color:M.muted }}>
+            {playing
+              ? <>Measure <strong style={{ color:M.hi }}>{measureIdx + 1}</strong> of {total}</>
+              : measureIdx >= total - 1 && !playing
+                ? <span style={{ color:M.hi }}>Complete</span>
+                : <span style={{ color:M.muted }}>{total} measures · {bpm} BPM</span>
+            }
+          </p>
+        </div>
+
+        {/* Progress bar */}
+        <div style={{ height:5, background:M.surface, borderRadius:3,
+          marginBottom:32, overflow:'hidden' }}>
+          <div style={{ height:'100%', borderRadius:3,
+            background:`linear-gradient(90deg,${M.primary},${M.accent})`,
+            width:`${playing || measureIdx > 0 ? pct : 0}%`,
+            transition:'width 0.35s ease' }} />
+        </div>
+
+        {/* Big play/pause button */}
+        <div style={{ display:'flex', justifyContent:'center', marginBottom:32 }}>
+          <button
+            onClick={handlePlayPause}
+            style={{
+              width:80, height:80, borderRadius:'50%',
+              border:`2px solid ${playing ? M.borderHi : M.border}`,
+              background: playing ? 'rgba(232,131,58,0.22)' : 'rgba(196,100,40,0.12)',
+              color: playing ? M.hi : M.text,
+              fontSize:30, cursor:'pointer',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              transition:'all 0.15s', userSelect:'none',
+              boxShadow: playing ? '0 0 24px rgba(232,131,58,0.3)' : 'none',
+            }}
+          >
+            {playing ? '⏹' : '▶'}
+          </button>
+        </div>
+
+        {/* Measure dots */}
+        <div style={{ display:'flex', gap:5, justifyContent:'center', marginBottom:32, flexWrap:'wrap' }}>
+          {measures.map((_, i) => (
+            <div key={i} style={{
+              width: i === measureIdx && playing ? 20 : 8,
+              height:8, borderRadius:4,
+              background: i < measureIdx ? M.primary
+                : i === measureIdx ? M.accent : M.surface,
+              transition:'all 0.2s ease',
+            }} />
+          ))}
+        </div>
+
+        {/* Back to Song Learn */}
+        <div style={{ textAlign:'center', paddingBottom:40 }}>
+          <a href="#song-learn"
+            onClick={stop}
+            style={{ color:M.muted, fontSize:13, textDecoration:'none' }}>
+            ← Back to Song Learn
+          </a>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 // ─── Shared stub screen ──────────────────────────────────────────────────────
 function StubScreen({ icon, title, description, pro = false }) {
   return (
@@ -415,6 +567,7 @@ export default function App() {
 
   if (hash === '#tab-test')   return <TabTest />;
   if (hash === '#song-learn') return <SongLearnEngine song={TWINKLE_SONG} />;
+  if (hash === '#song-play')  return <SongPlayScreen  song={TWINKLE_SONG} />;
   if (hash === '#tuner')      return <Tuner strings={GUITAR_STRINGS} theme={GUITAR_THEME} title="Tune Your Guitar" />;
   if (hash === '#scale-play') return <StubScreen icon="🎹" title="Scale Play"
     description="Interactive scale patterns across the fretboard. Coming soon." />;
