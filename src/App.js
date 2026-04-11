@@ -5,6 +5,18 @@
 import React from 'react';
 import TabNotationDisplay from './TabNotationDisplay';
 import SongLearnEngine from './SongLearnEngine';
+import Tuner from './Tuner';
+import Metronome from './Metronome';
+
+const GUITAR_STRINGS = [
+  { label: 'E2', freq: 82.41  },
+  { label: 'A2', freq: 110.00 },
+  { label: 'D3', freq: 146.83 },
+  { label: 'G3', freq: 196.00 },
+  { label: 'B3', freq: 246.94 },
+  { label: 'E4', freq: 329.63 },
+];
+const GUITAR_THEME = { bg: '#120A04', card: '#2A1208', amber: '#E8A050', accent: '#C4603A' };
 
 // ─── Colour palette ─────────────────────────────────────────────────────────
 // #120A04  very dark mahogany  (background)
@@ -398,13 +410,11 @@ export default function App() {
 
   if (hash === '#tab-test')   return <TabTest />;
   if (hash === '#song-learn') return <SongLearnEngine song={TWINKLE_SONG} />;
-  if (hash === '#tuner')      return <StubScreen icon="🎚" title="Tuner"
-    description="Real-time chromatic pitch detection for all six strings. Coming soon." />;
+  if (hash === '#tuner')      return <Tuner strings={GUITAR_STRINGS} theme={GUITAR_THEME} title="Tune Your Guitar" />;
   if (hash === '#scale-play') return <StubScreen icon="🎹" title="Scale Play"
     description="Interactive scale patterns across the fretboard. Coming soon." />;
   if (hash === '#chord-play') return <StubScreen icon="🎸" title="Chord Play"
     description="Chord diagrams, voicings & strumming patterns. Unlock with PRO." pro />;
-  if (hash === '#metronome')  return <StubScreen icon="⏱" title="Metronome"
-    description="Tap tempo, subdivisions & accent patterns for practice. Coming soon." />;
+  if (hash === '#metronome')  return <Metronome theme={GUITAR_THEME} title="Guitar Metronome" />;
   return <Home />;
 }
