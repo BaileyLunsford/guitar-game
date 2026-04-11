@@ -504,7 +504,8 @@ export default function ScalePlay() {
   const [bpm,        setBpm]       = useState(80);
   const [loop,       setLoop]      = useState(false);
   const [loopTick,   setLoopTick]  = useState(0);
-  const [activeNote, setActiveNote]= useState(null); // null or noteIdx when playing
+  const [activeNote,     setActiveNote]     = useState(null); // null or noteIdx when playing
+  const [hearActiveFret, setHearActiveFret] = useState(null); // {string,fret} during Hear the Scale
 
   const noteTimersRef = useRef([]);
   const loopTimerRef  = useRef(null);
@@ -524,11 +525,19 @@ export default function ScalePlay() {
 
   function hearScale() {
     clearNoteTimers();
+    setHearActiveFret(null);
     guitarSampler.resume();
     const beatMs = 60_000 / bpm;
     notes.forEach((note, i) => {
-      const t = setTimeout(() => guitarSampler.playNote(note.noteName), i * beatMs);
-      noteTimersRef.current.push(t);
+      // Light up dot + play audio
+      const tOn = setTimeout(() => {
+        guitarSampler.playNote(note.noteName);
+        setHearActiveFret({ string: note.string, fret: note.fret });
+      }, Math.round(i * beatMs));
+      // Clear dot 80% through the beat (before the next note lights up)
+      const tOff = setTimeout(() => setHearActiveFret(null),
+        Math.round(i * beatMs + beatMs * 0.8));
+      noteTimersRef.current.push(tOn, tOff);
     });
   }
 
@@ -706,7 +715,7 @@ export default function ScalePlay() {
 
             {/* Fretboard diagram */}
             <div style={{ marginBottom: 16, overflowX: 'auto' }}>
-              <FretboardDiagram notes={levelNotes} />
+              <FretboardDiagram notes={levelNotes} activeFret={hearActiveFret} />
             </div>
 
             {/* Hear the Scale */}
