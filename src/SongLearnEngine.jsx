@@ -106,11 +106,11 @@ export default function SongLearnEngine({ song }) {
     return () => clearTimeout(timerRef.current);
   }, [playing, measureIdx, bpm, loop, loopTick]); // eslint-disable-line
 
-  // Play notes whenever the displayed measure changes (manual nav or auto-advance)
+  // Play notes whenever the displayed measure changes, or when loopTick fires
   useEffect(() => {
     playMeasureNotes(currentMeasure, bpm);
     return () => clearNoteTimers();
-  }, [measureIdx]); // eslint-disable-line
+  }, [measureIdx, loopTick]); // eslint-disable-line
 
   // Clean up on unmount
   useEffect(() => () => {
@@ -126,8 +126,7 @@ export default function SongLearnEngine({ song }) {
 
   function handleRepeat() {
     stop();
-    // Staying on same measure — visual reset only
-    setLoopTick(0);
+    playMeasureNotes(currentMeasure, bpm);
   }
 
   function handleNext() {
