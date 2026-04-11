@@ -398,11 +398,18 @@ function SongPlayScreen({ song }) {
 
         {/* Progress bar */}
         <div style={{ height:5, background:M.surface, borderRadius:3,
-          marginBottom:32, overflow:'hidden' }}>
+          marginBottom:20, overflow:'hidden' }}>
           <div style={{ height:'100%', borderRadius:3,
             background:`linear-gradient(90deg,${M.primary},${M.accent})`,
             width:`${playing || measureIdx > 0 ? pct : 0}%`,
             transition:'width 0.35s ease' }} />
+        </div>
+
+        {/* Notation + Tab — updates in real time as measures advance */}
+        <div style={{ background:M.surface, borderRadius:14,
+          padding:'16px 12px', border:`1px solid ${M.border}`,
+          marginBottom:24 }}>
+          <TabNotationDisplay notes={measures[measureIdx] ?? []} />
         </div>
 
         {/* Big play/pause button */}
