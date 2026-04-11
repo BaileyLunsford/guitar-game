@@ -144,9 +144,28 @@ export default function SongLearnEngine({ song }) {
           }}>
             {song?.title ?? 'Song'}
           </h1>
-          <p style={{ fontSize: 13, color: M.muted }}>
+          <p style={{ fontSize: 13, color: M.muted, marginBottom: 10 }}>
             Measure <strong style={{ color: M.hi }}>{measureIdx + 1}</strong> of {total}
           </p>
+          {/* Dot indicators */}
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+            {measures.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => { stop(); setMeasureIdx(i); }}
+                title={`Measure ${i + 1}`}
+                style={{
+                  width: i === measureIdx ? 22 : 10,
+                  height: 10, borderRadius: 5, border: 'none',
+                  background: i === measureIdx ? M.accent
+                    : i < measureIdx ? M.primary : M.surface,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  padding: 0,
+                }}
+              />
+            ))}
+          </div>
         </div>
 
         {/* ── Progress bar ──────────────────────────────────────────────── */}
@@ -238,26 +257,6 @@ export default function SongLearnEngine({ song }) {
           >
             +
           </button>
-        </div>
-
-        {/* ── Measure dots ──────────────────────────────────────────────── */}
-        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 28 }}>
-          {measures.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => { stop(); setMeasureIdx(i); }}
-              title={`Measure ${i + 1}`}
-              style={{
-                width: i === measureIdx ? 22 : 10,
-                height: 10, borderRadius: 5, border: 'none',
-                background: i === measureIdx ? M.accent
-                  : i < measureIdx ? M.primary : M.surface,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                padding: 0,
-              }}
-            />
-          ))}
         </div>
 
         {/* ── Back link ─────────────────────────────────────────────────── */}

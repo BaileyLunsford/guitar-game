@@ -30,11 +30,12 @@ const TWINKLE_SONG = {
       { string: 1, fret: 3, beat: 3, noteName: 'G4' },
       { string: 1, fret: 3, beat: 4, noteName: 'G4' },
     ],
-    // M2: A A G (half note)
+    // M2: A A G G (G is half note, fill beat 4)
     [
       { string: 1, fret: 5, beat: 1, noteName: 'A4' },
       { string: 1, fret: 5, beat: 2, noteName: 'A4' },
       { string: 1, fret: 3, beat: 3, noteName: 'G4' },
+      { string: 1, fret: 3, beat: 4, noteName: 'G4' },
     ],
     // M3: F F E E
     [
@@ -96,7 +97,7 @@ function TabTest() {
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{ fontSize: 40, marginBottom: 8 }}>🎸</div>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>🪕</div>
           <h1 style={{
             fontSize: 20, fontWeight: 800, marginBottom: 4,
             background: 'linear-gradient(135deg,#E8833A,#F5A65B,#C46428)',
@@ -277,7 +278,7 @@ function Home() {
         .dev-link:hover { color: #A0785A; }
       `}</style>
 
-      <div className="home-logo">🎸</div>
+      <div className="home-logo">🪕</div>
       <h1 className="home-title">Guitar Audition Game</h1>
       <p className="home-subtitle">Learn · Tune · Play</p>
 
