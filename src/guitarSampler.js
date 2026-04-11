@@ -1,5 +1,5 @@
 // guitarSampler.js
-// Lazy-loading acoustic guitar sampler backed by the Gleitz MIDI.js soundfont CDN.
+// Lazy-loading acoustic steel-string guitar sampler backed by the Gleitz MIDI.js soundfont CDN.
 // Files are named like A4.mp3, Bb4.mp3 (flat notation — no sharp filenames).
 // Sharp notes (e.g. F#4) are handled via enharmonic fallback: Fs4 → Gb4.
 //
@@ -170,7 +170,7 @@ export class InstrumentSampler {
 // ── Default export ────────────────────────────────────────────────────────────
 
 export const guitarSampler = new InstrumentSampler({
-  basePath:   'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/acoustic_guitar_nylon-mp3',
+  basePath:   'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/acoustic_guitar_steel-mp3',
   polyphonic: true, // guitar strings ring independently
 });
 
