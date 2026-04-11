@@ -25,3 +25,4 @@ yarn-error.log*
 # Capacitor
 /ios/App/App/public/
 /ios/App/Pods/
+.vercel

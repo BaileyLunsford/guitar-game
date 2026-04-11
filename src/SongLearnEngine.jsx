@@ -1,0 +1,273 @@
+/**
+ * SongLearnEngine.jsx — Guitar Audition Game
+ * Displays a song measure-by-measure with playback controls and BPM adjustment.
+ *
+ * Props:
+ *   song  { title, bpm, measures: Array<Array<{string, fret, noteName, beat}>> }
+ */
+
+import React, { useState, useEffect, useRef } from 'react';
+import TabNotationDisplay from './TabNotationDisplay';
+
+// ─── Mahogany palette ────────────────────────────────────────────────────────
+const M = {
+  bg:      '#120A04',
+  surface: '#2A1208',
+  panel:   '#1E0D06',
+  primary: '#C46428',
+  accent:  '#E8833A',
+  hi:      '#F5A65B',
+  muted:   '#A0785A',
+  text:    '#F5E8D8',
+  border:  'rgba(196,100,40,0.25)',
+  borderHi:'rgba(232,131,58,0.55)',
+};
+
+// ─── Reusable button style ────────────────────────────────────────────────────
+function btnStyle(active = false, disabled = false) {
+  return {
+    padding: '10px 18px',
+    borderRadius: 12,
+    border: `1px solid ${active ? M.borderHi : M.border}`,
+    background: active ? 'rgba(232,131,58,0.22)' : 'rgba(196,100,40,0.1)',
+    color: disabled ? M.muted : (active ? M.hi : M.text),
+    fontFamily: "Georgia, 'Times New Roman', serif",
+    fontWeight: 700,
+    fontSize: 14,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.45 : 1,
+    transition: 'all 0.15s',
+    userSelect: 'none',
+  };
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
+export default function SongLearnEngine({ song }) {
+  const measures   = song?.measures ?? [];
+  const total      = measures.length;
+
+  const [measureIdx, setMeasureIdx] = useState(0);
+  const [bpm,        setBpm]        = useState(song?.bpm ?? 80);
+  const [loop,       setLoop]       = useState(false);
+  const [playing,    setPlaying]    = useState(false);
+  const [loopTick,   setLoopTick]   = useState(0); // bumped to re-arm timer when looping
+
+  const timerRef = useRef(null);
+
+  const currentMeasure = measures[measureIdx] ?? [];
+
+  // Duration of the current measure in ms (based on highest beat number in measure)
+  function measureMs(idx) {
+    const m = measures[idx] ?? [];
+    const beats = m.length > 0 ? Math.max(...m.map(n => n.beat)) : 4;
+    return Math.round(beats * (60_000 / bpm));
+  }
+
+  // Stop auto-play
+  function stop() {
+    clearTimeout(timerRef.current);
+    timerRef.current = null;
+    setPlaying(false);
+  }
+
+  // Auto-advance timer while playing
+  useEffect(() => {
+    if (!playing) return;
+    const dur = measureMs(measureIdx);
+    timerRef.current = setTimeout(() => {
+      if (loop) {
+        // Stay on current measure — bump loopTick to re-arm this effect
+        setLoopTick(t => t + 1);
+      } else if (measureIdx >= total - 1) {
+        setPlaying(false);          // reached end
+      } else {
+        setMeasureIdx(i => i + 1); // advance
+      }
+    }, dur);
+    return () => clearTimeout(timerRef.current);
+  }, [playing, measureIdx, bpm, loop, loopTick]); // eslint-disable-line
+
+  // Clean up on unmount
+  useEffect(() => () => clearTimeout(timerRef.current), []);
+
+  // ── Controls ──────────────────────────────────────────────────────────────
+  function handlePrev() {
+    stop();
+    setMeasureIdx(i => Math.max(i - 1, 0));
+  }
+
+  function handleRepeat() {
+    stop();
+    // Staying on same measure — visual reset only
+    setLoopTick(0);
+  }
+
+  function handleNext() {
+    stop();
+    setMeasureIdx(i => Math.min(i + 1, total - 1));
+  }
+
+  function handlePlayPause() {
+    if (playing) { stop(); return; }
+    // Start from beginning if we're at the end (and not looping)
+    if (measureIdx >= total - 1 && !loop) {
+      setMeasureIdx(0);
+    }
+    setLoopTick(0);
+    setPlaying(true);
+  }
+
+  const atStart = measureIdx === 0;
+  const atEnd   = measureIdx >= total - 1;
+  const pct     = total > 1 ? ((measureIdx) / (total - 1)) * 100 : 100;
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: M.bg,
+      color: M.text,
+      fontFamily: "Georgia, 'Times New Roman', serif",
+      padding: '24px 16px',
+    }}>
+      <div style={{ maxWidth: 520, margin: '0 auto' }}>
+
+        {/* ── Header ────────────────────────────────────────────────────── */}
+        <div style={{ textAlign: 'center', marginBottom: 18 }}>
+          <div style={{ fontSize: 36, marginBottom: 6, filter: 'drop-shadow(0 2px 8px rgba(196,100,40,0.4))' }}>
+            🎸
+          </div>
+          <h1 style={{
+            fontSize: 20, fontWeight: 800, marginBottom: 4, letterSpacing: '-0.01em',
+            background: 'linear-gradient(135deg,#E8833A,#F5A65B,#C46428)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          }}>
+            {song?.title ?? 'Song'}
+          </h1>
+          <p style={{ fontSize: 13, color: M.muted }}>
+            Measure <strong style={{ color: M.hi }}>{measureIdx + 1}</strong> of {total}
+          </p>
+        </div>
+
+        {/* ── Progress bar ──────────────────────────────────────────────── */}
+        <div style={{
+          height: 5, background: M.surface, borderRadius: 3,
+          marginBottom: 20, overflow: 'hidden',
+        }}>
+          <div style={{
+            height: '100%', borderRadius: 3,
+            background: `linear-gradient(90deg, ${M.primary}, ${M.accent})`,
+            width: `${pct}%`,
+            transition: 'width 0.35s ease',
+          }} />
+        </div>
+
+        {/* ── Notation + Tab display ─────────────────────────────────────── */}
+        <div style={{
+          background: M.surface, borderRadius: 14,
+          padding: '16px 12px', border: `1px solid ${M.border}`,
+          marginBottom: 20,
+        }}>
+          <TabNotationDisplay notes={currentMeasure} />
+        </div>
+
+        {/* ── Navigation: Prev / Repeat / Next ─────────────────────────── */}
+        <div style={{
+          display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 12,
+        }}>
+          <button onClick={handlePrev} disabled={atStart} style={btnStyle(false, atStart)}>
+            ← Prev
+          </button>
+          <button onClick={handleRepeat} disabled={playing} style={btnStyle(false, playing)}>
+            ↺ Repeat
+          </button>
+          <button onClick={handleNext} disabled={atEnd} style={btnStyle(false, atEnd)}>
+            Next →
+          </button>
+        </div>
+
+        {/* ── Play full song + Loop ─────────────────────────────────────── */}
+        <div style={{
+          display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 20,
+        }}>
+          <button
+            onClick={handlePlayPause}
+            style={{
+              ...btnStyle(playing, false),
+              paddingLeft: 26, paddingRight: 26,
+            }}
+          >
+            {playing ? '⏹ Stop' : '▶ Play Full Song'}
+          </button>
+          <button
+            onClick={() => setLoop(l => !l)}
+            style={btnStyle(loop, false)}
+          >
+            🔁 {loop ? 'Loop On' : 'Loop Off'}
+          </button>
+        </div>
+
+        {/* ── BPM control ───────────────────────────────────────────────── */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
+          padding: '14px 20px', background: M.panel,
+          border: `1px solid ${M.border}`, borderRadius: 14, marginBottom: 28,
+        }}>
+          <button
+            onClick={() => setBpm(b => Math.max(40, b - 10))}
+            disabled={bpm <= 40}
+            style={{ ...btnStyle(false, bpm <= 40), padding: '7px 16px', fontSize: 18, lineHeight: 1 }}
+          >
+            −
+          </button>
+          <div style={{ textAlign: 'center', minWidth: 72 }}>
+            <div style={{ fontSize: 30, fontWeight: 800, color: M.accent, lineHeight: 1 }}>
+              {bpm}
+            </div>
+            <div style={{
+              fontSize: 10, color: M.muted, textTransform: 'uppercase',
+              letterSpacing: '0.12em', marginTop: 2,
+            }}>
+              BPM
+            </div>
+          </div>
+          <button
+            onClick={() => setBpm(b => Math.min(200, b + 10))}
+            disabled={bpm >= 200}
+            style={{ ...btnStyle(false, bpm >= 200), padding: '7px 16px', fontSize: 18, lineHeight: 1 }}
+          >
+            +
+          </button>
+        </div>
+
+        {/* ── Measure dots ──────────────────────────────────────────────── */}
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 28 }}>
+          {measures.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => { stop(); setMeasureIdx(i); }}
+              title={`Measure ${i + 1}`}
+              style={{
+                width: i === measureIdx ? 22 : 10,
+                height: 10, borderRadius: 5, border: 'none',
+                background: i === measureIdx ? M.accent
+                  : i < measureIdx ? M.primary : M.surface,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                padding: 0,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* ── Back link ─────────────────────────────────────────────────── */}
+        <div style={{ textAlign: 'center', paddingBottom: 40 }}>
+          <a href="#" style={{ color: M.muted, fontSize: 13, textDecoration: 'none' }}>
+            ← Back to home
+          </a>
+        </div>
+
+      </div>
+    </div>
+  );
+}
