@@ -7,6 +7,7 @@ import TabNotationDisplay from './TabNotationDisplay';
 import SongLearnEngine from './SongLearnEngine';
 import Tuner from './Tuner';
 import Metronome from './Metronome';
+import ChordPlay from './ChordPlay';
 import { guitarSampler } from './guitarSampler';
 
 const GUITAR_STRINGS = [
@@ -533,7 +534,7 @@ const FEATURES = [
   {
     icon: '🎸', title: 'Chord Play',
     desc: 'Chord diagrams, voicings & strumming patterns',
-    hash: '#chord-play', pro: true,
+    hash: '#chord-play', pro: false,
   },
   {
     icon: '⏱', title: 'Metronome',
@@ -645,8 +646,7 @@ export default function App() {
   if (hash === '#tuner')      return <Tuner strings={GUITAR_STRINGS} theme={GUITAR_THEME} title="Tune Your Guitar" />;
   if (hash === '#scale-play') return <StubScreen icon="🎹" title="Scale Play"
     description="Interactive scale patterns across the fretboard. Coming soon." />;
-  if (hash === '#chord-play') return <StubScreen icon="🎸" title="Chord Play"
-    description="Chord diagrams, voicings & strumming patterns. Unlock with PRO." pro />;
+  if (hash === '#chord-play') return <ChordPlay />;
   if (hash === '#metronome')  return <Metronome theme={GUITAR_THEME} title="Guitar Metronome" />;
   return <Home />;
 }
