@@ -228,81 +228,160 @@ function TabTest() {
   );
 }
 
+// ─── Shared stub screen ──────────────────────────────────────────────────────
+function StubScreen({ icon, title, description, pro = false }) {
+  return (
+    <div style={{
+      minHeight: '100vh', background: '#120A04', color: '#F5E8D8',
+      fontFamily: "Georgia, 'Times New Roman', serif",
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      justifyContent: 'center', padding: '32px 24px', textAlign: 'center',
+    }}>
+      <div style={{ fontSize: 56, marginBottom: 16,
+        filter: 'drop-shadow(0 4px 16px rgba(196,100,40,0.45))' }}>{icon}</div>
+      <h1 style={{
+        fontSize: 22, fontWeight: 800, marginBottom: 8,
+        background: 'linear-gradient(135deg,#E8833A,#F5A65B,#C46428)',
+        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+      }}>{title}</h1>
+      {pro && (
+        <span style={{
+          display: 'inline-block', marginBottom: 16,
+          fontSize: 10, fontWeight: 800, letterSpacing: '0.1em',
+          textTransform: 'uppercase', padding: '3px 10px', borderRadius: 20,
+          background: 'rgba(232,131,58,0.18)', border: '1px solid rgba(232,131,58,0.5)',
+          color: '#E8833A',
+        }}>PRO</span>
+      )}
+      <p style={{ fontSize: 14, color: '#A0785A', lineHeight: 1.7,
+        maxWidth: 280, marginBottom: 40 }}>{description}</p>
+      <a href="#" style={{
+        fontSize: 13, color: '#A0785A', textDecoration: 'none',
+        padding: '10px 22px', borderRadius: 12,
+        border: '1px solid rgba(196,100,40,0.3)',
+        background: 'rgba(196,100,40,0.08)',
+      }}>← Back to home</a>
+    </div>
+  );
+}
+
 // ─── Home screen ────────────────────────────────────────────────────────────
+const FEATURES = [
+  {
+    icon: '🎵', title: 'Song Learn',
+    desc: 'Measure-by-measure playback with notation & tab',
+    hash: '#song-learn', pro: false,
+  },
+  {
+    icon: '🎼', title: 'Tab & Notation',
+    desc: 'Standard notation with guitar tablature overlay',
+    hash: '#tab-test', pro: false,
+  },
+  {
+    icon: '🎚', title: 'Tuner',
+    desc: 'Chromatic pitch detection for EADGBE tuning',
+    hash: '#tuner', pro: false,
+  },
+  {
+    icon: '🎹', title: 'Scale Play',
+    desc: 'Interactive scale patterns across the fretboard',
+    hash: '#scale-play', pro: false,
+  },
+  {
+    icon: '🎸', title: 'Chord Play',
+    desc: 'Chord diagrams, voicings & strumming patterns',
+    hash: '#chord-play', pro: true,
+  },
+  {
+    icon: '⏱', title: 'Metronome',
+    desc: 'Tap tempo, subdivisions & accent control',
+    hash: '#metronome', pro: false,
+  },
+];
+
 function Home() {
   return (
-    <div id="oa-root">
+    <div style={{
+      minHeight: '100vh', background: '#120A04', color: '#F5E8D8',
+      fontFamily: "Georgia, 'Times New Roman', serif",
+      padding: 'env(safe-area-inset-top,16px) 0 env(safe-area-inset-bottom,16px)',
+      overflowY: 'auto',
+    }}>
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body, #oa-root {
-          height: 100%;
-          background: #120A04;
-          color: #F5E8D8;
-          font-family: Georgia, 'Times New Roman', serif;
-          overflow: hidden;
+        html, body { background: #120A04; }
+        .feat-card {
+          background: #2A1208;
+          border: 1px solid rgba(196,100,40,0.22);
+          border-radius: 16px;
+          padding: 16px 14px 14px;
+          cursor: pointer;
+          text-decoration: none;
+          color: inherit;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          transition: border-color 0.15s, background 0.15s;
+          -webkit-tap-highlight-color: transparent;
         }
-        #oa-root {
-          display: flex; flex-direction: column;
-          align-items: center; justify-content: center;
-          min-height: 100vh;
-          padding: env(safe-area-inset-top) env(safe-area-inset-right)
-                   env(safe-area-inset-bottom) env(safe-area-inset-left);
+        .feat-card:hover, .feat-card:active {
+          border-color: rgba(232,131,58,0.55);
+          background: #341609;
         }
-        .home-logo { font-size: 72px; margin-bottom: 16px;
-          filter: drop-shadow(0 4px 16px rgba(196,100,40,0.5)); }
-        .home-title {
-          font-size: 28px; font-weight: 800; letter-spacing: -0.02em;
-          background: linear-gradient(135deg,#E8833A,#F5A65B,#C46428,#F5A65B);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-          background-clip: text; margin-bottom: 6px; text-align: center; }
-        .home-subtitle { font-size: 14px; color: #A0785A; font-weight: 500;
-          letter-spacing: 0.06em; text-transform: uppercase;
-          margin-bottom: 48px; text-align: center; }
-        .coming-soon-card { background: rgba(42,18,8,0.9);
-          border: 1px solid rgba(196,100,40,0.25); border-radius: 20px;
-          padding: 28px 32px; max-width: 320px; text-align: center; }
-        .coming-soon-card h2 { font-size: 18px; color: #E8833A;
-          margin-bottom: 10px; font-weight: 700; }
-        .coming-soon-card p { font-size: 14px; color: #A0785A; line-height: 1.6; }
-        .badge-row { display: flex; gap: 8px; justify-content: center; margin-top: 20px; }
-        .badge { font-size: 11px; font-weight: 700; padding: 4px 10px;
-          border-radius: 20px; letter-spacing: 0.05em; text-transform: uppercase; }
-        .badge-guitar { background: rgba(196,100,40,0.18);
-          border: 1px solid rgba(196,100,40,0.5); color: #C46428; }
-        .badge-sight  { background: rgba(232,131,58,0.18);
-          border: 1px solid rgba(232,131,58,0.5); color: #E8833A; }
-        .badge-tuner  { background: rgba(123,158,107,0.18);
-          border: 1px solid rgba(123,158,107,0.5); color: #7B9E6B; }
-        .dev-link { margin-top: 32px; font-size: 12px; color: rgba(160,120,90,0.6);
-          text-decoration: none; }
-        .dev-link:hover { color: #A0785A; }
+        .feat-icon { font-size: 28px; margin-bottom: 6px;
+          filter: drop-shadow(0 2px 6px rgba(196,100,40,0.35)); }
+        .feat-title { font-size: 14px; font-weight: 800; color: #F5E8D8;
+          letter-spacing: -0.01em; }
+        .feat-desc { font-size: 11px; color: #A0785A; line-height: 1.5; flex: 1; }
+        .feat-badge {
+          align-self: flex-start; margin-top: 8px;
+          font-size: 9px; font-weight: 800; letter-spacing: 0.08em;
+          text-transform: uppercase; padding: 2px 8px; border-radius: 20px;
+        }
+        .badge-free {
+          background: rgba(123,158,107,0.15);
+          border: 1px solid rgba(123,158,107,0.45);
+          color: #7B9E6B;
+        }
+        .badge-pro {
+          background: rgba(232,131,58,0.18);
+          border: 1px solid rgba(232,131,58,0.5);
+          color: #E8833A;
+        }
       `}</style>
 
-      <div className="home-logo">🪕</div>
-      <h1 className="home-title">Guitar Audition Game</h1>
-      <p className="home-subtitle">Learn · Tune · Play</p>
-
-      <div className="coming-soon-card">
-        <h2>Coming Soon</h2>
-        <p>
-          Sight-read standard notation on guitar.
-          Real-time pitch detection, chromatic tuner,
-          metronome, and fingerboard diagrams —
-          built for EADGBE standard tuning.
+      {/* Header */}
+      <div style={{ textAlign: 'center', padding: '32px 24px 24px' }}>
+        <div style={{ fontSize: 64, marginBottom: 12,
+          filter: 'drop-shadow(0 4px 20px rgba(196,100,40,0.55))' }}>🎸</div>
+        <h1 style={{
+          fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 6,
+          background: 'linear-gradient(135deg,#E8833A,#F5A65B,#C46428,#F5A65B)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+        }}>Guitar Audition Game</h1>
+        <p style={{ fontSize: 13, color: '#A0785A', letterSpacing: '0.08em',
+          textTransform: 'uppercase', fontWeight: 500 }}>
+          Learn · Tune · Play
         </p>
-        <div className="badge-row">
-          <span className="badge badge-guitar">Guitar</span>
-          <span className="badge badge-sight">Sight-Read</span>
-          <span className="badge badge-tuner">Tuner</span>
-        </div>
       </div>
 
-      <a className="dev-link" href="#song-learn" style={{ display: 'block', marginBottom: 6 }}>
-        🎵 Song learn engine →
-      </a>
-      <a className="dev-link" href="#tab-test">
-        🛠 Tab notation test →
-      </a>
+      {/* Feature grid */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr 1fr',
+        gap: 12, padding: '0 16px 32px', maxWidth: 480, margin: '0 auto',
+      }}>
+        {FEATURES.map(f => (
+          <a key={f.hash} href={f.hash} className="feat-card">
+            <div className="feat-icon">{f.icon}</div>
+            <div className="feat-title">{f.title}</div>
+            <div className="feat-desc">{f.desc}</div>
+            <span className={`feat-badge ${f.pro ? 'badge-pro' : 'badge-free'}`}>
+              {f.pro ? 'PRO' : 'FREE'}
+            </span>
+          </a>
+        ))}
+      </div>
     </div>
   );
 }
@@ -319,5 +398,13 @@ export default function App() {
 
   if (hash === '#tab-test')   return <TabTest />;
   if (hash === '#song-learn') return <SongLearnEngine song={TWINKLE_SONG} />;
+  if (hash === '#tuner')      return <StubScreen icon="🎚" title="Tuner"
+    description="Real-time chromatic pitch detection for all six strings. Coming soon." />;
+  if (hash === '#scale-play') return <StubScreen icon="🎹" title="Scale Play"
+    description="Interactive scale patterns across the fretboard. Coming soon." />;
+  if (hash === '#chord-play') return <StubScreen icon="🎸" title="Chord Play"
+    description="Chord diagrams, voicings & strumming patterns. Unlock with PRO." pro />;
+  if (hash === '#metronome')  return <StubScreen icon="⏱" title="Metronome"
+    description="Tap tempo, subdivisions & accent patterns for practice. Coming soon." />;
   return <Home />;
 }
