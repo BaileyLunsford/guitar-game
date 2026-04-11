@@ -8,6 +8,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import TabNotationDisplay from './TabNotationDisplay';
+import { guitarSampler } from './guitarSampler';
 
 // ─── Mahogany palette ────────────────────────────────────────────────────────
 const M = {
@@ -52,9 +53,27 @@ export default function SongLearnEngine({ song }) {
   const [playing,    setPlaying]    = useState(false);
   const [loopTick,   setLoopTick]   = useState(0); // bumped to re-arm timer when looping
 
-  const timerRef = useRef(null);
+  const timerRef      = useRef(null);
+  const noteTimersRef = useRef([]);
 
   const currentMeasure = measures[measureIdx] ?? [];
+
+  // Cancel any scheduled note sounds
+  function clearNoteTimers() {
+    noteTimersRef.current.forEach(t => clearTimeout(t));
+    noteTimersRef.current = [];
+  }
+
+  // Play every note in a measure at the correct beat offset
+  function playMeasureNotes(measure, bpmValue) {
+    clearNoteTimers();
+    guitarSampler.resume();
+    measure.forEach(note => {
+      const ms = Math.round((note.beat - 1) * (60_000 / bpmValue));
+      const t = setTimeout(() => guitarSampler.playNote(note.noteName), ms);
+      noteTimersRef.current.push(t);
+    });
+  }
 
   // Duration of the current measure in ms (based on highest beat number in measure)
   function measureMs(idx) {
@@ -87,8 +106,17 @@ export default function SongLearnEngine({ song }) {
     return () => clearTimeout(timerRef.current);
   }, [playing, measureIdx, bpm, loop, loopTick]); // eslint-disable-line
 
+  // Play notes whenever the displayed measure changes (manual nav or auto-advance)
+  useEffect(() => {
+    playMeasureNotes(currentMeasure, bpm);
+    return () => clearNoteTimers();
+  }, [measureIdx]); // eslint-disable-line
+
   // Clean up on unmount
-  useEffect(() => () => clearTimeout(timerRef.current), []);
+  useEffect(() => () => {
+    clearTimeout(timerRef.current);
+    clearNoteTimers();
+  }, []);
 
   // ── Controls ──────────────────────────────────────────────────────────────
   function handlePrev() {

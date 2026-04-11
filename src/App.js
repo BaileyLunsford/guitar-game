@@ -7,6 +7,7 @@ import TabNotationDisplay from './TabNotationDisplay';
 import SongLearnEngine from './SongLearnEngine';
 import Tuner from './Tuner';
 import Metronome from './Metronome';
+import { guitarSampler } from './guitarSampler';
 
 const GUITAR_STRINGS = [
   { label: 'E2', freq: 82.41  },
@@ -179,7 +180,11 @@ function TabTest() {
             {TWINKLE_LOW_E.map((note, idx) => (
               <button
                 key={idx}
-                onClick={() => setActive(active === idx ? null : idx)}
+                onClick={() => {
+                  setActive(active === idx ? null : idx);
+                  guitarSampler.resume();
+                  guitarSampler.playNote(note.noteName);
+                }}
                 style={{
                   padding: '8px 14px', borderRadius: 10, cursor: 'pointer',
                   fontSize: 12, fontWeight: 700,
