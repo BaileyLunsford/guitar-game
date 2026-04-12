@@ -285,13 +285,6 @@ function btnStyle(active = false, disabled = false) {
   };
 }
 
-// ── Backing track URLs per genre ──────────────────────────────────────────────
-// TODO: add files to public/audio/backing/ — see useBackingTrack.js for names
-const BACKING_SRC = {
-  blues:   '/audio/backing/blues-loop.mp3',
-  rock:    '/audio/backing/rock-loop.mp3',
-  country: '/audio/backing/country-loop.mp3',
-};
 
 // ── Timing humanization ───────────────────────────────────────────────────────
 // ±20–40ms per note, not cumulative. Matches SongLearnEngine / ScalePlay.
@@ -322,9 +315,8 @@ export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
 
   // ── Metronome + backing track ─────────────────────────────────────────────
   // Backing src is derived from activeCat — changing genre auto-stops the track
-  const backingSrc = activeCat ? (BACKING_SRC[activeCat] ?? null) : null;
   const { clickOn,  toggleClick, stopClick  } = useMetronome(bpm);
-  const { trackOn,  toggleTrack, stopTrack  } = useBackingTrack(backingSrc);
+  const { trackOn,  toggleTrack, stopTrack  } = useBackingTrack(activeCat, bpm);
 
   const loopTimerRef  = useRef(null);
   const noteTimersRef = useRef([]);
