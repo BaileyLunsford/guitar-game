@@ -13,6 +13,7 @@ import useIAP from './useIAP';
 import useAmbience from './useAmbience';
 import LandingPage from './LandingPage';
 import AuditionGame from './AuditionGame';
+import LickPlay from './LickPlay';
 import { guitarSampler } from './guitarSampler';
 
 const GUITAR_STRINGS = [
@@ -555,6 +556,11 @@ const FEATURES = [
     hash: '#scale-play', pro: false,
   },
   {
+    icon: '🎸', title: 'Lick Play',
+    desc: 'Short riffs and phrases',
+    hash: '#lick-play', pro: false,
+  },
+  {
     icon: '🎸', title: 'Chord Play',
     desc: 'Chord diagrams, voicings & strumming patterns',
     hash: '#chord-play', pro: true,
@@ -706,8 +712,9 @@ export default function App() {
   if (hash === '#song-learn') return <SongLearnEngine song={TWINKLE_SONG} />;
   if (hash === '#song-play')  return <SongPlayScreen  song={TWINKLE_SONG} />;
   if (hash === '#tuner')      return <Tuner strings={GUITAR_STRINGS} theme={GUITAR_THEME} title="Tune Your Guitar" />;
-  if (hash === '#scale-play') return <ScalePlay isPro={isPro} onPurchase={purchase} onRestore={restore} />;
-  if (hash === '#chord-play') return <ChordPlay isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hash === '#scale-play') return <ScalePlay  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hash === '#lick-play')  return <LickPlay   isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hash === '#chord-play') return <ChordPlay  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
   if (hash === '#metronome')  return <Metronome theme={GUITAR_THEME} title="Guitar Metronome" />;
   return <Home ambOn={ambOn} ambToggle={ambToggle} />;
 }
