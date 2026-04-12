@@ -205,8 +205,8 @@ const POSITION_DOTS = new Set([3, 5, 7, 9, 12]);
 function FretHint({ note }) {
   const pos = NOTE_FRET[note];
   if (!pos) return null;
-  const W = 216, H = 100;
-  const padL = 26, padR = 10, padT = 10, padB = 16; // extra padB for dot row
+  const W = 216, H = 130;
+  const padL = 28, padR = 10, padT = 12, padB = 20; // extra padB for dot row
   const gridW = W - padL - padR;
   const gridH = H - padT - padB;
   const strGap  = gridH / 5;
@@ -253,7 +253,7 @@ function FretHint({ note }) {
       })}
       {/* String labels */}
       {[1,2,3,4,5,6].map(s => (
-        <text key={s} x={padL - 10} y={strY(s) + 4} fill={M.muted} fontSize={8} textAnchor="middle" fontFamily="Georgia,serif">{STR_LABELS[s]}</text>
+        <text key={s} x={padL - 10} y={strY(s) + 4} fill={M.muted} fontSize={11} textAnchor="middle" fontFamily="Georgia,serif">{STR_LABELS[s]}</text>
       ))}
       {/* Note dot */}
       <circle cx={cx} cy={cy} r={9} fill="#4ade80" stroke="rgba(74,222,128,0.45)" strokeWidth={2} />
