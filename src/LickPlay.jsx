@@ -24,9 +24,11 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import LandingPage    from './LandingPage';
+import LandingPage       from './LandingPage';
 import TabNotationDisplay from './TabNotationDisplay';
-import UpgradeModal   from './UpgradeModal';
+import UpgradeModal      from './UpgradeModal';
+import useMetronome      from './useMetronome';
+import useBackingTrack   from './useBackingTrack';
 import { guitarSampler } from './guitarSampler';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
@@ -283,6 +285,21 @@ function btnStyle(active = false, disabled = false) {
   };
 }
 
+// ── Backing track URLs per genre ──────────────────────────────────────────────
+// TODO: add files to public/audio/backing/ — see useBackingTrack.js for names
+const BACKING_SRC = {
+  blues:   '/audio/backing/blues-loop.mp3',
+  rock:    '/audio/backing/rock-loop.mp3',
+  country: '/audio/backing/country-loop.mp3',
+};
+
+// ── Timing humanization ───────────────────────────────────────────────────────
+// ±20–40ms per note, not cumulative. Matches SongLearnEngine / ScalePlay.
+function jitterMs() {
+  const mag = 20 + Math.random() * 20;
+  return Math.random() < 0.5 ? mag : -mag;
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
   // ── Phase ─────────────────────────────────────────────────────────────────
@@ -303,6 +320,12 @@ export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
   // ── PRO modal ─────────────────────────────────────────────────────────────
   const [modal,       setModal]       = useState(null); // null | { feature }
 
+  // ── Metronome + backing track ─────────────────────────────────────────────
+  // Backing src is derived from activeCat — changing genre auto-stops the track
+  const backingSrc = activeCat ? (BACKING_SRC[activeCat] ?? null) : null;
+  const { clickOn,  toggleClick, stopClick  } = useMetronome(bpm);
+  const { trackOn,  toggleTrack, stopTrack  } = useBackingTrack(backingSrc);
+
   const loopTimerRef  = useRef(null);
   const noteTimersRef = useRef([]);
 
@@ -318,7 +341,7 @@ export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
     guitarSampler.resume();
     const beatMs = 60_000 / bpmVal;
     measure.forEach((note, idx) => {
-      const ms = Math.round((note.beat - 1) * beatMs);
+      const ms = Math.max(0, Math.round((note.beat - 1) * beatMs) + jitterMs());
       const t = setTimeout(() => {
         guitarSampler.playNote(note.noteName);
         setActiveNote(idx);
@@ -370,7 +393,9 @@ export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
   useEffect(() => () => {
     clearTimeout(loopTimerRef.current);
     clearNoteTimers();
-  }, []);
+    stopClick();
+    stopTrack();
+  }, []); // eslint-disable-line
 
   // ── Drill controls ────────────────────────────────────────────────────────
   const total  = measures.length;
@@ -692,7 +717,7 @@ export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
         {/* ── BPM control ── */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:16,
           padding:'14px 20px', background:M.panel,
-          border:`1px solid ${M.border}`, borderRadius:14, marginBottom:24 }}>
+          border:`1px solid ${M.border}`, borderRadius:14, marginBottom:10 }}>
           <button onClick={() => setBpm(b => Math.max(40, b - 10))} disabled={bpm <= 40}
             style={{ ...btnStyle(false, bpm <= 40), padding:'7px 16px', fontSize:18, lineHeight:1 }}>
             −
@@ -708,10 +733,20 @@ export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
           </button>
         </div>
 
+        {/* ── Metronome + Backing track toggles ── */}
+        <div style={{ display:'flex', gap:8, justifyContent:'center', marginBottom:24 }}>
+          <button onClick={toggleClick} style={btnStyle(clickOn, false)}>
+            🎵 {clickOn ? 'Click On' : 'Click Off'}
+          </button>
+          <button onClick={toggleTrack} style={btnStyle(trackOn, false)}>
+            🎸 {trackOn ? 'Track On' : 'Track Off'}
+          </button>
+        </div>
+
         {/* ── Back link ── */}
         <div style={{ textAlign:'center', paddingBottom:40 }}>
           <button
-            onClick={() => { setLoop(false); clearNoteTimers(); setPhase('lickSelect'); }}
+            onClick={() => { setLoop(false); clearNoteTimers(); stopClick(); stopTrack(); setPhase('lickSelect'); }}
             style={{ background:'none', border:'none', color:M.muted,
               fontFamily:"Georgia,serif", fontSize:13, cursor:'pointer' }}>
             ← Back to Lick Select

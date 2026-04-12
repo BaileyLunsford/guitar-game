@@ -72,12 +72,18 @@ export default function SongLearnEngine({ song }) {
     setActiveNote(null);
   }
 
+  // ±20–40ms random offset applied independently per note (not cumulative)
+  function jitterMs() {
+    const mag = 20 + Math.random() * 20;
+    return Math.random() < 0.5 ? mag : -mag;
+  }
+
   function playMeasureNotes(measure, bpmValue) {
     clearNoteTimers();
     guitarSampler.resume();
     const beatMs = 60_000 / bpmValue;
     measure.forEach((note, idx) => {
-      const ms = Math.round((note.beat - 1) * beatMs);
+      const ms = Math.max(0, Math.round((note.beat - 1) * beatMs) + jitterMs());
       const t = setTimeout(() => {
         guitarSampler.playNote(note.noteName);
         setActiveNote(idx);

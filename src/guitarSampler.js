@@ -83,7 +83,15 @@ export class InstrumentSampler {
     return promise;
   }
 
-  async playNote(note, { volume = 1.0, detune = 0 } = {}) {
+  // ── Humanization helpers ─────────────────────────────────────────────────
+  // Applied when volume/detune are not explicitly overridden by the caller.
+  // Keeps playback feeling "played" rather than mechanical:
+  //   velocity : ±15 % gain variation
+  //   pitch    : ±3 cents random detune
+  static _humanVol()    { return 0.85 + Math.random() * 0.30; }   // 0.85–1.15
+  static _humanDetune() { return (Math.random() - 0.5) * 6; }     // –3 … +3 cents
+
+  async playNote(note, { volume = null, detune = null } = {}) {
     const ctx = this._getCtx();
 
     let buffer;
@@ -95,7 +103,11 @@ export class InstrumentSampler {
     }
 
     const now       = ctx.currentTime;
-    const targetVol = Math.max(0, Math.min(2, volume));
+    // null → apply humanization; explicit value → use as-is
+    const targetVol = Math.max(0, Math.min(2,
+      volume  ?? InstrumentSampler._humanVol()
+    ));
+    const detuneVal = detune ?? InstrumentSampler._humanDetune();
 
     console.log(
       '[GuitarSampler] playNote ' + note +
@@ -123,7 +135,7 @@ export class InstrumentSampler {
 
     const source = ctx.createBufferSource();
     source.buffer       = buffer;
-    source.detune.value = detune;
+    source.detune.value = detuneVal;
 
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0, startAt);

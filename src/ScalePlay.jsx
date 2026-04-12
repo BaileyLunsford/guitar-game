@@ -525,20 +525,28 @@ export default function ScalePlay({ isPro = false, onPurchase, onRestore }) {
     setActiveNote(null);
   }
 
+  // ±20–40ms random offset applied independently per note (not cumulative)
+  function jitterMs() {
+    const mag = 20 + Math.random() * 20;
+    return Math.random() < 0.5 ? mag : -mag;
+  }
+
   function hearScale() {
     clearNoteTimers();
     setHearActiveFret(null);
     guitarSampler.resume();
     const beatMs = 60_000 / bpm;
     notes.forEach((note, i) => {
+      const base  = Math.round(i * beatMs);
+      const onset = Math.max(0, base + jitterMs());
       // Light up dot + play audio
       const tOn = setTimeout(() => {
         guitarSampler.playNote(note.noteName);
         setHearActiveFret({ string: note.string, fret: note.fret });
-      }, Math.round(i * beatMs));
+      }, onset);
       // Clear dot 80% through the beat (before the next note lights up)
       const tOff = setTimeout(() => setHearActiveFret(null),
-        Math.round(i * beatMs + beatMs * 0.8));
+        Math.round(base + beatMs * 0.8));
       noteTimersRef.current.push(tOn, tOff);
     });
   }
