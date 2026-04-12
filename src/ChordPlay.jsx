@@ -8,6 +8,7 @@
 import React, { useState } from 'react';
 import { guitarSampler } from './guitarSampler';
 import UpgradeModal from './UpgradeModal';
+import LandingPage from './LandingPage';
 
 // ─── Mahogany palette ────────────────────────────────────────────────────────
 const M = {
@@ -66,27 +67,15 @@ const CL = {
 // ─── Keys — Essential (I IV V) + Full diatonic set ───────────────────────────
 const KEYS = [
   {
-    label: 'G', pro: false,
+    label: 'C', pro: true,
     chords: [
-      { ...CL.G,      degree: 'I'    },
-      { ...CL.Am,     degree: 'ii'   },
-      { ...CL.Bm,     degree: 'iii'  },
-      { ...CL.C,      degree: 'IV'   },
-      { ...CL.D,      degree: 'V'    },
-      { ...CL.Em,     degree: 'vi'   },
-      { ...CL.Fshdim, degree: 'vii°' },
-    ],
-  },
-  {
-    label: 'D', pro: true,
-    chords: [
-      { ...CL.D,      degree: 'I'    },
-      { ...CL.Em,     degree: 'ii'   },
-      { ...CL.Fshm,   degree: 'iii'  },
-      { ...CL.G,      degree: 'IV'   },
-      { ...CL.A,      degree: 'V'    },
-      { ...CL.Bm,     degree: 'vi'   },
-      { ...CL.Cshdim, degree: 'vii°' },
+      { ...CL.C,    degree: 'I'    },
+      { ...CL.Dm,   degree: 'ii'   },
+      { ...CL.Em,   degree: 'iii'  },
+      { ...CL.F,    degree: 'IV'   },
+      { ...CL.G,    degree: 'V'    },
+      { ...CL.Am,   degree: 'vi'   },
+      { ...CL.Bdim, degree: 'vii°' },
     ],
   },
   {
@@ -102,6 +91,18 @@ const KEYS = [
     ],
   },
   {
+    label: 'G', pro: false,
+    chords: [
+      { ...CL.G,      degree: 'I'    },
+      { ...CL.Am,     degree: 'ii'   },
+      { ...CL.Bm,     degree: 'iii'  },
+      { ...CL.C,      degree: 'IV'   },
+      { ...CL.D,      degree: 'V'    },
+      { ...CL.Em,     degree: 'vi'   },
+      { ...CL.Fshdim, degree: 'vii°' },
+    ],
+  },
+  {
     label: 'E', pro: true,
     chords: [
       { ...CL.E,      degree: 'I'    },
@@ -114,15 +115,15 @@ const KEYS = [
     ],
   },
   {
-    label: 'C', pro: true,
+    label: 'D', pro: true,
     chords: [
-      { ...CL.C,    degree: 'I'    },
-      { ...CL.Dm,   degree: 'ii'   },
-      { ...CL.Em,   degree: 'iii'  },
-      { ...CL.F,    degree: 'IV'   },
-      { ...CL.G,    degree: 'V'    },
-      { ...CL.Am,   degree: 'vi'   },
-      { ...CL.Bdim, degree: 'vii°' },
+      { ...CL.D,      degree: 'I'    },
+      { ...CL.Em,     degree: 'ii'   },
+      { ...CL.Fshm,   degree: 'iii'  },
+      { ...CL.G,      degree: 'IV'   },
+      { ...CL.A,      degree: 'V'    },
+      { ...CL.Bm,     degree: 'vi'   },
+      { ...CL.Cshdim, degree: 'vii°' },
     ],
   },
 ];
@@ -230,12 +231,29 @@ function btn(active = false, disabled = false) {
 
 // ─── ChordPlay ────────────────────────────────────────────────────────────────
 export default function ChordPlay({ isPro = false, onPurchase, onRestore }) {
+  const [phase,      setPhase]      = useState('landing'); // 'landing' | 'chords'
   const [keyIdx,     setKeyIdx]     = useState(0);
   const [chordIdx,   setChordIdx]   = useState(0);
   const [mode,       setMode]       = useState('essential'); // 'essential' | 'full'
   const [playing,    setPlaying]    = useState(false);
   const [activeNote, setActiveNote] = useState(null);
   const [modal,      setModal]      = useState(null); // null | { feature }
+
+  if (phase === 'landing') return (
+    <LandingPage
+      emoji="🎸"
+      title="Chord Play"
+      description="Learn open position chords used in real songs. Master the shapes that unlock thousands of songs."
+      difficulty="Beginner"
+      features={[
+        'CAGED chord system',
+        'Hear every chord voiced correctly',
+        'I-IV-V and full diatonic sets',
+      ]}
+      onStart={() => setPhase('chords')}
+      onBack={() => { window.location.hash = ''; }}
+    />
+  );
 
   const currentKey    = KEYS[keyIdx];
   const currentChords = mode === 'essential'
@@ -490,9 +508,11 @@ export default function ChordPlay({ isPro = false, onPurchase, onRestore }) {
 
         {/* ── Back link ── */}
         <div style={{ textAlign:'center', paddingBottom:40 }}>
-          <a href="#" style={{ color:M.muted, fontSize:13, textDecoration:'none' }}>
-            ← Back to home
-          </a>
+          <button onClick={() => setPhase('landing')}
+            style={{ background:'none', border:'none', color:M.muted,
+              fontFamily:"Georgia,'Times New Roman',serif", fontSize:13, cursor:'pointer' }}>
+            ← Back
+          </button>
         </div>
 
       </div>
