@@ -20,15 +20,29 @@
  *   - Exit → home (#)
  */
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import LandingPage from './LandingPage';
 
 export default function Metronome({ theme = {}, title = 'Metronome' }) {
+  const [started, setStarted] = useState(false);
   const T = {
     bg:     theme.bg     || '#120A04',
     card:   theme.card   || '#2A1208',
     amber:  theme.amber  || '#E8A050',
     accent: theme.accent || '#C4603A',
   };
+
+  if (!started) return (
+    <LandingPage
+      emoji="⏱"
+      title="Metronome"
+      description="Build rock-solid timing and rhythm. Set your BPM, tap tempo, and practice with subdivisions. The foundation of all great playing."
+      difficulty="Beginner"
+      features={['Tap tempo with 3-second window', 'Time signatures: 4/4, 3/4, 6/8', 'Visual beat circles with accent on beat 1']}
+      onStart={() => setStarted(true)}
+      onBack={() => { window.location.hash = ''; }}
+    />
+  );
 
   useEffect(() => {
 
@@ -187,7 +201,7 @@ export default function Metronome({ theme = {}, title = 'Metronome' }) {
       if (smPlaying) smStop();
       if (sharedCtx) sharedCtx.close().catch(function () {});
     };
-  }, []); // eslint-disable-line
+  }, [started]); // eslint-disable-line
 
   // ── CSS vars derived from theme ────────────────────────────
   const css = `

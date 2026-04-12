@@ -13,6 +13,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import TabNotationDisplay from './TabNotationDisplay';
+import LandingPage from './LandingPage';
 import { guitarSampler } from './guitarSampler';
 
 // ─── Mahogany palette ────────────────────────────────────────────────────────
@@ -49,6 +50,20 @@ function btnStyle(active = false, disabled = false) {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function SongLearnEngine({ song }) {
+  const [started, setStarted] = useState(false);
+
+  if (!started) return (
+    <LandingPage
+      emoji="🎵"
+      title="Song Learn"
+      description="Learn songs measure by measure. Follow the notation and tab as each note plays. Perfect for beginners building their repertoire."
+      difficulty="Beginner"
+      features={['Measure-by-measure playback', 'Standard notation + guitar tab', 'Adjustable BPM tempo']}
+      onStart={() => setStarted(true)}
+      onBack={() => { window.location.hash = ''; }}
+    />
+  );
+
   const measures = song?.measures ?? [];
   const total    = measures.length;
 

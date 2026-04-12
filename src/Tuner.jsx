@@ -19,7 +19,8 @@
  * to the DOM inside the RAF loop.
  */
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import LandingPage from './LandingPage';
 
 // Fixed palette for string indicator circles (cycles if > 6 strings)
 const STR_COLORS = ['#C46428','#E8833A','#F5A65B','#A0785A','#86efac','#c4b5fd'];
@@ -44,12 +45,25 @@ const CHROM_FREQS = [
 ];
 
 export default function Tuner({ strings = [], theme = {}, title = 'Tune Your Instrument' }) {
+  const [started, setStarted] = useState(false);
   const T = {
     bg:     theme.bg     || '#120A04',
     card:   theme.card   || '#2A1208',
     amber:  theme.amber  || '#E8A050',
     accent: theme.accent || '#C4603A',
   };
+
+  if (!started) return (
+    <LandingPage
+      emoji="🎸"
+      title="Guitar Tuner"
+      description="Keep your guitar in perfect pitch. Chromatic tuner detects all 6 strings in real time. Essential before every practice session."
+      difficulty="Beginner"
+      features={['Detects all 6 strings (EADGBE)', 'Real-time chromatic pitch detection', 'Visual needle + sharp/flat indicator']}
+      onStart={() => setStarted(true)}
+      onBack={() => { window.location.hash = ''; }}
+    />
+  );
 
   useEffect(() => {
     // Capture prop values at mount time for the DOM-based logic
@@ -293,7 +307,7 @@ export default function Tuner({ strings = [], theme = {}, title = 'Tune Your Ins
       if (micStream) micStream.getTracks().forEach(function (t) { t.stop(); });
       if (sharedCtx) sharedCtx.close().catch(function () {});
     };
-  }, []); // eslint-disable-line
+  }, [started]); // eslint-disable-line
 
   // ── Render ────────────────────────────────────────────────
   return (

@@ -11,6 +11,7 @@ import ChordPlay from './ChordPlay';
 import ScalePlay from './ScalePlay';
 import useIAP from './useIAP';
 import useAmbience from './useAmbience';
+import LandingPage from './LandingPage';
 import { guitarSampler } from './guitarSampler';
 
 const GUITAR_STRINGS = [
@@ -154,7 +155,20 @@ const TWINKLE_LOW_E = [
 
 // ─── Tab test screen ────────────────────────────────────────────────────────
 function TabTest() {
+  const [started, setStarted] = React.useState(false);
   const [active, setActive] = React.useState(null);
+
+  if (!started) return (
+    <LandingPage
+      emoji="🎼"
+      title="Tab & Notation"
+      description="Read music the guitarist's way. See standard notation and guitar tablature side by side. Train your eyes and ears together."
+      difficulty="Beginner"
+      features={['Standard notation + guitar tab overlay', 'Highlighted active note playback', 'Builds music reading fundamentals']}
+      onStart={() => setStarted(true)}
+      onBack={() => { window.location.hash = ''; }}
+    />
+  );
 
   return (
     <div style={{
