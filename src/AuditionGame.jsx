@@ -1,9 +1,41 @@
-// AuditionGame.jsx — Guitar Audition Game
-// Real-time mic pitch detection via autocorrelation.
-// Engine ported from violin-game/src/App.js — adapted for guitar range (E2–E5).
+// STANDARD AUDITION GAME PATTERN
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase flow:  landing → levelSelect → playing → results
+//
+// State:
+//   phase           'landing' | 'levelSelect' | 'playing' | 'results'
+//   currentNote     note name string (e.g. "C3") for the note the player must play
+//   flashState      null | 'correct' | 'wrong'  — brief color flash on evaluation
+//   showFretboard   bool — user toggle; also auto-set true on wrong answer
+//
+// Refs (hot loop — never trigger re-render):
+//   analyserRef, dStateRef, sustainCountRef, sustainNoteRef
+//   noteQueueRef, noteIdxRef, correctRef, totalRef, streakRef
+//   phaseRef, levelIdxRef, timerTotalRef
+//
+// Stale-closure pattern:
+//   onTimeoutRef.current   = onTimeout;    // updated every render
+//   advanceNoteRef.current = advanceNote;  // updated every render
+//   Timers/RAF call ref.current() to always get the latest version.
+//
+// Pitch detection:
+//   Autocorrelation, guitar range E2–E5 (minOff sr/700, maxOff sr/70).
+//   SUSTAIN_FRAMES consecutive matching frames → evaluateNote().
+//   COOLDOWN_MS guard prevents double-triggers.
+//
+// TabNotationDisplay usage:
+//   Pass a single-item notes array built from NOTE_FRET[currentNote].
+//   currentNote={0} always (only one note displayed at a time).
+//   Highlight state controlled by ringColor / flashState, not by this prop.
+//
+// FretHint:
+//   Inline SVG mini-fretboard. Shows only the target note dot.
+//   Auto-shown on wrong answer; toggled by "Show Fingerboard" button.
+// ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useEffect, useRef } from 'react';
 import LandingPage from './LandingPage';
+import TabNotationDisplay from './TabNotationDisplay';
 
 // ── Detection constants ───────────────────────────────────────────────────────
 const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -45,6 +77,29 @@ const NOTE_STRING = {
   E4:'E4', F4:'E4', 'F#4':'E4', G4:'E4', 'G#4':'E4',
   A4:'E4', 'A#4':'E4', B4:'E4', C5:'E4', D5:'E4', E5:'E4',
 };
+
+// ── Note → first-position fret (string 1=high e … 6=low E) ───────────────────
+const NOTE_FRET = {
+  E2:{string:6,fret:0}, F2:{string:6,fret:1}, 'F#2':{string:6,fret:2},
+  G2:{string:6,fret:3}, 'G#2':{string:6,fret:4},
+  A2:{string:5,fret:0}, 'A#2':{string:5,fret:1}, B2:{string:5,fret:2},
+  C3:{string:5,fret:3}, 'C#3':{string:5,fret:4},
+  D3:{string:4,fret:0}, 'D#3':{string:4,fret:1}, E3:{string:4,fret:2},
+  F3:{string:4,fret:3}, 'F#3':{string:4,fret:4},
+  G3:{string:3,fret:0}, 'G#3':{string:3,fret:1}, A3:{string:3,fret:2},
+  'A#3':{string:3,fret:3},
+  B3:{string:2,fret:0}, C4:{string:2,fret:1}, 'C#4':{string:2,fret:2},
+  D4:{string:2,fret:3}, 'D#4':{string:2,fret:4},
+  E4:{string:1,fret:0}, F4:{string:1,fret:1}, 'F#4':{string:1,fret:2},
+  G4:{string:1,fret:3}, 'G#4':{string:1,fret:4}, A4:{string:1,fret:5},
+  'A#4':{string:1,fret:6}, B4:{string:1,fret:7}, C5:{string:1,fret:8},
+  'C#5':{string:1,fret:9}, D5:{string:1,fret:10}, 'D#5':{string:1,fret:11},
+  E5:{string:1,fret:12},
+};
+
+// ── String labels (diagram: 1=high e, 6=low E) ────────────────────────────────
+const STR_LABELS = { 1:'e', 2:'B', 3:'G', 4:'D', 5:'A', 6:'E' };
+const STR_FULL   = { 1:'High e', 2:'B', 3:'G', 4:'D', 5:'A', 6:'Low E' };
 
 // ── Levels ────────────────────────────────────────────────────────────────────
 const LEVELS = [
@@ -140,8 +195,57 @@ const M = {
   muted:'#A0785A', text:'#F5E8D8', border:'rgba(196,100,40,0.25)',
 };
 
-const RING_R = 54;
+const RING_R = 44;
 const RING_C = 2 * Math.PI * RING_R;
+
+// ── Inline mini-fretboard hint ────────────────────────────────────────────────
+function FretHint({ note }) {
+  const pos = NOTE_FRET[note];
+  if (!pos) return null;
+  const W = 280, H = 100;
+  const padL = 26, padR = 10, padT = 10, padB = 10;
+  const gridW = W - padL - padR;
+  const gridH = H - padT - padB;
+  const strGap  = gridH / 5;
+  const numFrets = pos.fret === 0 ? 4 : 5;
+  const startFret = pos.fret <= 2 ? 0 : pos.fret - 2;
+  const endFret   = startFret + numFrets;
+  const fretGap   = gridW / numFrets;
+  function strY(s) { return padT + (s - 1) * strGap; }
+  function fretX(f) { return padL + (f - startFret) * fretGap; }
+  function midX(f)  { return fretX(f) - fretGap / 2; }
+  const cx = pos.fret === 0 ? padL - 12 : midX(pos.fret);
+  const cy = strY(pos.string);
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display:'block', maxWidth:280 }}>
+      {/* Nut or position marker */}
+      {startFret === 0
+        ? <rect x={padL} y={padT - 2} width={3} height={gridH + 4} fill={M.hi} rx={1} />
+        : <text x={padL - 6} y={padT + gridH / 2 + 4} fill={M.muted} fontSize={9} textAnchor="middle" fontFamily="Georgia,serif">{startFret}fr</text>
+      }
+      {/* Strings */}
+      {[1,2,3,4,5,6].map(s => (
+        <line key={s} x1={padL} y1={strY(s)} x2={padL + gridW} y2={strY(s)}
+          stroke={s === pos.string ? 'rgba(196,100,40,0.7)' : 'rgba(196,100,40,0.3)'}
+          strokeWidth={s === 6 ? 1.8 : 1} />
+      ))}
+      {/* Frets */}
+      {Array.from({ length: numFrets + 1 }, (_, i) => startFret + i).map(f => (
+        <line key={f} x1={fretX(f)} y1={padT} x2={fretX(f)} y2={padT + gridH}
+          stroke="rgba(196,100,40,0.2)" strokeWidth={1} />
+      ))}
+      {/* String labels */}
+      {[1,2,3,4,5,6].map(s => (
+        <text key={s} x={padL - 10} y={strY(s) + 4} fill={M.muted} fontSize={8} textAnchor="middle" fontFamily="Georgia,serif">{STR_LABELS[s]}</text>
+      ))}
+      {/* Note dot */}
+      <circle cx={cx} cy={cy} r={9} fill="#4ade80" stroke="rgba(74,222,128,0.45)" strokeWidth={2} />
+      <text x={cx} y={cy + 3.5} textAnchor="middle" fill="#0a1a0a" fontSize={7} fontWeight="700" fontFamily="Georgia,serif">
+        {note.replace('#', '♯')}
+      </text>
+    </svg>
+  );
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function AuditionGame() {
@@ -157,9 +261,11 @@ export default function AuditionGame() {
   const [score, setScore] = useState({ correct: 0, total: 0, streak: 0 });
 
   // ── Feedback + ring ───────────────────────────────────────────────────────
-  const [feedback,  setFeedback]  = useState({ main: 'Play the note', sub: '', color: 'rgba(255,255,255,0.4)' });
-  const [ringPct,   setRingPct]   = useState(0);
-  const [ringColor, setRingColor] = useState(M.border);
+  const [feedback,      setFeedback]      = useState({ main: 'Play the note', sub: '', color: 'rgba(255,255,255,0.4)' });
+  const [ringPct,       setRingPct]       = useState(0);
+  const [ringColor,     setRingColor]     = useState(M.border);
+  const [flashState,    setFlashState]    = useState(null);   // null | 'correct' | 'wrong'
+  const [showFretboard, setShowFretboard] = useState(false);  // user toggle; auto-true on wrong
 
   // ── Timer ─────────────────────────────────────────────────────────────────
   const [timeLeft, setTimeLeft] = useState(30);
@@ -174,6 +280,7 @@ export default function AuditionGame() {
   const timerIntervalRef = useRef(null);
   const feedbackTimerRef = useRef(null);
   const cooldownTimerRef = useRef(null);
+  const flashTimerRef    = useRef(null);
 
   const dStateRef       = useRef('idle');   // idle | detecting | cooldown
   const sustainCountRef = useRef(0);
@@ -238,6 +345,8 @@ export default function AuditionGame() {
     setFeedback({ main: 'Play the note', sub: '', color: 'rgba(255,255,255,0.4)' });
     setRingPct(0);
     setRingColor(M.border);
+    setFlashState(null);
+    clearTimeout(flashTimerRef.current);
   }
 
   // ── Scoring ───────────────────────────────────────────────────────────────
@@ -284,6 +393,9 @@ export default function AuditionGame() {
       setFeedback({ main: 'Perfect! ✓', sub: '', color: '#4ade80' });
       setRingPct(100);
       setRingColor('#4ade80');
+      setFlashState('correct');
+      clearTimeout(flashTimerRef.current);
+      flashTimerRef.current = setTimeout(() => setFlashState(null), 500);
       clearTimeout(feedbackTimerRef.current);
       feedbackTimerRef.current = setTimeout(() => advanceNoteRef.current?.(), 600);
     } else {
@@ -292,6 +404,10 @@ export default function AuditionGame() {
       setFeedback({ main: `That was ${played || '?'}`, sub: 'Try again — same note', color: '#f87171' });
       setRingPct(0);
       setRingColor('#f87171');
+      setFlashState('wrong');
+      setShowFretboard(true);  // auto-reveal hint on wrong answer
+      clearTimeout(flashTimerRef.current);
+      flashTimerRef.current = setTimeout(() => setFlashState(null), 700);
       clearTimeout(feedbackTimerRef.current);
       feedbackTimerRef.current = setTimeout(() => {
         if (phaseRef.current !== 'playing') return;
@@ -388,6 +504,8 @@ export default function AuditionGame() {
     sustainCountRef.current = 0;
     sustainNoteRef.current  = null;
     setScore({ correct: 0, total: 0, streak: 0 });
+    setShowFretboard(false);
+    setFlashState(null);
     setPhase('playing');
     phaseRef.current = 'playing';
     renderCurrentNote();
@@ -402,6 +520,7 @@ export default function AuditionGame() {
       clearInterval(timerIntervalRef.current);
       clearTimeout(feedbackTimerRef.current);
       clearTimeout(cooldownTimerRef.current);
+      clearTimeout(flashTimerRef.current);
     };
   }, []);
 
@@ -506,9 +625,14 @@ export default function AuditionGame() {
   const timerCol  = timeLeft <= 5 ? '#f87171' : timeLeft <= 10 ? '#f59e0b' : '#4ade80';
   const stringKey = currentNote ? NOTE_STRING[currentNote] : null;
   const ringDash  = RING_C - (ringPct / 100) * RING_C;
+  const notePos   = currentNote ? NOTE_FRET[currentNote] : null;
+  const tabNote   = notePos ? [{ string: notePos.string, fret: notePos.fret, beat: 1, noteName: currentNote }] : [];
+  const flashBg   = flashState === 'correct' ? 'rgba(74,222,128,0.07)'
+                  : flashState === 'wrong'   ? 'rgba(248,113,113,0.07)'
+                  : 'transparent';
 
   return (
-    <div style={{ minHeight:'100vh', background:M.bg, color:M.text, fontFamily:"Georgia,'Times New Roman',serif", display:'flex', flexDirection:'column' }}>
+    <div style={{ minHeight:'100vh', background:M.bg, color:M.text, fontFamily:"Georgia,'Times New Roman',serif", display:'flex', flexDirection:'column', transition:'background 0.2s' }}>
 
       {/* ── Top bar ── */}
       <div style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', background:M.panel, borderBottom:`1px solid ${M.border}` }}>
@@ -535,43 +659,102 @@ export default function AuditionGame() {
         </div>
       </div>
 
-      {/* ── Main area ── */}
-      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'20px 16px' }}>
+      {/* ── Main scroll area ── */}
+      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', padding:'14px 16px 8px', background: flashBg, transition:'background 0.15s' }}>
 
-        {/* Ring + note name */}
-        <div style={{ position:'relative', width:140, height:140, marginBottom:16 }}>
-          <svg width={140} height={140} style={{ transform:'rotate(-90deg)' }}>
-            <circle cx={70} cy={70} r={RING_R} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={10} />
-            <circle cx={70} cy={70} r={RING_R} fill="none"
-              stroke={ringColor} strokeWidth={10} strokeLinecap="round"
-              strokeDasharray={RING_C} strokeDashoffset={ringDash}
-              style={{ transition:'stroke-dashoffset 0.08s, stroke 0.2s' }}
-            />
-          </svg>
-          <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', pointerEvents:'none' }}>
-            <div style={{ fontSize:30, fontWeight:900, letterSpacing:'-0.02em' }}>{currentNote || '--'}</div>
+        {/* ── Notation + Tab display ── */}
+        {tabNote.length > 0 && (
+          <div style={{ width:'100%', maxWidth:340, background:M.surface, borderRadius:12,
+            padding:'10px 8px 6px', border:`1px solid ${M.border}`, marginBottom:12 }}>
+            <TabNotationDisplay notes={tabNote} currentNote={0} />
+          </div>
+        )}
+
+        {/* ── Note info row: ring + name/string/fret ── */}
+        <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:10, width:'100%', maxWidth:340 }}>
+          {/* Detection ring */}
+          <div style={{ position:'relative', width:100, height:100, flexShrink:0 }}>
+            <svg width={100} height={100} style={{ transform:'rotate(-90deg)' }}>
+              <circle cx={50} cy={50} r={RING_R} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={9} />
+              <circle cx={50} cy={50} r={RING_R} fill="none"
+                stroke={ringColor} strokeWidth={9} strokeLinecap="round"
+                strokeDasharray={RING_C} strokeDashoffset={ringDash}
+                style={{ transition:'stroke-dashoffset 0.08s, stroke 0.2s' }}
+              />
+            </svg>
+            <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', pointerEvents:'none' }}>
+              <div style={{ fontSize:22, fontWeight:900, letterSpacing:'-0.02em', color: ringColor !== M.border ? ringColor : M.text }}>
+                {currentNote || '--'}
+              </div>
+            </div>
+          </div>
+
+          {/* Prominent note info */}
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:34, fontWeight:900, lineHeight:1, letterSpacing:'-0.03em',
+              background:'linear-gradient(135deg,#E8833A,#F5A65B)', WebkitBackgroundClip:'text',
+              WebkitTextFillColor:'transparent', backgroundClip:'text', marginBottom:4 }}>
+              {currentNote || '--'}
+            </div>
+            {notePos && (
+              <>
+                <div style={{ fontSize:13, color:M.muted, marginBottom:2 }}>
+                  <span style={{ color:M.hi, fontWeight:700 }}>{STR_FULL[notePos.string]}</span> string
+                </div>
+                <div style={{ fontSize:13, color:M.muted }}>
+                  Fret <span style={{ color:M.hi, fontWeight:700 }}>{notePos.fret === 0 ? 'Open' : notePos.fret}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Feedback */}
-        <div style={{ textAlign:'center', marginBottom:20, minHeight:44 }}>
-          <div style={{ fontSize:18, fontWeight:800, color:feedback.color, marginBottom:4 }}>{feedback.main}</div>
+        {/* ── Feedback ── */}
+        <div style={{ textAlign:'center', marginBottom:10, minHeight:38, width:'100%', maxWidth:340 }}>
+          <div style={{ fontSize:16, fontWeight:800, color:feedback.color, marginBottom:2 }}>{feedback.main}</div>
           {feedback.sub && <div style={{ fontSize:12, color:M.muted }}>{feedback.sub}</div>}
         </div>
 
-        {/* String indicators */}
-        <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+        {/* ── Show Fingerboard toggle ── */}
+        <button
+          onClick={() => setShowFretboard(s => !s)}
+          style={{
+            padding:'7px 18px', borderRadius:10, marginBottom:10,
+            border:`1px solid ${showFretboard ? 'rgba(232,131,58,0.55)' : M.border}`,
+            background: showFretboard ? 'rgba(232,131,58,0.15)' : 'rgba(196,100,40,0.08)',
+            color: showFretboard ? M.hi : M.muted,
+            fontFamily:"Georgia,serif", fontWeight:700, fontSize:13, cursor:'pointer',
+            letterSpacing:'0.01em', WebkitTapHighlightColor:'transparent',
+          }}>
+          {showFretboard ? '🎸 Hide Fingerboard' : '🎸 Show Fingerboard'}
+        </button>
+
+        {/* ── Fretboard hint ── */}
+        {showFretboard && currentNote && (
+          <div style={{ width:'100%', maxWidth:300, background:M.surface, borderRadius:12,
+            padding:'10px 12px', border:`1px solid ${flashState === 'wrong' ? 'rgba(248,113,113,0.4)' : M.border}`,
+            marginBottom:10, transition:'border-color 0.2s' }}>
+            <div style={{ fontSize:10, color:M.muted, textAlign:'center', marginBottom:6,
+              textTransform:'uppercase', letterSpacing:'0.1em' }}>
+              Correct Position
+            </div>
+            <FretHint note={currentNote} />
+          </div>
+        )}
+
+        {/* ── String indicators ── */}
+        <div style={{ display:'flex', gap:7, marginBottom:10 }}>
           {GUITAR_STRINGS.map(s => {
             const active = stringKey === s.key;
             return (
               <div key={s.key} style={{
-                width:36, height:36, borderRadius:'50%',
+                width:32, height:32, borderRadius:'50%',
                 background: active ? s.color : 'rgba(0,0,0,0.3)',
                 border: `2px solid ${active ? s.color : 'rgba(255,255,255,0.1)'}`,
                 display:'flex', alignItems:'center', justifyContent:'center',
-                fontSize:11, fontWeight:800, color: active ? '#111' : s.color,
+                fontSize:10, fontWeight:800, color: active ? '#111' : s.color,
                 transition:'all 0.2s', transform: active ? 'scale(1.18)' : 'scale(1)',
-                boxShadow: active ? `0 0 14px ${s.color}88` : 'none',
+                boxShadow: active ? `0 0 12px ${s.color}88` : 'none',
               }}>
                 {s.label}
               </div>
@@ -579,8 +762,8 @@ export default function AuditionGame() {
           })}
         </div>
 
-        {/* Volume bar */}
-        <div style={{ width:'100%', maxWidth:320 }}>
+        {/* ── Volume bar ── */}
+        <div style={{ width:'100%', maxWidth:320, paddingBottom:8 }}>
           <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, color:'rgba(255,255,255,0.2)', marginBottom:3 }}>
             <span>{micGranted ? '🎙 Mic active' : '🎙 Waiting for mic…'}</span>
             <span>{volPct}%</span>
