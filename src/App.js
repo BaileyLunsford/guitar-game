@@ -9,6 +9,7 @@ import Tuner from './Tuner';
 import Metronome from './Metronome';
 import ChordPlay from './ChordPlay';
 import ScalePlay from './ScalePlay';
+import useIAP from './useIAP';
 import { guitarSampler } from './guitarSampler';
 
 const GUITAR_STRINGS = [
@@ -634,6 +635,7 @@ function Home() {
 // ─── Root — hash-based routing ───────────────────────────────────────────────
 export default function App() {
   const [hash, setHash] = React.useState(window.location.hash);
+  const { isPro, purchase, restore } = useIAP();
 
   React.useEffect(() => {
     const onHash = () => setHash(window.location.hash);
@@ -645,8 +647,8 @@ export default function App() {
   if (hash === '#song-learn') return <SongLearnEngine song={TWINKLE_SONG} />;
   if (hash === '#song-play')  return <SongPlayScreen  song={TWINKLE_SONG} />;
   if (hash === '#tuner')      return <Tuner strings={GUITAR_STRINGS} theme={GUITAR_THEME} title="Tune Your Guitar" />;
-  if (hash === '#scale-play') return <ScalePlay />;
-  if (hash === '#chord-play') return <ChordPlay />;
+  if (hash === '#scale-play') return <ScalePlay isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hash === '#chord-play') return <ChordPlay isPro={isPro} onPurchase={purchase} onRestore={restore} />;
   if (hash === '#metronome')  return <Metronome theme={GUITAR_THEME} title="Guitar Metronome" />;
   return <Home />;
 }

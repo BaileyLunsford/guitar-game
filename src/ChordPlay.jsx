@@ -7,6 +7,7 @@
 
 import React, { useState } from 'react';
 import { guitarSampler } from './guitarSampler';
+import UpgradeModal from './UpgradeModal';
 
 // ─── Mahogany palette ────────────────────────────────────────────────────────
 const M = {
@@ -228,12 +229,13 @@ function btn(active = false, disabled = false) {
 }
 
 // ─── ChordPlay ────────────────────────────────────────────────────────────────
-export default function ChordPlay() {
+export default function ChordPlay({ isPro = false, onPurchase, onRestore }) {
   const [keyIdx,     setKeyIdx]     = useState(0);
   const [chordIdx,   setChordIdx]   = useState(0);
   const [mode,       setMode]       = useState('essential'); // 'essential' | 'full'
   const [playing,    setPlaying]    = useState(false);
   const [activeNote, setActiveNote] = useState(null);
+  const [modal,      setModal]      = useState(null); // null | { feature }
 
   const currentKey    = KEYS[keyIdx];
   const currentChords = mode === 'essential'
@@ -245,6 +247,11 @@ export default function ChordPlay() {
   const isAdvanced    = currentChord?.degree === 'vii°';
 
   function handleKeySelect(i) {
+    const key = KEYS[i];
+    if (key.pro && !isPro) {
+      setModal({ feature: `Key of ${key.label} — PRO Feature` });
+      return;
+    }
     setKeyIdx(i);
     setChordIdx(0);
     setPlaying(false);
@@ -323,10 +330,12 @@ export default function ChordPlay() {
                 display:'flex', alignItems:'center', gap:5,
               }}>
                 {k.label}
-                {k.pro
+                {k.pro && !isPro
                   ? <span style={{ fontSize:11, opacity:0.8 }}>🔒</span>
-                  : <span style={{ fontSize:8, fontWeight:800, color:M.free,
-                      letterSpacing:'0.08em', textTransform:'uppercase' }}>FREE</span>
+                  : !k.pro
+                    ? <span style={{ fontSize:8, fontWeight:800, color:M.free,
+                        letterSpacing:'0.08em', textTransform:'uppercase' }}>FREE</span>
+                    : null
                 }
               </button>
             );
@@ -354,8 +363,8 @@ export default function ChordPlay() {
           })}
         </div>
 
-        {/* ── PRO gate ── */}
-        {currentKey.pro ? (
+        {/* ── PRO gate (shown only if somehow on a pro key without isPro) ── */}
+        {currentKey.pro && !isPro ? (
           <div style={{
             textAlign:'center', padding:'52px 20px 48px',
             background:M.surface, borderRadius:16,
@@ -365,9 +374,15 @@ export default function ChordPlay() {
             <div style={{ fontSize:18, fontWeight:800, color:M.accent, marginBottom:8 }}>
               Key of {currentKey.label} — PRO
             </div>
-            <p style={{ fontSize:13, color:M.muted, lineHeight:1.7 }}>
-              Unlock all 5 keys and 8 chords<br/>by upgrading to PRO.
-            </p>
+            <button onClick={() => setModal({ feature: `Key of ${currentKey.label} — PRO Feature` })}
+              style={{
+                marginTop:12, padding:'10px 24px', borderRadius:12,
+                border:`1px solid ${M.borderHi}`, background:'rgba(232,131,58,0.18)',
+                color:M.hi, fontFamily:"Georgia,serif", fontWeight:700, fontSize:13,
+                cursor:'pointer',
+              }}>
+              Unlock PRO →
+            </button>
           </div>
         ) : (
           <>
@@ -481,6 +496,14 @@ export default function ChordPlay() {
         </div>
 
       </div>
+
+      <UpgradeModal
+        isOpen={modal !== null}
+        onClose={() => setModal(null)}
+        onPurchase={onPurchase}
+        onRestore={onRestore}
+        feature={modal?.feature}
+      />
     </div>
   );
 }

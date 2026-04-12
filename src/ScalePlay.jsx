@@ -9,6 +9,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import TabNotationDisplay from './TabNotationDisplay';
+import UpgradeModal from './UpgradeModal';
 import { guitarSampler } from './guitarSampler';
 
 // ─── Mahogany palette ────────────────────────────────────────────────────────
@@ -495,9 +496,10 @@ function btnStyle(active = false, disabled = false) {
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
-export default function ScalePlay() {
+export default function ScalePlay({ isPro = false, onPurchase, onRestore }) {
   const [category,   setCategory]  = useState('major');
   const [scaleId,    setScaleId]   = useState('g-major');
+  const [modal,      setModal]     = useState(null); // null | { feature }
   const [levelIdx,   setLevelIdx]  = useState(0);
   const [mode,       setMode]      = useState('landing');
   const [noteIdx,    setNoteIdx]   = useState(0);
@@ -585,7 +587,10 @@ export default function ScalePlay() {
 
   // ── Scale selection ─────────────────────────────────────────────────────────
   function selectScale(s) {
-    if (s.pro) return;
+    if (s.pro && !isPro) {
+      setModal({ feature: `${s.name} — PRO Scale` });
+      return;
+    }
     setScaleId(s.id);
     setLevelIdx(0);
     setNoteIdx(0);
@@ -644,16 +649,16 @@ export default function ScalePlay() {
               return (
                 <button key={s.id} onClick={() => selectScale(s)} style={{
                   flexShrink: 0, padding: '7px 14px', borderRadius: 20,
-                  border: `1px solid ${isSel ? M.borderHi : s.pro ? 'rgba(160,120,90,0.3)' : M.border}`,
+                  border: `1px solid ${isSel ? M.borderHi : (s.pro && !isPro) ? 'rgba(160,120,90,0.3)' : M.border}`,
                   background: isSel ? 'rgba(232,131,58,0.2)'
-                    : s.pro ? 'rgba(160,120,90,0.06)' : 'rgba(196,100,40,0.08)',
-                  color: isSel ? M.hi : s.pro ? 'rgba(160,120,90,0.6)' : M.text,
+                    : (s.pro && !isPro) ? 'rgba(160,120,90,0.06)' : 'rgba(196,100,40,0.08)',
+                  color: isSel ? M.hi : (s.pro && !isPro) ? 'rgba(160,120,90,0.6)' : M.text,
                   fontFamily: "Georgia, serif", fontWeight: 600, fontSize: 12,
-                  cursor: s.pro ? 'default' : 'pointer',
+                  cursor: (s.pro && !isPro) ? 'pointer' : 'pointer',
                   transition: 'all 0.15s', userSelect: 'none',
                   display: 'flex', alignItems: 'center', gap: 5,
                 }}>
-                  {s.pro && <span style={{ fontSize: 10 }}>🔒</span>}
+                  {s.pro && !isPro && <span style={{ fontSize: 10 }}>🔒</span>}
                   {s.name}
                   {!s.pro && (
                     <span style={{
@@ -765,6 +770,14 @@ export default function ScalePlay() {
           </div>
 
         </div>
+
+        <UpgradeModal
+          isOpen={modal !== null}
+          onClose={() => setModal(null)}
+          onPurchase={onPurchase}
+          onRestore={onRestore}
+          feature={modal?.feature}
+        />
       </div>
     );
   }
