@@ -216,7 +216,8 @@ function FretHint({ note }) {
   function strY(s) { return padT + (s - 1) * strGap; }
   function fretX(f) { return padL + (f - startFret) * fretGap; }
   function midX(f)  { return fretX(f) - fretGap / 2; }
-  const cx = pos.fret === 0 ? padL - 12 : midX(pos.fret);
+  const dotR = 9;
+  const cx = pos.fret === 0 ? dotR + 2 : midX(pos.fret); // open: flush inside left edge
   const cy = strY(pos.string);
   // Frets visible in this window that have position markers
   const visibleFrets = Array.from({ length: numFrets }, (_, i) => startFret + 1 + i);
@@ -245,18 +246,18 @@ function FretHint({ note }) {
         const mx = midX(f);
         if (f === 12) return (
           <g key={f}>
-            <circle cx={mx - 4} cy={dotY} r={3} fill="rgba(232,131,58,0.4)" />
-            <circle cx={mx + 4} cy={dotY} r={3} fill="rgba(232,131,58,0.4)" />
+            <circle cx={mx - 4} cy={dotY} r={3} fill="rgba(232,131,58,0.7)" />
+            <circle cx={mx + 4} cy={dotY} r={3} fill="rgba(232,131,58,0.7)" />
           </g>
         );
-        return <circle key={f} cx={mx} cy={dotY} r={3} fill="rgba(232,131,58,0.4)" />;
+        return <circle key={f} cx={mx} cy={dotY} r={3} fill="rgba(232,131,58,0.7)" />;
       })}
       {/* String labels */}
       {[1,2,3,4,5,6].map(s => (
         <text key={s} x={padL - 10} y={strY(s) + 4} fill={M.muted} fontSize={11} textAnchor="middle" fontFamily="Georgia,serif">{STR_LABELS[s]}</text>
       ))}
       {/* Note dot */}
-      <circle cx={cx} cy={cy} r={9} fill="#4ade80" stroke="rgba(74,222,128,0.45)" strokeWidth={2} />
+      <circle cx={cx} cy={cy} r={dotR} fill="#4ade80" stroke="rgba(74,222,128,0.45)" strokeWidth={2} />
       <text x={cx} y={cy + 3.5} textAnchor="middle" fill="#0a1a0a" fontSize={7} fontWeight="700" fontFamily="Georgia,serif">
         {note.replace('#', '♯')}
       </text>
