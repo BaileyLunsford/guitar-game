@@ -50,23 +50,7 @@ function btnStyle(active = false, disabled = false) {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function SongLearnEngine({ song }) {
-  const [started, setStarted] = useState(false);
-
-  if (!started) return (
-    <LandingPage
-      emoji="🎵"
-      title="Song Learn"
-      description="Learn songs measure by measure. Follow the notation and tab as each note plays. Perfect for beginners building their repertoire."
-      difficulty="Beginner"
-      features={['Measure-by-measure playback', 'Standard notation + guitar tab', 'Adjustable BPM tempo']}
-      onStart={() => setStarted(true)}
-      onBack={() => { window.location.hash = ''; }}
-    />
-  );
-
-  const measures = song?.measures ?? [];
-  const total    = measures.length;
-
+  const [started,    setStarted]    = useState(false);
   const [measureIdx, setMeasureIdx] = useState(0);
   const [bpm,        setBpm]        = useState(song?.bpm ?? 80);
   const [loop,       setLoop]       = useState(false);
@@ -76,6 +60,8 @@ export default function SongLearnEngine({ song }) {
   const loopTimerRef  = useRef(null);
   const noteTimersRef = useRef([]);
 
+  const measures       = song?.measures ?? [];
+  const total          = measures.length;
   const currentMeasure = measures[measureIdx] ?? [];
 
   // ── Audio helpers ─────────────────────────────────────────────────────────
@@ -169,6 +155,18 @@ export default function SongLearnEngine({ song }) {
     setLoop(false);
     window.location.hash = '#song-play';
   }
+
+  if (!started) return (
+    <LandingPage
+      emoji="🎵"
+      title="Song Learn"
+      description="Learn songs measure by measure. Follow the notation and tab as each note plays. Perfect for beginners building their repertoire."
+      difficulty="Beginner"
+      features={['Measure-by-measure playback', 'Standard notation + guitar tab', 'Adjustable BPM tempo']}
+      onStart={() => setStarted(true)}
+      onBack={() => { window.location.hash = ''; }}
+    />
+  );
 
   const atStart = measureIdx === 0;
   const atEnd   = measureIdx >= total - 1;
