@@ -106,6 +106,7 @@ export default function SongLearnEngine({ song }) {
   // When loop=true: play notes now, then schedule the next cycle via loopTick.
   // When loop=false: cancel any pending cycle immediately.
   useEffect(() => {
+    if (!started) return;
     if (!loop) {
       clearTimeout(loopTimerRef.current);
       loopTimerRef.current = null;
@@ -115,16 +116,18 @@ export default function SongLearnEngine({ song }) {
     const dur = measureMs(measureIdx);
     loopTimerRef.current = setTimeout(() => setLoopTick(t => t + 1), dur);
     return () => clearTimeout(loopTimerRef.current);
-  }, [loop, measureIdx, bpm, loopTick]); // eslint-disable-line
+  }, [started, loop, measureIdx, bpm, loopTick]); // eslint-disable-line
 
   // ── Navigation note-play effect ───────────────────────────────────────────
   // Fires when the displayed measure changes due to Prev / Next / dot tap.
   // Skipped when loop is active (loop effect owns audio then).
+  // Skipped until the user has clicked Get Started.
   useEffect(() => {
+    if (!started) return;
     if (loop) return;
     playMeasureNotes(currentMeasure, bpm);
     return () => clearNoteTimers();
-  }, [measureIdx]); // eslint-disable-line
+  }, [started, measureIdx]); // eslint-disable-line
 
   // ── Cleanup on unmount ────────────────────────────────────────────────────
   useEffect(() => () => {
@@ -163,7 +166,7 @@ export default function SongLearnEngine({ song }) {
       description="Learn songs measure by measure. Follow the notation and tab as each note plays. Perfect for beginners building their repertoire."
       difficulty="Beginner"
       features={['Measure-by-measure playback', 'Standard notation + guitar tab', 'Adjustable BPM tempo']}
-      onStart={() => setStarted(true)}
+      onStart={() => { setMeasureIdx(0); setStarted(true); }}
       onBack={() => { window.location.hash = ''; }}
     />
   );
