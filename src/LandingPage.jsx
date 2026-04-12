@@ -1,3 +1,13 @@
+// STANDARD LANDING PAGE INTEGRATION PATTERN
+// 1. import LandingPage from './LandingPage'
+// 2. const [started, setStarted] = useState(false)
+// 3. All hooks must be called BEFORE the !started check (React rules of hooks)
+// 4. Audio/playback effects must be guarded: if (!started) return; at top of useEffect
+// 5. Reset all state (measureIdx, activeNote, etc.) when started becomes true
+// 6. Place the early return AFTER all hooks:
+//      if (!started) return <LandingPage ... onStart={() => { resetState(); setStarted(true); }} />
+// 7. Use onBack={() => { window.location.hash = ''; }} to navigate home on exit
+
 import React from 'react';
 
 const BADGE = {
