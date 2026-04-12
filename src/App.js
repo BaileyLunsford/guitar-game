@@ -12,6 +12,7 @@ import ScalePlay from './ScalePlay';
 import useIAP from './useIAP';
 import useAmbience from './useAmbience';
 import LandingPage from './LandingPage';
+import AuditionGame from './AuditionGame';
 import { guitarSampler } from './guitarSampler';
 
 const GUITAR_STRINGS = [
@@ -529,6 +530,11 @@ function StubScreen({ icon, title, description, pro = false }) {
 // ─── Home screen ────────────────────────────────────────────────────────────
 const FEATURES = [
   {
+    icon: '🎸', title: 'Audition Game',
+    desc: 'Sight-read notes with real-time mic pitch detection',
+    hash: '#audition', pro: false,
+  },
+  {
     icon: '🎵', title: 'Song Learn',
     desc: 'Measure-by-measure playback with notation & tab',
     hash: '#song-learn', pro: false,
@@ -695,6 +701,7 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, [ambStop]);
 
+  if (hash === '#audition')   return <AuditionGame />;
   if (hash === '#tab-test')   return <TabTest />;
   if (hash === '#song-learn') return <SongLearnEngine song={TWINKLE_SONG} />;
   if (hash === '#song-play')  return <SongPlayScreen  song={TWINKLE_SONG} />;
