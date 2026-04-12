@@ -198,26 +198,31 @@ const M = {
 const RING_R = 44;
 const RING_C = 2 * Math.PI * RING_R;
 
+// Standard position marker frets (single dot; 12 gets double dot)
+const POSITION_DOTS = new Set([3, 5, 7, 9, 12]);
+
 // ── Inline mini-fretboard hint ────────────────────────────────────────────────
 function FretHint({ note }) {
   const pos = NOTE_FRET[note];
   if (!pos) return null;
-  const W = 280, H = 100;
-  const padL = 26, padR = 10, padT = 10, padB = 10;
+  const W = 216, H = 100;
+  const padL = 26, padR = 10, padT = 10, padB = 16; // extra padB for dot row
   const gridW = W - padL - padR;
   const gridH = H - padT - padB;
   const strGap  = gridH / 5;
   const numFrets = pos.fret === 0 ? 4 : 5;
   const startFret = pos.fret <= 2 ? 0 : pos.fret - 2;
-  const endFret   = startFret + numFrets;
   const fretGap   = gridW / numFrets;
   function strY(s) { return padT + (s - 1) * strGap; }
   function fretX(f) { return padL + (f - startFret) * fretGap; }
   function midX(f)  { return fretX(f) - fretGap / 2; }
   const cx = pos.fret === 0 ? padL - 12 : midX(pos.fret);
   const cy = strY(pos.string);
+  // Frets visible in this window that have position markers
+  const visibleFrets = Array.from({ length: numFrets }, (_, i) => startFret + 1 + i);
+  const dotY = padT + gridH + 8; // below the lowest string
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display:'block', maxWidth:280 }}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display:'block', maxWidth:216 }}>
       {/* Nut or position marker */}
       {startFret === 0
         ? <rect x={padL} y={padT - 2} width={3} height={gridH + 4} fill={M.hi} rx={1} />
@@ -234,6 +239,18 @@ function FretHint({ note }) {
         <line key={f} x1={fretX(f)} y1={padT} x2={fretX(f)} y2={padT + gridH}
           stroke="rgba(196,100,40,0.2)" strokeWidth={1} />
       ))}
+      {/* Position marker dots (below strings) */}
+      {visibleFrets.map(f => {
+        if (!POSITION_DOTS.has(f)) return null;
+        const mx = midX(f);
+        if (f === 12) return (
+          <g key={f}>
+            <circle cx={mx - 4} cy={dotY} r={3} fill="rgba(232,131,58,0.4)" />
+            <circle cx={mx + 4} cy={dotY} r={3} fill="rgba(232,131,58,0.4)" />
+          </g>
+        );
+        return <circle key={f} cx={mx} cy={dotY} r={3} fill="rgba(232,131,58,0.4)" />;
+      })}
       {/* String labels */}
       {[1,2,3,4,5,6].map(s => (
         <text key={s} x={padL - 10} y={strY(s) + 4} fill={M.muted} fontSize={8} textAnchor="middle" fontFamily="Georgia,serif">{STR_LABELS[s]}</text>
@@ -731,7 +748,7 @@ export default function AuditionGame() {
 
         {/* ── Fretboard hint ── */}
         {showFretboard && currentNote && (
-          <div style={{ width:'100%', maxWidth:300, background:M.surface, borderRadius:12,
+          <div style={{ width:'100%', maxWidth:260, background:M.surface, borderRadius:12,
             padding:'10px 12px', border:`1px solid ${flashState === 'wrong' ? 'rgba(248,113,113,0.4)' : M.border}`,
             marginBottom:10, transition:'border-color 0.2s' }}>
             <div style={{ fontSize:10, color:M.muted, textAlign:'center', marginBottom:6,
