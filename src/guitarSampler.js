@@ -8,6 +8,8 @@
 //   guitarSampler.preload(['E2',…])  — warm the cache in parallel
 //   guitarSampler.playNote('A4')     — returns BufferSourceNode (or null on error)
 
+import { getAudioContext } from './audioContext';
+
 // Enharmonic map — sharps → flat equivalents (Gleitz CDN uses flat filenames)
 const ENHARMONICS = {
   'C#': 'Db', 'D#': 'Eb', 'F#': 'Gb', 'G#': 'Ab', 'A#': 'Bb',
@@ -33,9 +35,7 @@ export class InstrumentSampler {
   }
 
   _getCtx() {
-    if (!this._ctx) {
-      this._ctx = new (window.AudioContext || window.webkitAudioContext)();
-    }
+    if (!this._ctx) this._ctx = getAudioContext();
     return this._ctx;
   }
 

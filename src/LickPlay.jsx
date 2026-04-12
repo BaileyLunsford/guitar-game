@@ -30,6 +30,7 @@ import UpgradeModal      from './UpgradeModal';
 import useMetronome      from './useMetronome';
 import useBackingTrack   from './useBackingTrack';
 import { guitarSampler } from './guitarSampler';
+import { getAudioContext } from './audioContext';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 const M = {
@@ -315,11 +316,13 @@ export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
 
   // ── Metronome + backing track ─────────────────────────────────────────────
   // Backing src is derived from activeCat — changing genre auto-stops the track
-  const { clickOn,  toggleClick, stopClick  } = useMetronome(bpm);
-  const { trackOn,  toggleTrack, stopTrack  } = useBackingTrack(activeCat, bpm);
+  const { clickOn,  toggleClick, stopClick,  syncToTime: metSyncToTime   } = useMetronome(bpm);
+  const { trackOn,  toggleTrack, stopTrack,  syncToTime: trackSyncToTime } = useBackingTrack(activeCat, bpm);
 
-  const loopTimerRef  = useRef(null);
-  const noteTimersRef = useRef([]);
+  const loopTimerRef    = useRef(null);
+  const noteTimersRef   = useRef([]);
+  const loopAnchorRef   = useRef(0);    // absolute AudioContext time for next loop iteration
+  const prevLoopTickRef = useRef(-1);   // last loopTick value; -1 = not running
 
   // ── Audio helpers ─────────────────────────────────────────────────────────
   function clearNoteTimers() {
@@ -328,12 +331,19 @@ export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
     setActiveNote(null);
   }
 
-  function playMeasureNotes(measure, bpmVal) {
+  // startCtxTime: optional AudioContext timestamp for the downbeat of this measure.
+  // When provided, note delays are computed relative to that anchor so they land
+  // in sync with the metronome/backing track.  When omitted, notes fire immediately.
+  function playMeasureNotes(measure, bpmVal, startCtxTime) {
     clearNoteTimers();
     guitarSampler.resume();
+    const ctx    = getAudioContext();
     const beatMs = 60_000 / bpmVal;
     measure.forEach((note, idx) => {
-      const ms = Math.max(0, Math.round((note.beat - 1) * beatMs) + jitterMs());
+      const noteOffsetMs = Math.round((note.beat - 1) * beatMs) + jitterMs();
+      const ms = startCtxTime != null
+        ? Math.max(0, (startCtxTime - ctx.currentTime) * 1000 + noteOffsetMs)
+        : Math.max(0, noteOffsetMs);
       const t = setTimeout(() => {
         guitarSampler.playNote(note.noteName);
         setActiveNote(idx);
@@ -341,8 +351,11 @@ export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
       noteTimersRef.current.push(t);
     });
     if (measure.length > 0) {
-      const last = measure[measure.length - 1];
-      const clearMs = Math.round((last.beat - 1 + (last.duration ?? 1)) * beatMs);
+      const last          = measure[measure.length - 1];
+      const clearOffsetMs = Math.round((last.beat - 1 + (last.duration ?? 1)) * beatMs);
+      const clearMs = startCtxTime != null
+        ? Math.max(0, (startCtxTime - ctx.currentTime) * 1000 + clearOffsetMs)
+        : clearOffsetMs;
       const tc = setTimeout(() => setActiveNote(null), clearMs);
       noteTimersRef.current.push(tc);
     }
@@ -365,11 +378,35 @@ export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
     if (!loop) {
       clearTimeout(loopTimerRef.current);
       loopTimerRef.current = null;
+      prevLoopTickRef.current = -1;
       return;
     }
-    playMeasureNotes(currentMeasure, bpm);
-    const dur = measureMs(measures, measureIdx, bpm);
-    loopTimerRef.current = setTimeout(() => setLoopTick(t => t + 1), dur);
+
+    const ctx = getAudioContext();
+    // isContinuation: loopTick incremented by exactly 1 from the last time we saw it.
+    // All other cases (loop just turned on, bpm/measure changed mid-loop) = fresh start.
+    const isContinuation =
+      prevLoopTickRef.current !== -1 && loopTick === prevLoopTickRef.current + 1;
+
+    if (!isContinuation) {
+      // Fresh start — anchor everything to the same beat-1 time.
+      const anchor = ctx.currentTime + 0.05;
+      loopAnchorRef.current = anchor;
+      metSyncToTime(anchor);
+      trackSyncToTime(anchor);
+    }
+
+    const anchor = loopAnchorRef.current;
+    playMeasureNotes(currentMeasure, bpm, anchor);
+
+    // Advance anchor for the next iteration.
+    loopAnchorRef.current = anchor + measureMs(measures, measureIdx, bpm) / 1000;
+    prevLoopTickRef.current = loopTick;
+
+    // Schedule next tick using the AudioContext clock as ground truth.
+    const delayMs = Math.max(10, (loopAnchorRef.current - ctx.currentTime) * 1000);
+    loopTimerRef.current = setTimeout(() => setLoopTick(t => t + 1), delayMs);
+
     return () => clearTimeout(loopTimerRef.current);
   }, [phase, loop, measureIdx, bpm, loopTick]); // eslint-disable-line
 
@@ -400,7 +437,11 @@ export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
   }
   function handleRepeat() {
     setLoop(false);
-    playMeasureNotes(currentMeasure, bpm);
+    const ctx = getAudioContext();
+    const t = ctx.currentTime + 0.05;
+    metSyncToTime(t);
+    trackSyncToTime(t);
+    playMeasureNotes(currentMeasure, bpm, t);
   }
   function handleNext() {
     setLoop(false);
@@ -686,15 +727,20 @@ export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
             onClick={() => {
               setLoop(false);
               setMeasureIdx(0);
-              // Play all measures sequentially
-              let offset = 0;
+              const ctx = getAudioContext();
+              const t   = ctx.currentTime + 0.05;
+              metSyncToTime(t);
+              trackSyncToTime(t);
+              // Pre-compute each measure's absolute start time, then schedule.
+              let offsetSec = 0;
               measures.forEach((m, i) => {
-                const delay = offset;
-                offset += measureMs(measures, i, bpm);
+                const startTime = t + offsetSec;
+                const delayMs   = Math.max(0, (startTime - ctx.currentTime) * 1000);
                 setTimeout(() => {
                   setMeasureIdx(i);
-                  playMeasureNotes(m, bpm);
-                }, delay);
+                  playMeasureNotes(m, bpm, startTime);
+                }, delayMs);
+                offsetSec += measureMs(measures, i, bpm) / 1000;
               });
             }}
             style={{ ...btnStyle(false, false), paddingLeft:24, paddingRight:24 }}
