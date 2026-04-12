@@ -10,6 +10,7 @@ import Metronome from './Metronome';
 import ChordPlay from './ChordPlay';
 import ScalePlay from './ScalePlay';
 import useIAP from './useIAP';
+import useAmbience from './useAmbience';
 import { guitarSampler } from './guitarSampler';
 
 const GUITAR_STRINGS = [
@@ -545,7 +546,7 @@ const FEATURES = [
   },
 ];
 
-function Home() {
+function Home({ ambOn, ambToggle }) {
   return (
     <div style={{
       minHeight: '100vh', background: '#120A04', color: '#F5E8D8',
@@ -594,6 +595,28 @@ function Home() {
           border: 1px solid rgba(232,131,58,0.5);
           color: #E8833A;
         }
+        .amb-toggle {
+          display: flex; align-items: center; justify-content: space-between;
+          width: 100%; max-width: 448px; margin: 0 auto 24px;
+          padding: 14px 18px; border-radius: 14px; cursor: pointer;
+          background: #2A1208; border: 1px solid rgba(196,100,40,0.22);
+          color: #F5E8D8; font-family: Georgia, serif; font-size: 14px;
+          transition: border-color 0.15s, background 0.15s;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .amb-toggle:active { background: #341609; border-color: rgba(232,131,58,0.55); }
+        .amb-pip {
+          width: 42px; height: 24px; border-radius: 12px;
+          background: rgba(255,255,255,0.08); border: 1px solid rgba(196,100,40,0.3);
+          position: relative; transition: background 0.2s, border-color 0.2s;
+        }
+        .amb-pip.on { background: #C46428; border-color: #E8833A; }
+        .amb-pip::after {
+          content: ''; position: absolute; top: 3px; left: 3px;
+          width: 16px; height: 16px; border-radius: 50%;
+          background: rgba(255,255,255,0.4); transition: transform 0.2s, background 0.2s;
+        }
+        .amb-pip.on::after { transform: translateX(18px); background: #fff; }
       `}</style>
 
       {/* Header */}
@@ -628,6 +651,17 @@ function Home() {
           </a>
         ))}
       </div>
+
+      {/* Ambience toggle */}
+      <div style={{ padding: '0 16px' }}>
+        <button className="amb-toggle" onClick={ambToggle}>
+          <div>
+            <div style={{ fontWeight: 700, marginBottom: 2 }}>🎵 Ambience</div>
+            <div style={{ fontSize: 11, color: '#A0785A' }}>Background music while you practice</div>
+          </div>
+          <div className={`amb-pip${ambOn ? ' on' : ''}`} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -636,12 +670,16 @@ function Home() {
 export default function App() {
   const [hash, setHash] = React.useState(window.location.hash);
   const { isPro, purchase, restore } = useIAP();
+  const { ambOn, ambToggle, ambStop } = useAmbience('/orchestra.wav');
 
   React.useEffect(() => {
-    const onHash = () => setHash(window.location.hash);
+    const onHash = () => {
+      ambStop();
+      setHash(window.location.hash);
+    };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
-  }, []);
+  }, [ambStop]);
 
   if (hash === '#tab-test')   return <TabTest />;
   if (hash === '#song-learn') return <SongLearnEngine song={TWINKLE_SONG} />;
@@ -650,5 +688,5 @@ export default function App() {
   if (hash === '#scale-play') return <ScalePlay isPro={isPro} onPurchase={purchase} onRestore={restore} />;
   if (hash === '#chord-play') return <ChordPlay isPro={isPro} onPurchase={purchase} onRestore={restore} />;
   if (hash === '#metronome')  return <Metronome theme={GUITAR_THEME} title="Guitar Metronome" />;
-  return <Home />;
+  return <Home ambOn={ambOn} ambToggle={ambToggle} />;
 }
