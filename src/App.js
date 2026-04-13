@@ -556,7 +556,6 @@ function Home({ ambOn, ambToggle, onShowTour, isPro, onUpgrade }) {
       minHeight: '100vh', background: '#120A04', color: '#F5E8D8',
       fontFamily: "Georgia, 'Times New Roman', serif",
       padding: 'env(safe-area-inset-top,16px) 0 env(safe-area-inset-bottom,16px)',
-      overflowY: 'auto',
     }}>
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -744,20 +743,8 @@ export default function App() {
   const [showTour,     setShowTour]     = React.useState(() => !localStorage.getItem('guitar_tour_seen'));
   const [tourSlide,    setTourSlide]    = React.useState(0);
   const [showUpgrade,  setShowUpgrade]  = React.useState(false);
-  const prevIsProRef                    = React.useRef(localStorage.getItem('guitar_pro') === 'true');
   const { isPro, purchase, restore, purchasePro, restorePurchases, devToggle } = useIAP();
   const { ambOn, ambToggle, ambStop } = useAmbience('/orchestra.wav');
-
-  // Detect PRO upgrade → show post-upgrade tour slide
-  React.useEffect(() => {
-    if (isPro && !prevIsProRef.current && !showUpgrade) {
-      prevIsProRef.current = true;
-      setTourSlide(3);
-      setShowTour(true);
-    } else {
-      prevIsProRef.current = isPro;
-    }
-  }, [isPro, showUpgrade]);
 
   React.useEffect(() => {
     const onHash = () => {
