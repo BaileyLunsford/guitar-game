@@ -789,19 +789,11 @@ export default function App() {
   }
 
   if (showTour) return (
-    <>
-      <OnboardingTour
-        onComplete={handleTourComplete}
-        onUpgrade={handleTourUpgrade}
-        startSlide={tourSlide}
-      />
-      <UpgradeModal
-        isOpen={showUpgrade}
-        onClose={() => setShowUpgrade(false)}
-        onPurchase={purchase}
-        onRestore={restore}
-      />
-    </>
+    <OnboardingTour
+      onComplete={handleTourComplete}
+      onUpgrade={handleTourUpgrade}
+      startSlide={tourSlide}
+    />
   );
 
   if (hash === '#audition')    return <AuditionGame />;
