@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import { guitarSampler } from './guitarSampler';
 import UpgradeModal from './UpgradeModal';
 import LandingPage from './LandingPage';
+import ChordDiagram from './ChordDiagram';
 
 // ─── Mahogany palette ────────────────────────────────────────────────────────
 const M = {
@@ -36,7 +37,8 @@ const CL = {
   D:  { name:'D',   full:'D Major',   frets:[-1,-1,0,2,3,2],     notes:['D3','A3','D4','F#4'] },
   A:  { name:'A',   full:'A Major',   frets:[-1,0,2,2,2,0],      notes:['A2','E3','A3','C#4','E4'] },
   E:  { name:'E',   full:'E Major',   frets:[0,2,2,1,0,0],       notes:['E2','B2','E3','G#3','B3','E4'] },
-  F:  { name:'F',   full:'F Major',   frets:[1,3,3,2,1,1],       notes:['F2','C3','F3','A3','C4','F4'] },
+  F:  { name:'F',   full:'F Major',   frets:[1,3,3,2,1,1],       notes:['F2','C3','F3','A3','C4','F4'],
+        barre:{ fret:1, from:0, to:5 } },
 
   // ── Dominant 7th ──
   B7: { name:'B7',  full:'B7',        frets:[-1,2,1,2,0,2],      notes:['B2','D#3','A3','B3','F#4'] },
@@ -45,7 +47,8 @@ const CL = {
   Am: { name:'Am',  full:'A Minor',   frets:[-1,0,2,2,1,0],      notes:['A2','E3','A3','C4','E4'] },
   Em: { name:'Em',  full:'E Minor',   frets:[0,0,2,2,0,0],       notes:['E2','A2','E3','A3','B3','E4'] },
   Dm: { name:'Dm',  full:'D Minor',   frets:[-1,-1,0,2,3,1],     notes:['D3','A3','D4','F4'] },
-  Bm: { name:'Bm',  full:'B Minor',   frets:[-1,2,4,4,3,2],      notes:['B2','F#3','B3','D4','F#4'] },
+  Bm: { name:'Bm',  full:'B Minor',   frets:[-1,2,4,4,3,2],      notes:['B2','F#3','B3','D4','F#4'],
+        barre:{ fret:2, from:1, to:5 } },
 
   // Barre chords — frets are relative to baseFret
   Csm:  { name:'C#m', full:'C# Minor', frets:[-1,1,3,3,2,-1], baseFret:4,
@@ -129,90 +132,6 @@ const KEYS = [
 ];
 
 const ESSENTIAL_DEGREES = new Set(['I', 'IV', 'V']);
-
-// ─── SVG chord diagram ────────────────────────────────────────────────────────
-const STR_GAP  = 30;
-const FRET_GAP = 32;
-const LEFT     = 20;
-const TOP      = 46;
-const FRETS    = 5;
-const RIGHT    = LEFT + 5 * STR_GAP;    // 170
-const BOTTOM   = TOP  + FRETS * FRET_GAP; // 206
-const SVG_W    = RIGHT + LEFT;           // 190
-const SVG_H    = BOTTOM + 24;            // 230
-
-const strX = (si)   => LEFT + si * STR_GAP;
-const fretY = (fi)  => TOP  + fi * FRET_GAP;
-const dotY  = (rel) => TOP  + (rel - 0.5) * FRET_GAP; // rel is 1-indexed
-
-function ChordDiagram({ frets, baseFret = 1, playing }) {
-  const isOpenPos = baseFret === 1;
-  return (
-    <svg
-      viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-      style={{ width:'100%', maxWidth:240, display:'block', margin:'0 auto' }}
-    >
-      {/* String lines */}
-      {[0,1,2,3,4,5].map(si => (
-        <line key={`s${si}`}
-          x1={strX(si)} y1={TOP} x2={strX(si)} y2={BOTTOM}
-          stroke="rgba(245,232,216,0.35)" strokeWidth={1.5} />
-      ))}
-
-      {/* Fret lines — nut thick only in open position */}
-      {[0,1,2,3,4,5].map(fi => (
-        <line key={`f${fi}`}
-          x1={LEFT} y1={fretY(fi)} x2={RIGHT} y2={fretY(fi)}
-          stroke={fi === 0 && isOpenPos ? 'rgba(245,232,216,0.85)' : 'rgba(245,232,216,0.3)'}
-          strokeWidth={fi === 0 && isOpenPos ? 4 : 1.5} />
-      ))}
-
-      {/* baseFret label — "4fr" to the right of the top line */}
-      {!isOpenPos && (
-        <text
-          x={RIGHT + 8} y={TOP + 4}
-          fill={M.muted} fontSize={10}
-          fontFamily="Georgia,'Times New Roman',serif"
-          fontWeight="700"
-        >{baseFret}fr</text>
-      )}
-
-      {/* X / O labels above nut (open-position strings only) */}
-      {isOpenPos && frets.map((f, si) => {
-        if (f === 0)  return <text key={`lbl${si}`} x={strX(si)} y={TOP-10}
-          textAnchor="middle" fill="rgba(245,232,216,0.75)"
-          fontSize={13} fontFamily="Georgia,'Times New Roman',serif" fontWeight="700">O</text>;
-        if (f === -1) return <text key={`lbl${si}`} x={strX(si)} y={TOP-10}
-          textAnchor="middle" fill={M.muted}
-          fontSize={14} fontFamily="Georgia,'Times New Roman',serif" fontWeight="700">×</text>;
-        return null;
-      })}
-
-      {/* Muted strings for higher-position chords */}
-      {!isOpenPos && frets.map((f, si) => {
-        if (f === -1) return <text key={`lbl${si}`} x={strX(si)} y={TOP-10}
-          textAnchor="middle" fill={M.muted}
-          fontSize={14} fontFamily="Georgia,'Times New Roman',serif" fontWeight="700">×</text>;
-        return null;
-      })}
-
-      {/* Finger dots */}
-      {frets.map((f, si) => f > 0 ? (
-        <circle key={`d${si}`}
-          cx={strX(si)} cy={dotY(f)} r={10}
-          fill={playing ? M.hi : M.accent}
-          style={{ transition:'fill 0.1s' }} />
-      ) : null)}
-
-      {/* String labels below */}
-      {['E','A','D','G','B','e'].map((label, si) => (
-        <text key={`sl${si}`} x={strX(si)} y={BOTTOM+16}
-          textAnchor="middle" fill={M.muted}
-          fontSize={10} fontFamily="Georgia,'Times New Roman',serif">{label}</text>
-      ))}
-    </svg>
-  );
-}
 
 // ─── Button style ─────────────────────────────────────────────────────────────
 function btn(active = false, disabled = false) {
@@ -438,6 +357,7 @@ export default function ChordPlay({ isPro = false, onPurchase, onRestore }) {
               <ChordDiagram
                 frets={currentChord.frets}
                 baseFret={currentChord.baseFret ?? 1}
+                barre={currentChord.barre}
                 playing={playing}
               />
             </div>

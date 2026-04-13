@@ -8,6 +8,8 @@ import SongLearnEngine from './SongLearnEngine';
 import Tuner from './Tuner';
 import Metronome from './Metronome';
 import ChordPlay from './ChordPlay';
+import BarreChords from './BarreChords';
+import CAGEDSystem from './CAGEDSystem';
 import ScalePlay from './ScalePlay';
 import useIAP from './useIAP';
 import useAmbience from './useAmbience';
@@ -566,6 +568,16 @@ const FEATURES = [
     hash: '#chord-play', pro: true,
   },
   {
+    icon: '🤘', title: 'Barre Chords',
+    desc: 'Moveable shapes up the neck',
+    hash: '#barre-chords', pro: false,
+  },
+  {
+    icon: '🎸', title: 'CAGED System',
+    desc: 'One chord. Five positions. The whole neck.',
+    hash: '#caged', pro: true,
+  },
+  {
     icon: '⏱', title: 'Metronome',
     desc: 'Tap tempo, subdivisions & accent control',
     hash: '#metronome', pro: false,
@@ -714,7 +726,9 @@ export default function App() {
   if (hash === '#tuner')      return <Tuner strings={GUITAR_STRINGS} theme={GUITAR_THEME} title="Tune Your Guitar" />;
   if (hash === '#scale-play') return <ScalePlay  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
   if (hash === '#lick-play')  return <LickPlay   isPro={isPro} onPurchase={purchase} onRestore={restore} />;
-  if (hash === '#chord-play') return <ChordPlay  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hash === '#chord-play')   return <ChordPlay    isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hash === '#barre-chords') return <BarreChords  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hash === '#caged')        return <CAGEDSystem   isPro={isPro} onPurchase={purchase} onRestore={restore} />;
   if (hash === '#metronome')  return <Metronome theme={GUITAR_THEME} title="Guitar Metronome" />;
   return <Home ambOn={ambOn} ambToggle={ambToggle} />;
 }
