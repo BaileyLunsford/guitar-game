@@ -285,7 +285,7 @@ function ListenMode({ song, onBack }) {
     }
     setNoteIdx(idx);
     const note = allNotes[idx];
-    guitarSampler(note.noteName, 0.7);
+    guitarSampler.playNote(note.noteName);
     const dur = (note.duration || 1) * beatMs;
     timerRef.current = setTimeout(() => playNote(idx + 1), dur);
   }
@@ -455,13 +455,10 @@ export default function SongLibrary({ isPro, onUpgrade }) {
           textTransform: 'uppercase', color: M.muted, margin: '20px 0 8px' }}>
           PRO
         </div>
-        {SONGS.filter(s => s.pro).map(song => {
-          const locked = !isPro;
-          return (
-            <SongRow key={song.id} song={song} locked={locked}
-              onSelect={() => locked ? onUpgrade() : setSelected(song)} />
-          );
-        })}
+        {SONGS.filter(s => s.pro).map(song => (
+          <SongRow key={song.id} song={song} locked={!isPro}
+            onSelect={() => !isPro ? onUpgrade() : setSelected(song)} />
+        ))}
       </div>
     </div>
   );
