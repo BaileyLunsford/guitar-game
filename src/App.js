@@ -744,7 +744,7 @@ export default function App() {
   const [showTour,     setShowTour]     = React.useState(() => !localStorage.getItem('guitar_tour_seen'));
   const [tourSlide,    setTourSlide]    = React.useState(0);
   const [showUpgrade,  setShowUpgrade]  = React.useState(false);
-  const prevIsProRef                    = React.useRef(false);
+  const prevIsProRef                    = React.useRef(localStorage.getItem('guitar_pro') === 'true');
   const { isPro, purchase, restore, purchasePro, restorePurchases, devToggle } = useIAP();
   const { ambOn, ambToggle, ambStop } = useAmbience('/orchestra.wav');
 
