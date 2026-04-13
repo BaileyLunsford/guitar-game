@@ -20,6 +20,9 @@ import { guitarSampler } from './guitarSampler';
 import OnboardingTour from './OnboardingTour';
 import Flashcards from './Flashcards';
 import UpgradeModal from './UpgradeModal';
+import SettingsModal from './SettingsModal';
+import ProgressTracker, { useProgressTracker, StreakBanner } from './ProgressTracker';
+import SongLibrary from './SongLibrary';
 
 const GUITAR_STRINGS = [
   { label: 'E2', freq: 82.41  },
@@ -517,17 +520,17 @@ const HOME_SECTIONS = [
   {
     label: 'Beginner', sectionBadge: 'FREE', sectionBadgeClass: 'badge-free',
     items: [
-      { icon: '🎸', title: 'Audition Game',  desc: 'Sight-read notes with real-time mic pitch detection', hash: '#audition',   pro: false },
-      { icon: '🎵', title: 'Song Learn',     desc: 'Measure-by-measure playback with notation & tab',    hash: '#song-learn', pro: false },
-      { icon: '🎼', title: 'Tab & Notation', desc: 'Standard notation with guitar tablature overlay',    hash: '#tab-test',   pro: false },
-      { icon: '🃏', title: 'Flashcards',     desc: 'Drill notes, chords, tab & theory — flip to check', hash: '#flashcards', pro: false },
+      { icon: '🎯', title: 'Audition Game',  desc: 'Sight-read notes with real-time mic pitch detection', hash: '#audition',      pro: false },
+      { icon: '📚', title: 'Song Library',   desc: 'Twinkle free · 5 more songs with PRO',               hash: '#song-library',  pro: false },
+      { icon: '🎵', title: 'Song Learn',     desc: 'Measure-by-measure playback with notation & tab',    hash: '#song-learn',    pro: false },
+      { icon: '🃏', title: 'Flashcards',     desc: 'Drill notes, chords, tab & theory — flip to check', hash: '#flashcards',    pro: false },
     ],
   },
   {
     label: 'Intermediate', sectionBadge: null,
     items: [
       { icon: '🎹', title: 'Scale Play',    desc: 'Interactive scale patterns across the fretboard',  hash: '#scale-play',   pro: false },
-      { icon: '🎸', title: 'Lick Play',     desc: 'Classic riffs phrase by phrase',                   hash: '#lick-play',    pro: false },
+      { icon: '🎼', title: 'Tab & Notation',desc: 'Standard notation with guitar tablature overlay',  hash: '#tab-test',     pro: false },
       { icon: '🤘', title: 'Barre Chords',  desc: 'Moveable E and A shapes in every key',             hash: '#barre-chords', pro: false },
       { icon: '🎸', title: 'Chord Play',    desc: 'Open chords, voicings & I–IV–V progressions',      hash: '#chord-play',   pro: true  },
     ],
@@ -535,22 +538,54 @@ const HOME_SECTIONS = [
   {
     label: 'Advanced', sectionBadge: 'PRO', sectionBadgeClass: 'badge-pro',
     items: [
-      { icon: '🎸', title: 'CAGED System',        desc: 'One chord. Five positions. The whole neck.',  hash: '#caged',  pro: true, soon: false },
-      { icon: '🎵', title: 'Triads & Arpeggios',  desc: 'Lead playing essentials',                     hash: null,      pro: true, soon: true  },
-      { icon: '🎙', title: 'Backing Tracks',       desc: 'Full band for every genre',                   hash: null,      pro: true, soon: true  },
-      { icon: '📈', title: 'Progress Tracker',     desc: 'Streaks, goals, and charts',                  hash: null,      pro: true, soon: true  },
+      { icon: '🎸', title: 'CAGED System',       desc: 'One chord. Five positions. The whole neck.',  hash: '#caged', pro: true, soon: false },
+      { icon: '🎵', title: 'Lick Play',           desc: 'Classic riffs and phrases by style',          hash: '#lick-play', pro: false },
+      { icon: '🎙', title: 'Triads & Arpeggios',  desc: 'Lead playing essentials',                     hash: null,     pro: true, soon: true  },
+      { icon: '🎛', title: 'Backing Tracks',       desc: 'Full band for every genre',                   hash: null,     pro: true, soon: true  },
     ],
   },
   {
     label: 'Always Free', sectionBadge: 'FREE', sectionBadgeClass: 'badge-free',
     items: [
-      { icon: '🎸', title: 'Tuner',     desc: 'Chromatic pitch detection for EADGBE tuning', hash: '#tuner',     pro: false },
-      { icon: '⏱',  title: 'Metronome', desc: 'Tap tempo, subdivisions & accent control',    hash: '#metronome', pro: false },
+      { icon: '🎸', title: 'Tuner',            desc: 'Chromatic pitch detection for EADGBE tuning', hash: '#tuner',     pro: false },
+      { icon: '⏱',  title: 'Metronome',        desc: 'Tap tempo, subdivisions & accent control',    hash: '#metronome', pro: false },
+      { icon: '📈', title: 'Progress Tracker', desc: 'Daily streak, goals & practice calendar',     hash: '#progress',  pro: false },
     ],
   },
 ];
 
-function Home({ ambOn, ambToggle, onShowTour, isPro, onUpgrade }) {
+// Simple acoustic guitar silhouette SVG
+function AcousticGuitarIcon({ size = 72 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{ filter: 'drop-shadow(0 4px 20px rgba(196,100,40,0.55))' }}>
+      {/* Body */}
+      <ellipse cx="36" cy="48" rx="18" ry="16" fill="#C46428" opacity="0.9"/>
+      <ellipse cx="36" cy="48" rx="12" ry="10" fill="#A0522D" opacity="0.5"/>
+      {/* Waist */}
+      <rect x="30" y="30" width="12" height="10" rx="3" fill="#C46428" opacity="0.9"/>
+      {/* Upper bout */}
+      <ellipse cx="36" cy="26" rx="13" ry="10" fill="#C46428" opacity="0.85"/>
+      {/* Neck */}
+      <rect x="33" y="6" width="6" height="22" rx="3" fill="#8B4513" opacity="0.9"/>
+      {/* Sound hole */}
+      <circle cx="36" cy="48" r="5" fill="#120A04" opacity="0.7"/>
+      {/* Strings */}
+      {[33,35,37,39].map(x => (
+        <line key={x} x1={x} y1="8" x2={x} y2="56" stroke="#F5E8D8" strokeWidth="0.5" opacity="0.5"/>
+      ))}
+      {/* Head */}
+      <rect x="31" y="3" width="10" height="7" rx="2" fill="#6B3410"/>
+      {/* Tuning pegs */}
+      <circle cx="30" cy="5" r="1.5" fill="#F5C842"/>
+      <circle cx="42" cy="5" r="1.5" fill="#F5C842"/>
+      <circle cx="30" cy="8" r="1.5" fill="#F5C842"/>
+      <circle cx="42" cy="8" r="1.5" fill="#F5C842"/>
+    </svg>
+  );
+}
+
+function Home({ ambOn, ambToggle, onShowTour, onShowSettings, isPro, onUpgrade, getTodayMinutes, onOpenProgress }) {
   return (
     <div style={{
       minHeight: '100vh', background: '#120A04', color: '#F5E8D8',
@@ -655,10 +690,19 @@ function Home({ ambOn, ambToggle, onShowTour, isPro, onUpgrade }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             lineHeight: 1, flexShrink: 0,
           }}>?</button>
+          <button onClick={onShowSettings} style={{
+            width: 30, height: 30, borderRadius: '50%',
+            border: '1px solid rgba(196,100,40,0.4)',
+            background: 'rgba(196,100,40,0.12)',
+            color: '#A0785A', fontSize: 15, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            lineHeight: 1, flexShrink: 0,
+          }}>⚙️</button>
         </div>
 
-        <div style={{ fontSize: 64, marginBottom: 12,
-          filter: 'drop-shadow(0 4px 20px rgba(196,100,40,0.55))' }}>🎸</div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+          <AcousticGuitarIcon size={72} />
+        </div>
         <h1 style={{
             fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 6,
             background: 'linear-gradient(135deg,#E8833A,#F5A65B,#C46428,#F5A65B)',
@@ -669,6 +713,9 @@ function Home({ ambOn, ambToggle, onShowTour, isPro, onUpgrade }) {
           textTransform: 'uppercase', fontWeight: 500 }}>
           Learn · Tune · Play
         </p>
+        {getTodayMinutes && (
+          <StreakBanner getTodayMinutes={getTodayMinutes} onClick={onOpenProgress} />
+        )}
       </div>
 
       {/* Sectioned feature grid */}
@@ -737,8 +784,10 @@ export default function App() {
   const [showTour,     setShowTour]     = React.useState(false);
   const [tourSlide,    setTourSlide]    = React.useState(0);
   const [showUpgrade,  setShowUpgrade]  = React.useState(false);
-  const { isPro, purchase, restore, purchasePro, restorePurchases, devToggle } = useIAP();
+  const [showSettings, setShowSettings] = React.useState(false);
+  const { isPro, purchase, restore, restorePurchases, devToggle } = useIAP();
   const { ambOn, ambToggle, ambStop } = useAmbience('/orchestra.wav');
+  const { getTodayMinutes } = useProgressTracker();
 
   // Guard: auto-show tour only on first launch. Never re-trigger after guitar_tour_seen is set.
   // The "?" button bypasses this guard intentionally — it calls setShowTour(true) directly.
@@ -773,7 +822,13 @@ export default function App() {
     setShowUpgrade(true);
   }
 
-  // Called from Home header "Unlock PRO →", locked cards, and DEV triple-tap
+  function handleReplayTour() {
+    localStorage.removeItem('guitar_tour_seen');
+    setTourSlide(0);
+    setShowTour(true);
+  }
+
+  // Called from locked cards
   function handleUpgrade(featureOrSignal) {
     if (featureOrSignal === '__devToggle__') {
       devToggle();
@@ -790,27 +845,46 @@ export default function App() {
     />
   );
 
-  if (hash === '#audition')    return <AuditionGame />;
-  if (hash === '#tab-test')    return <TabTest />;
-  if (hash === '#song-learn')  return <SongLearnEngine song={TWINKLE_SONG} />;
-  if (hash === '#song-play')   return <SongPlayScreen  song={TWINKLE_SONG} />;
-  if (hash === '#tuner')       return <Tuner strings={GUITAR_STRINGS} theme={GUITAR_THEME} title="Tune Your Guitar" />;
-  if (hash === '#scale-play')  return <ScalePlay    isPro={isPro} onPurchase={purchase} onRestore={restore} />;
-  if (hash === '#lick-play')   return <LickPlay     isPro={isPro} onPurchase={purchase} onRestore={restore} />;
-  if (hash === '#chord-play')  return <ChordPlay    isPro={isPro} onPurchase={purchase} onRestore={restore} />;
-  if (hash === '#barre-chords')return <BarreChords  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
-  if (hash === '#caged')       return <CAGEDSystem  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
-  if (hash === '#flashcards')  return <Flashcards   isPro={isPro} onPurchase={purchase} onRestore={restore} />;
-  if (hash === '#metronome')   return <Metronome theme={GUITAR_THEME} title="Guitar Metronome" />;
+  if (hash === '#audition')     return <AuditionGame />;
+  if (hash === '#tab-test')     return <TabTest />;
+  if (hash === '#song-learn')   return <SongLearnEngine song={TWINKLE_SONG} />;
+  if (hash === '#song-play')    return <SongPlayScreen  song={TWINKLE_SONG} />;
+  if (hash === '#song-library') return <SongLibrary isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
+  if (hash === '#progress')     return <ProgressTracker isPro={isPro} getTodayMinutes={getTodayMinutes} />;
+  if (hash === '#tuner')        return <Tuner strings={GUITAR_STRINGS} theme={GUITAR_THEME} title="Tune Your Guitar" />;
+  if (hash === '#scale-play')   return <ScalePlay    isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hash === '#lick-play')    return <LickPlay     isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hash === '#chord-play')   return <ChordPlay    isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hash === '#barre-chords') return <BarreChords  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hash === '#caged')        return <CAGEDSystem  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hash === '#flashcards')   return <Flashcards   isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hash === '#metronome')    return <Metronome theme={GUITAR_THEME} title="Guitar Metronome" />;
 
   return (
     <>
-      <Home ambOn={ambOn} ambToggle={ambToggle} onShowTour={() => { setTourSlide(0); setShowTour(true); }} isPro={isPro} onUpgrade={handleUpgrade} />
+      <Home
+        ambOn={ambOn} ambToggle={ambToggle}
+        onShowTour={() => { setTourSlide(0); setShowTour(true); }}
+        onShowSettings={() => setShowSettings(true)}
+        isPro={isPro} onUpgrade={handleUpgrade}
+        getTodayMinutes={getTodayMinutes}
+        onOpenProgress={() => { window.location.hash = '#progress'; setHash('#progress'); }}
+      />
       <UpgradeModal
         isOpen={showUpgrade}
         onClose={() => setShowUpgrade(false)}
         onPurchase={purchase}
         onRestore={restore}
+      />
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        ambOn={ambOn}
+        ambToggle={ambToggle}
+        isPro={isPro}
+        onRestorePurchases={restorePurchases}
+        onUpgrade={() => { setShowSettings(false); setShowUpgrade(true); }}
+        onReplayTour={handleReplayTour}
       />
       {process.env.NODE_ENV === 'development' && (
         <button

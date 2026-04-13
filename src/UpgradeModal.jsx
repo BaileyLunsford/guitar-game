@@ -50,7 +50,7 @@ export default function UpgradeModal({ isOpen, onClose, onPurchase, onRestore, f
     try {
       await onPurchase(plan);
       setSuccess(true);
-      setTimeout(() => { setSuccess(false); setLoading(false); onClose(); }, 1400);
+      setTimeout(() => { setSuccess(false); setLoading(false); onClose(); }, 1800);
     } catch {
       setLoading(false);
     }
@@ -105,15 +105,27 @@ export default function UpgradeModal({ isOpen, onClose, onPurchase, onRestore, f
           }}
         >✕ Maybe Later</button>
 
-        {/* Success flash */}
+        {/* Success flash — full-card takeover */}
         {success ? (
-          <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <div style={{ fontSize: 52, marginBottom: 16 }}>🎸</div>
+          <div style={{
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            padding: '60px 24px', textAlign: 'center',
+          }}>
             <div style={{
-              fontSize: 22, fontWeight: 900,
-              background: 'linear-gradient(135deg,#E8833A,#F5A65B)',
+              fontSize: 80, marginBottom: 24,
+              filter: 'drop-shadow(0 4px 24px rgba(245,200,66,0.6))',
+              animation: 'none',
+            }}>🎸</div>
+            <div style={{
+              fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em',
+              marginBottom: 10,
+              background: 'linear-gradient(135deg,#F5C842,#E8A838)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             }}>PRO Unlocked!</div>
+            <div style={{ fontSize: 14, color: M.muted, marginTop: 4 }}>
+              All features are now available.
+            </div>
           </div>
         ) : (
           <>
