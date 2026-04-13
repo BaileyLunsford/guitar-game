@@ -740,11 +740,17 @@ function Home({ ambOn, ambToggle, onShowTour, isPro, onUpgrade }) {
 // ─── Root — hash-based routing ───────────────────────────────────────────────
 export default function App() {
   const [hash,         setHash]         = React.useState(window.location.hash);
-  const [showTour,     setShowTour]     = React.useState(() => !localStorage.getItem('guitar_tour_seen'));
+  const [showTour,     setShowTour]     = React.useState(false);
   const [tourSlide,    setTourSlide]    = React.useState(0);
   const [showUpgrade,  setShowUpgrade]  = React.useState(false);
   const { isPro, purchase, restore, purchasePro, restorePurchases, devToggle } = useIAP();
   const { ambOn, ambToggle, ambStop } = useAmbience('/orchestra.wav');
+
+  // Guard: auto-show tour only on first launch. Never re-trigger after guitar_tour_seen is set.
+  // The "?" button bypasses this guard intentionally — it calls setShowTour(true) directly.
+  React.useLayoutEffect(() => {
+    if (!localStorage.getItem('guitar_tour_seen')) setShowTour(true);
+  }, []);
 
   React.useEffect(() => {
     const onHash = () => {
@@ -759,12 +765,17 @@ export default function App() {
     localStorage.setItem('guitar_tour_seen', '1');
     setShowTour(false);
     setTourSlide(0);
+    // Clear any stale hash so we always land on Home, not a sub-screen
+    if (window.location.hash) window.history.replaceState(null, '', window.location.pathname);
+    setHash('');
   }
 
   function handleTourUpgrade() {
     localStorage.setItem('guitar_tour_seen', '1');
     setShowTour(false);
     setTourSlide(0);
+    if (window.location.hash) window.history.replaceState(null, '', window.location.pathname);
+    setHash('');
     setShowUpgrade(true);
   }
 
