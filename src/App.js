@@ -186,13 +186,13 @@ function TabTest() {
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{ fontSize: 40, marginBottom: 8 }}>🪕</div>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>🎸</div>
           <h1 style={{
             fontSize: 20, fontWeight: 800, marginBottom: 4,
             background: 'linear-gradient(135deg,#E8833A,#F5A65B,#C46428)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
           }}>
-            Tab Notation — Test
+            Tab & Notation
           </h1>
           <p style={{ fontSize: 12, color: '#A0785A' }}>
             Twinkle Twinkle · 8 notes · low E string
@@ -283,27 +283,6 @@ function TabTest() {
             ))}
           </div>
         </div>
-
-        {/* 4-string example */}
-        <section style={{ marginBottom: 20 }}>
-          <label style={{ fontSize: 11, color: '#A0785A', letterSpacing: '0.1em',
-            textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
-            4-string (bass / mandolin tuning EADG)
-          </label>
-          <div style={{ background: '#2A1208', borderRadius: 14, padding: '16px 12px',
-            border: '1px solid rgba(196,100,40,0.2)' }}>
-            <TabNotationDisplay
-              notes={[
-                { string: 1, fret: 0,  beat: 1, noteName: 'G3' },
-                { string: 2, fret: 2,  beat: 2, noteName: 'B3' },
-                { string: 3, fret: 2,  beat: 3, noteName: 'B3' },
-                { string: 4, fret: 0,  beat: 4, noteName: 'E3' },
-              ]}
-              strings={4}
-              tuning={['E', 'A', 'D', 'G']}
-            />
-          </div>
-        </section>
 
         {/* Back link */}
         <div style={{ textAlign: 'center', paddingBottom: 40 }}>
