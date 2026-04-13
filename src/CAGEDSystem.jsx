@@ -42,13 +42,11 @@ const SHAPES = ['C-shape','A-shape','G-shape','E-shape','D-shape'];
 const VOICINGS = {
   // ── Root: G ─────────────────────────────────────────────────────────────────
   G: [
-    { // C-shape at 7fr  (barre across 5 strings, middle-finger cluster)
+    { // C-shape at 7fr — x,A10,D9,G7,B8,e7 → relative [-1,4,3,1,2,1]
       shape: 'C-shape', position: '7th position', baseFret: 7,
-      frets:  [-1,3,2,0,1,0],  // relative: x-A=3,D=2,G=0,B=1,e=0 → absolute 9,9,7,8,7
-      // Actual: x,10,9,7,8,7 → baseFret=7 so frets relative: x,4,3,1,2,1
       frets:  [-1,4,3,1,2,1],
       barre:  { fret:1, from:1, to:5 },
-      notes:  ['G3','D4','G4','B4','D5'],
+      notes:  ['G3','B3','D4','G4','B4'],
     },
     { // A-shape at 10fr
       shape: 'A-shape', position: '10th position', baseFret: 10,
@@ -90,10 +88,10 @@ const VOICINGS = {
       barre:  { fret:1, from:1, to:5 },
       notes:  ['C3','G3','C4','E4','G4'],
     },
-    { // G-shape at 5fr
+    { // G-shape at 5fr — E8,A7,D5,G5,B5,e8 → relative [4,3,1,1,1,4]
       shape: 'G-shape', position: '5th position', baseFret: 5,
-      frets:  [3,2,0,0,0,3],
-      barre:  null,
+      frets:  [4,3,1,1,1,4],
+      barre:  { fret:1, from:2, to:4 },
       notes:  ['C3','E3','G3','C4','E4','C5'],
     },
     { // E-shape at 8fr
@@ -124,10 +122,10 @@ const VOICINGS = {
       barre:  null,
       notes:  ['A2','E3','A3','C#4','E4'],
     },
-    { // G-shape at 2fr
+    { // G-shape at 2fr — E5,A4,D2,G2,B2,e5 → relative [4,3,1,1,1,4]
       shape: 'G-shape', position: '2nd position', baseFret: 2,
-      frets:  [3,2,0,0,0,3],
-      barre:  null,
+      frets:  [4,3,1,1,1,4],
+      barre:  { fret:1, from:2, to:4 },
       notes:  ['A2','C#3','E3','A3','C#4','A4'],
     },
     { // E-shape at 5fr
@@ -158,10 +156,10 @@ const VOICINGS = {
       barre:  { fret:1, from:1, to:5 },
       notes:  ['E3','B3','E4','G#4','B4'],
     },
-    { // G-shape at 9fr
+    { // G-shape at 9fr — E12,A11,D9,G9,B9,e12 → relative [4,3,1,1,1,4]
       shape: 'G-shape', position: '9th position', baseFret: 9,
-      frets:  [3,2,0,0,0,3],
-      barre:  null,
+      frets:  [4,3,1,1,1,4],
+      barre:  { fret:1, from:2, to:4 },
       notes:  ['E3','G#3','B3','E4','G#4','E5'],
     },
     { // E-shape open position
@@ -192,10 +190,10 @@ const VOICINGS = {
       barre:  { fret:1, from:1, to:5 },
       notes:  ['D3','A3','D4','F#4','A4'],
     },
-    { // G-shape at 7fr
+    { // G-shape at 7fr — E10,A9,D7,G7,B7,e10 → relative [4,3,1,1,1,4]
       shape: 'G-shape', position: '7th position', baseFret: 7,
-      frets:  [3,2,0,0,0,3],
-      barre:  null,
+      frets:  [4,3,1,1,1,4],
+      barre:  { fret:1, from:2, to:4 },
       notes:  ['D3','F#3','A3','D4','F#4','D5'],
     },
     { // E-shape at 10fr
