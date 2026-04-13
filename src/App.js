@@ -551,6 +551,10 @@ const HOME_SECTIONS = [
 ];
 
 function Home({ ambOn, ambToggle, onShowTour, isPro, onUpgrade }) {
+  React.useEffect(() => {
+    console.log('[Home] mount — onShowTour:', typeof onShowTour, '| onUpgrade:', typeof onUpgrade);
+  }, []); // eslint-disable-line
+
   return (
     <div style={{
       minHeight: '100vh', background: '#120A04', color: '#F5E8D8',
@@ -646,13 +650,16 @@ function Home({ ambOn, ambToggle, onShowTour, isPro, onUpgrade }) {
               color: '#120A04',
             }}>PRO</span>
           ) : (
-            <button onClick={() => onUpgrade()} style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: '#E8833A', fontSize: 12, fontWeight: 700,
-              fontFamily: "Georgia, serif", padding: 0,
-            }}>Unlock PRO →</button>
+            <button
+              onClick={() => window.dispatchEvent(new Event('showUpgrade'))}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: '#E8833A', fontSize: 12, fontWeight: 700,
+                fontFamily: "Georgia, serif", padding: 0,
+              }}
+            >Unlock PRO →</button>
           )}
-          <button onClick={onShowTour} style={{
+          <button onClick={() => { console.log('[Home] ? clicked — onShowTour:', onShowTour); onShowTour(); }} style={{
             width: 30, height: 30, borderRadius: '50%',
             border: '1px solid rgba(196,100,40,0.4)',
             background: 'rgba(196,100,40,0.12)',
@@ -702,7 +709,7 @@ function Home({ ambOn, ambToggle, onShowTour, isPro, onUpgrade }) {
                 <a
                   key={f.title}
                   href={(!f.soon && f.hash) ? f.hash : undefined}
-                  onClick={isLocked ? (e) => { e.preventDefault(); onUpgrade(f.title + ' — PRO Feature'); } : undefined}
+                  onClick={isLocked ? (e) => { e.preventDefault(); window.dispatchEvent(new Event('showUpgrade')); } : undefined}
                   className={`feat-card${f.soon ? ' soon' : ''}`}
                   style={isLocked ? { cursor: 'pointer', pointerEvents: 'auto', opacity: 0.55 } : undefined}
                 >
@@ -737,6 +744,9 @@ function Home({ ambOn, ambToggle, onShowTour, isPro, onUpgrade }) {
   );
 }
 
+// Global flag + event bus for upgrade modal — bypasses prop chain entirely
+window.__showUpgrade = false;
+
 // ─── Root — hash-based routing ───────────────────────────────────────────────
 export default function App() {
   const [hash,         setHash]         = React.useState(window.location.hash);
@@ -745,6 +755,13 @@ export default function App() {
   const [showUpgrade,  setShowUpgrade]  = React.useState(false);
   const { isPro, purchase, restore, purchasePro, restorePurchases, devToggle } = useIAP();
   const { ambOn, ambToggle, ambStop } = useAmbience('/orchestra.wav');
+
+  // Window-level upgrade event — fires from any component regardless of prop chain
+  React.useEffect(() => {
+    const handler = () => { window.__showUpgrade = true; setShowUpgrade(true); };
+    window.addEventListener('showUpgrade', handler);
+    return () => window.removeEventListener('showUpgrade', handler);
+  }, []);
 
   // Guard: auto-show tour only on first launch. Never re-trigger after guitar_tour_seen is set.
   // The "?" button bypasses this guard intentionally — it calls setShowTour(true) directly.
