@@ -551,7 +551,6 @@ const HOME_SECTIONS = [
 ];
 
 function Home({ ambOn, ambToggle, onShowTour, isPro, onUpgrade }) {
-  const devTapRef = React.useRef(0);
   return (
     <div style={{
       minHeight: '100vh', background: '#120A04', color: '#F5E8D8',
@@ -648,7 +647,7 @@ function Home({ ambOn, ambToggle, onShowTour, isPro, onUpgrade }) {
               color: '#120A04',
             }}>PRO</span>
           ) : (
-            <button onClick={onUpgrade} style={{
+            <button onClick={() => onUpgrade()} style={{
               background: 'none', border: 'none', cursor: 'pointer',
               color: '#E8833A', fontSize: 12, fontWeight: 700,
               fontFamily: "Georgia, serif", padding: 0,
@@ -667,22 +666,11 @@ function Home({ ambOn, ambToggle, onShowTour, isPro, onUpgrade }) {
 
         <div style={{ fontSize: 64, marginBottom: 12,
           filter: 'drop-shadow(0 4px 20px rgba(196,100,40,0.55))' }}>🎸</div>
-        <h1
-          onClick={() => {
-            if (process.env.NODE_ENV !== 'development') return;
-            devTapRef.current += 1;
-            if (devTapRef.current >= 3) {
-              devTapRef.current = 0;
-              onUpgrade('__devToggle__');
-            }
-          }}
-          style={{
+        <h1 style={{
             fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 6,
             background: 'linear-gradient(135deg,#E8833A,#F5A65B,#C46428,#F5A65B)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
-            cursor: process.env.NODE_ENV === 'development' ? 'pointer' : 'default',
-            userSelect: 'none',
           }}>Guitar Audition Game</h1>
         <p style={{ fontSize: 13, color: '#A0785A', letterSpacing: '0.08em',
           textTransform: 'uppercase', fontWeight: 500 }}>
@@ -762,14 +750,14 @@ export default function App() {
 
   // Detect PRO upgrade → show post-upgrade tour slide
   React.useEffect(() => {
-    if (isPro && !prevIsProRef.current) {
+    if (isPro && !prevIsProRef.current && !showUpgrade) {
       prevIsProRef.current = true;
       setTourSlide(3);
       setShowTour(true);
     } else {
       prevIsProRef.current = isPro;
     }
-  }, [isPro]);
+  }, [isPro, showUpgrade]);
 
   React.useEffect(() => {
     const onHash = () => {
@@ -840,6 +828,17 @@ export default function App() {
         onPurchase={purchase}
         onRestore={restore}
       />
+      {process.env.NODE_ENV === 'development' && (
+        <button
+          onClick={devToggle}
+          style={{
+            position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)',
+            background: 'rgba(0,0,0,0.85)', border: '1px solid #666',
+            color: '#fff', fontSize: 12, padding: '8px 16px', borderRadius: 8,
+            cursor: 'pointer', zIndex: 9999, fontFamily: 'monospace', whiteSpace: 'nowrap',
+          }}
+        >[DEV] Toggle PRO — {isPro ? 'ON' : 'OFF'}</button>
+      )}
     </>
   );
 }
