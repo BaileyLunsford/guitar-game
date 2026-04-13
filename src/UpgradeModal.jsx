@@ -1,49 +1,57 @@
 /**
- * UpgradeModal.jsx — PRO upgrade prompt
+ * UpgradeModal.jsx — PRO upgrade paywall
  *
  * Props:
- *   isOpen     boolean
- *   onClose    () => void
- *   onPurchase (productId: string) => Promise<void>
- *   onRestore  () => void
- *   feature    string  e.g. "Key of D — PRO Feature"
+ *   isOpen      boolean
+ *   onClose     () => void
+ *   onPurchase  (plan: 'monthly'|'yearly') => Promise<void>
+ *   onRestore   () => boolean
+ *   feature     string  optional — e.g. "CAGED System — PRO Feature"
  */
 
 import React, { useState } from 'react';
 
 const M = {
-  bg:       '#120A04',
-  surface:  '#2A1208',
-  panel:    '#1E0D06',
-  accent:   '#E8833A',
-  hi:       '#F5A65B',
-  muted:    '#A0785A',
-  text:     '#F5E8D8',
-  border:   'rgba(196,100,40,0.25)',
-  borderHi: 'rgba(232,131,58,0.55)',
+  bg:         '#120A04',
+  surface:    '#2A1208',
+  panel:      '#1A0C05',
+  accent:     '#E8833A',
+  hi:         '#F5A65B',
+  gold:       '#F5C842',
+  muted:      '#A0785A',
+  text:       '#F5E8D8',
+  border:     'rgba(196,100,40,0.25)',
+  borderHi:   'rgba(232,131,58,0.55)',
+  borderGold: 'rgba(245,200,66,0.7)',
 };
 
-const PRO_BULLETS = [
-  'All chord keys (D, A, E, C)',
-  'All scales & pentatonic patterns',
-  'Full song library',
-  'Lick Play & Lead Play (coming soon)',
+const PRO_FEATURES = [
+  'CAGED System — 5 shapes, whole neck',
+  'Chord Play — all keys and progressions',
+  'Barre Chords — Bb, Cm, Ab, C#m shapes',
+  'Lick Play — Rock and Country packs',
+  'Triads & Arpeggios (coming soon)',
+  'Progress Tracker — charts and history (coming soon)',
 ];
 
 export default function UpgradeModal({ isOpen, onClose, onPurchase, onRestore, feature }) {
-  const [loading, setLoading] = useState(false);
-  const [restored, setRestored] = useState(false);
+  const [loading,   setLoading]   = useState(false);
+  const [success,   setSuccess]   = useState(false);
+  const [noRestore, setNoRestore] = useState(false);
+  const [restored,  setRestored]  = useState(false);
+  const [selected,  setSelected]  = useState('yearly');
 
   if (!isOpen) return null;
 
-  async function handlePurchase() {
-    if (loading) return;
+  async function handlePurchase(plan) {
+    if (loading || success) return;
+    setSelected(plan);
     setLoading(true);
     try {
-      await onPurchase('pro_lifetime');
-      // onClose fires naturally because isPro flips true and parent re-renders
-      onClose();
-    } finally {
+      await onPurchase(plan);
+      setSuccess(true);
+      setTimeout(() => { setSuccess(false); setLoading(false); onClose(); }, 1400);
+    } catch {
       setLoading(false);
     }
   }
@@ -52,10 +60,11 @@ export default function UpgradeModal({ isOpen, onClose, onPurchase, onRestore, f
     if (loading) return;
     const had = onRestore();
     if (had) {
-      onClose();
-    } else {
       setRestored(true);
-      setTimeout(() => setRestored(false), 2500);
+      setTimeout(() => { setRestored(false); onClose(); }, 1000);
+    } else {
+      setNoRestore(true);
+      setTimeout(() => setNoRestore(false), 2500);
     }
   }
 
@@ -64,118 +73,170 @@ export default function UpgradeModal({ isOpen, onClose, onPurchase, onRestore, f
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0,
-        background: 'rgba(0,0,0,0.72)',
+        background: 'rgba(0,0,0,0.82)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 1000, padding: '24px 16px',
+        zIndex: 2000, padding: '16px',
+        fontFamily: "Georgia, 'Times New Roman', serif",
       }}
     >
-      {/* Card — stop propagation so tapping inside doesn't dismiss */}
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: '100%', maxWidth: 340,
+          width: '100%', maxWidth: 360,
           background: M.panel,
           border: `1px solid ${M.borderHi}`,
-          borderRadius: 20,
-          padding: '28px 24px',
-          boxShadow: '0 8px 48px rgba(196,100,40,0.35)',
-          fontFamily: "Georgia, 'Times New Roman', serif",
+          borderRadius: 22,
+          padding: '24px 20px 20px',
+          boxShadow: '0 12px 60px rgba(196,100,40,0.4)',
           color: M.text,
+          maxHeight: '92vh',
+          overflowY: 'auto',
+          position: 'relative',
         }}
       >
-        {/* Lock icon + feature name */}
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <div style={{ fontSize: 24, marginBottom: 10, color: M.accent }}>🔒</div>
-          <div style={{
-            fontSize: 16, fontWeight: 800, marginBottom: 6,
-            background: 'linear-gradient(135deg,#E8833A,#F5A65B,#C46428)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          }}>
-            {feature ?? 'PRO Feature'}
-          </div>
-          <div style={{ fontSize: 12, color: M.muted, lineHeight: 1.6 }}>
-            Unlock full access to everything in<br />Guitar Audition Game
-          </div>
-        </div>
+        {/* ✕ close */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute', top: 14, right: 16,
+            background: 'none', border: 'none',
+            color: M.muted, fontSize: 13, cursor: 'pointer',
+            fontFamily: "Georgia, serif",
+          }}
+        >✕ Maybe Later</button>
 
-        {/* Divider */}
-        <div style={{ height: 1, background: 'rgba(196,100,40,0.2)', marginBottom: 18 }} />
-
-        {/* What's included */}
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em',
-            textTransform: 'uppercase', color: M.muted, marginBottom: 10 }}>
-            What's included
+        {/* Success flash */}
+        {success ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <div style={{ fontSize: 52, marginBottom: 16 }}>🎸</div>
+            <div style={{
+              fontSize: 22, fontWeight: 900,
+              background: 'linear-gradient(135deg,#E8833A,#F5A65B)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            }}>PRO Unlocked!</div>
           </div>
-          {PRO_BULLETS.map((item, i) => (
-            <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 7,
-              alignItems: 'flex-start' }}>
-              <span style={{ color: M.accent, fontSize: 11, lineHeight: '1.6', flexShrink: 0 }}>✦</span>
-              <span style={{ fontSize: 13, color: M.text, lineHeight: 1.5 }}>{item}</span>
+        ) : (
+          <>
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: 18, paddingTop: 4 }}>
+              <div style={{ fontSize: 40, marginBottom: 8,
+                filter: 'drop-shadow(0 2px 12px rgba(232,131,58,0.5))' }}>🎸</div>
+              <h2 style={{
+                fontSize: 24, fontWeight: 900, margin: 0, letterSpacing: '-0.02em',
+                background: 'linear-gradient(135deg,#E8833A,#F5A65B,#C46428)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              }}>Go PRO</h2>
+              {feature && (
+                <div style={{ fontSize: 11, color: M.muted, marginTop: 6, fontStyle: 'italic' }}>
+                  {feature}
+                </div>
+              )}
             </div>
-          ))}
-        </div>
 
-        {/* Price callout */}
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <div style={{
-            fontSize: 32, fontWeight: 900, lineHeight: 1,
-            background: 'linear-gradient(135deg,#E8833A,#F5A65B)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          }}>$4.99</div>
-          <div style={{ fontSize: 11, color: M.muted, marginTop: 4 }}>
-            one-time purchase · no subscription
-          </div>
-        </div>
+            {/* Plan cards */}
+            <div style={{ display: 'flex', gap: 10, marginBottom: loading ? 10 : 18 }}>
+              {/* Monthly */}
+              <button
+                onClick={() => handlePurchase('monthly')}
+                disabled={loading}
+                style={{
+                  flex: 1, padding: '14px 8px', borderRadius: 14,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  border: `1px solid ${selected === 'monthly' ? M.borderHi : M.border}`,
+                  background: selected === 'monthly'
+                    ? 'rgba(232,131,58,0.14)' : 'rgba(42,18,8,0.6)',
+                  color: M.text, textAlign: 'center',
+                  transition: 'all 0.15s',
+                  fontFamily: "Georgia, serif",
+                }}
+              >
+                <div style={{ fontSize: 10, color: M.muted, marginBottom: 4,
+                  letterSpacing: '0.06em', textTransform: 'uppercase' }}>Monthly</div>
+                <div style={{ fontSize: 22, fontWeight: 900, color: M.hi, lineHeight: 1 }}>$4.99</div>
+                <div style={{ fontSize: 9, color: M.muted, marginTop: 5, lineHeight: 1.5 }}>
+                  Billed monthly<br/>cancel anytime
+                </div>
+              </button>
 
-        {/* Unlock button */}
-        <button
-          onClick={handlePurchase}
-          disabled={loading}
-          style={{
-            width: '100%', padding: '13px', borderRadius: 12,
-            border: `1px solid ${M.borderHi}`,
-            background: loading ? 'rgba(232,131,58,0.1)' : 'rgba(232,131,58,0.22)',
-            color: loading ? M.muted : M.hi,
-            fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 14,
-            cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.7 : 1,
-            marginBottom: 10, transition: 'all 0.15s',
-          }}
-        >
-          {loading ? 'Processing…' : 'Unlock PRO — $4.99'}
-        </button>
+              {/* Yearly — gold highlight */}
+              <button
+                onClick={() => handlePurchase('yearly')}
+                disabled={loading}
+                style={{
+                  flex: 1, padding: '14px 8px', borderRadius: 14,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  border: `2px solid ${M.borderGold}`,
+                  background: 'rgba(245,200,66,0.07)',
+                  color: M.text, textAlign: 'center',
+                  transition: 'all 0.15s',
+                  fontFamily: "Georgia, serif",
+                  boxShadow: '0 0 18px rgba(245,200,66,0.15)',
+                  position: 'relative',
+                }}
+              >
+                <div style={{
+                  position: 'absolute', top: -10, left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: 'linear-gradient(135deg,#F5C842,#E8A838)',
+                  color: '#120A04', fontSize: 9, fontWeight: 900,
+                  padding: '2px 9px', borderRadius: 20,
+                  letterSpacing: '0.06em', whiteSpace: 'nowrap',
+                }}>BEST VALUE</div>
+                <div style={{ fontSize: 10, color: M.gold, marginBottom: 4,
+                  letterSpacing: '0.06em', textTransform: 'uppercase' }}>Yearly</div>
+                <div style={{ fontSize: 22, fontWeight: 900, color: M.gold, lineHeight: 1 }}>$49.99</div>
+                <div style={{ fontSize: 9, color: M.muted, marginTop: 5, lineHeight: 1.5 }}>
+                  Save 17%<br/>Best value
+                </div>
+              </button>
+            </div>
 
-        {/* Restore button */}
-        <button
-          onClick={handleRestore}
-          disabled={loading}
-          style={{
-            width: '100%', padding: '11px', borderRadius: 12,
-            border: `1px solid ${M.border}`,
-            background: 'transparent',
-            color: restored ? '#4ade80' : M.muted,
-            fontFamily: "Georgia, serif", fontWeight: 700, fontSize: 13,
-            cursor: loading ? 'not-allowed' : 'pointer',
-            marginBottom: 10, transition: 'all 0.15s',
-          }}
-        >
-          {restored ? 'No purchase found' : 'Restore Purchase'}
-        </button>
+            {loading && (
+              <div style={{ textAlign: 'center', fontSize: 12, color: M.muted, marginBottom: 14 }}>
+                Processing…
+              </div>
+            )}
 
-        {/* Maybe Later */}
-        <div style={{ textAlign: 'center' }}>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: M.muted, fontSize: 12,
-              fontFamily: "Georgia, serif",
-            }}
-          >
-            Maybe Later
-          </button>
-        </div>
+            {/* Divider */}
+            <div style={{ height: 1, background: 'rgba(196,100,40,0.18)', marginBottom: 14 }} />
+
+            {/* PRO features */}
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em',
+                textTransform: 'uppercase', color: M.muted, marginBottom: 10 }}>
+                Everything in PRO
+              </div>
+              {PRO_FEATURES.map((f, i) => (
+                <div key={i} style={{
+                  display: 'flex', gap: 8, marginBottom: 7, alignItems: 'flex-start',
+                }}>
+                  <span style={{ color: M.accent, fontSize: 10, lineHeight: '1.7', flexShrink: 0 }}>✦</span>
+                  <span style={{
+                    fontSize: 12, lineHeight: 1.55,
+                    color: f.includes('coming soon') ? M.muted : M.text,
+                    fontStyle: f.includes('coming soon') ? 'italic' : 'normal',
+                  }}>{f}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Restore */}
+            <div style={{ textAlign: 'center' }}>
+              <button
+                onClick={handleRestore}
+                disabled={loading}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: noRestore ? '#f87171' : restored ? '#4ade80' : M.muted,
+                  fontSize: 12, fontFamily: "Georgia, serif",
+                  transition: 'color 0.2s',
+                }}
+              >
+                {noRestore ? 'No purchase found' : restored ? 'Restored!' : 'Restore Purchases'}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

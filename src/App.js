@@ -550,7 +550,8 @@ const HOME_SECTIONS = [
   },
 ];
 
-function Home({ ambOn, ambToggle, onShowTour }) {
+function Home({ ambOn, ambToggle, onShowTour, isPro, onUpgrade }) {
+  const devTapRef = React.useRef(0);
   return (
     <div style={{
       minHeight: '100vh', background: '#120A04', color: '#F5E8D8',
@@ -637,24 +638,52 @@ function Home({ ambOn, ambToggle, onShowTour }) {
 
       {/* Header */}
       <div style={{ textAlign: 'center', padding: '32px 24px 24px', position: 'relative' }}>
-        <button onClick={onShowTour} style={{
-          position: 'absolute', top: 32, right: 20,
-          width: 30, height: 30, borderRadius: '50%',
-          border: '1px solid rgba(196,100,40,0.4)',
-          background: 'rgba(196,100,40,0.12)',
-          color: '#A0785A', fontFamily: "Georgia, serif",
-          fontSize: 14, fontWeight: 800, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          lineHeight: 1,
-        }}>?</button>
+        {/* Top-right controls: PRO badge (or Unlock link) + ? button */}
+        <div style={{ position: 'absolute', top: 32, right: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
+          {isPro ? (
+            <span style={{
+              fontSize: 10, fontWeight: 900, letterSpacing: '0.1em',
+              padding: '3px 8px', borderRadius: 20,
+              background: 'linear-gradient(135deg,#F5C842,#E8A838)',
+              color: '#120A04',
+            }}>PRO</span>
+          ) : (
+            <button onClick={onUpgrade} style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: '#E8833A', fontSize: 12, fontWeight: 700,
+              fontFamily: "Georgia, serif", padding: 0,
+            }}>Unlock PRO →</button>
+          )}
+          <button onClick={onShowTour} style={{
+            width: 30, height: 30, borderRadius: '50%',
+            border: '1px solid rgba(196,100,40,0.4)',
+            background: 'rgba(196,100,40,0.12)',
+            color: '#A0785A', fontFamily: "Georgia, serif",
+            fontSize: 14, fontWeight: 800, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            lineHeight: 1, flexShrink: 0,
+          }}>?</button>
+        </div>
+
         <div style={{ fontSize: 64, marginBottom: 12,
           filter: 'drop-shadow(0 4px 20px rgba(196,100,40,0.55))' }}>🎸</div>
-        <h1 style={{
-          fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 6,
-          background: 'linear-gradient(135deg,#E8833A,#F5A65B,#C46428,#F5A65B)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-        }}>Guitar Audition Game</h1>
+        <h1
+          onClick={() => {
+            if (process.env.NODE_ENV !== 'development') return;
+            devTapRef.current += 1;
+            if (devTapRef.current >= 3) {
+              devTapRef.current = 0;
+              onUpgrade('__devToggle__');
+            }
+          }}
+          style={{
+            fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 6,
+            background: 'linear-gradient(135deg,#E8833A,#F5A65B,#C46428,#F5A65B)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            cursor: process.env.NODE_ENV === 'development' ? 'pointer' : 'default',
+            userSelect: 'none',
+          }}>Guitar Audition Game</h1>
         <p style={{ fontSize: 13, color: '#A0785A', letterSpacing: '0.08em',
           textTransform: 'uppercase', fontWeight: 500 }}>
           Learn · Tune · Play
@@ -680,11 +709,15 @@ function Home({ ambOn, ambToggle, onShowTour }) {
             </div>
             {/* 2-col grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              {section.items.map(f => (
+              {section.items.map(f => {
+                const isLocked = f.soon && !isPro;
+                return (
                 <a
                   key={f.title}
-                  href={f.soon ? undefined : f.hash}
+                  href={(!f.soon && f.hash) ? f.hash : undefined}
+                  onClick={isLocked ? (e) => { e.preventDefault(); onUpgrade(f.title + ' — PRO Feature'); } : undefined}
                   className={`feat-card${f.soon ? ' soon' : ''}`}
+                  style={isLocked ? { cursor: 'pointer', pointerEvents: 'auto', opacity: 0.55 } : undefined}
                 >
                   <div className="feat-icon">{f.icon}</div>
                   <div className="feat-title">{f.title}</div>
@@ -697,7 +730,7 @@ function Home({ ambOn, ambToggle, onShowTour }) {
                     </span>
                   )}
                 </a>
-              ))}
+              );})}
             </div>
           </div>
         ))}
@@ -724,7 +757,7 @@ export default function App() {
   const [tourSlide,    setTourSlide]    = React.useState(0);
   const [showUpgrade,  setShowUpgrade]  = React.useState(false);
   const prevIsProRef                    = React.useRef(false);
-  const { isPro, purchase, restore } = useIAP();
+  const { isPro, purchase, restore, purchasePro, restorePurchases, devToggle } = useIAP();
   const { ambOn, ambToggle, ambStop } = useAmbience('/orchestra.wav');
 
   // Detect PRO upgrade → show post-upgrade tour slide
@@ -760,6 +793,15 @@ export default function App() {
     setShowUpgrade(true);
   }
 
+  // Called from Home header "Unlock PRO →", locked cards, and DEV triple-tap
+  function handleUpgrade(featureOrSignal) {
+    if (featureOrSignal === '__devToggle__') {
+      devToggle();
+      return;
+    }
+    setShowUpgrade(true);
+  }
+
   if (showTour) return (
     <>
       <OnboardingTour
@@ -791,7 +833,7 @@ export default function App() {
 
   return (
     <>
-      <Home ambOn={ambOn} ambToggle={ambToggle} onShowTour={() => { setTourSlide(0); setShowTour(true); }} />
+      <Home ambOn={ambOn} ambToggle={ambToggle} onShowTour={() => { setTourSlide(0); setShowTour(true); }} isPro={isPro} onUpgrade={handleUpgrade} />
       <UpgradeModal
         isOpen={showUpgrade}
         onClose={() => setShowUpgrade(false)}

@@ -1,34 +1,62 @@
 /**
- * useIAP.js — In-App Purchase hook (Phase 1: localStorage mock)
+ * useIAP.js — In-App Purchase hook (Phase 1: localStorage)
  *
- * Returns { isPro, purchase, restore }
+ * Public API:
+ *   { isPro, purchasePro, restorePurchases, devToggle }
  *
- * Phase 2 will swap the internals for RevenueCat without changing
- * the public API consumed by ChordPlay, ScalePlay, etc.
+ * Backward-compat aliases (used by existing App.js call sites):
+ *   purchase → purchasePro
+ *   restore  → restorePurchases
+ *
+ * Phase 2: swap internals for RevenueCat Capacitor — no callers change.
+ *
+ * Plans:
+ *   'monthly'  $4.99/mo
+ *   'yearly'   $49.99/yr
  */
 
 import { useState } from 'react';
 
-const STORAGE_KEY = 'iap_pro';
+const STORAGE_KEY = 'guitar_pro';
 
 export default function useIAP() {
   const [isPro, setIsPro] = useState(
     () => localStorage.getItem(STORAGE_KEY) === 'true'
   );
 
-  // Simulates a network purchase — resolves after 1 s
-  async function purchase(productId = 'pro_lifetime') {
-    await new Promise(resolve => setTimeout(resolve, 1000));
+  async function purchasePro(plan = 'monthly') {
+    // Phase 1: instant unlock — Phase 2: RevenueCat purchase flow goes here
+    console.log('[IAP] purchasePro:', plan);
     localStorage.setItem(STORAGE_KEY, 'true');
     setIsPro(true);
   }
 
-  // Checks localStorage and restores state (mirrors what RevenueCat restore will do)
-  function restore() {
+  function restorePurchases() {
+    // Phase 1: re-read localStorage — Phase 2: RevenueCat restore goes here
     const stored = localStorage.getItem(STORAGE_KEY) === 'true';
+    console.log('[IAP] restorePurchases — found:', stored);
     setIsPro(stored);
     return stored;
   }
 
-  return { isPro, purchase, restore };
+  function devToggle() {
+    const next = !isPro;
+    if (next) {
+      localStorage.setItem(STORAGE_KEY, 'true');
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    setIsPro(next);
+    console.log('[IAP] devToggle → isPro:', next);
+  }
+
+  return {
+    isPro,
+    purchasePro,
+    restorePurchases,
+    devToggle,
+    // backward-compat aliases so existing App.js call sites need no changes
+    purchase: purchasePro,
+    restore:  restorePurchases,
+  };
 }
