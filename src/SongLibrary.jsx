@@ -481,14 +481,11 @@ function ListenMode({ song, onBack }) {
   function play() {
     if (playing) return;
     guitarSampler.resume?.();
-    // Anchor backing track to the same start time as note playback
+    // Anchor backing track to beat 1 now — same pattern as LickPlay
     const ctx = getAudioContext();
     const startTime = ctx.currentTime + 0.05;
-    if (trackOn) {
-      syncToTime(startTime);
-    } else {
-      toggleTrack(); // auto-start; useBackingTrack effect fires on next cycle at ~startTime
-    }
+    if (!trackOn) toggleTrack(); // turn on first if needed
+    syncToTime(startTime);       // re-anchor pattern to beat 1
     setPlaying(true);
     playNote(0);
   }

@@ -16,6 +16,7 @@ import TabNotationDisplay from './TabNotationDisplay';
 import LandingPage from './LandingPage';
 import { guitarSampler } from './guitarSampler';
 import useBackingTrack from './useBackingTrack';
+import { getAudioContext } from './audioContext';
 
 // ─── Mahogany palette ────────────────────────────────────────────────────────
 const M = {
@@ -61,7 +62,7 @@ export default function SongLearnEngine({ song }) {
   const loopTimerRef  = useRef(null);
   const noteTimersRef = useRef([]);
 
-  const { trackOn, toggleTrack, stopTrack } = useBackingTrack('blues', bpm);
+  const { trackOn, toggleTrack, stopTrack, syncToTime } = useBackingTrack('blues', bpm);
 
   const measures       = song?.measures ?? [];
   const total          = measures.length;
@@ -84,6 +85,9 @@ export default function SongLearnEngine({ song }) {
   function playMeasureNotes(measure, bpmValue) {
     clearNoteTimers();
     guitarSampler.resume();
+    const ctx = getAudioContext();
+    const t   = ctx.currentTime + 0.05;
+    if (trackOn) syncToTime(t);
     const beatMs = 60_000 / bpmValue;
     measure.forEach((note, idx) => {
       const ms = Math.max(0, Math.round((note.beat - 1) * beatMs) + jitterMs());

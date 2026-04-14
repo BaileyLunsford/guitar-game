@@ -311,7 +311,7 @@ function TriadsSection() {
           <ChordDiagram
             frets={diagramFrets}
             baseFret={shape.baseFret}
-            playing={playing}
+            playing={playMode !== null}
           />
         ) : (
           <div style={{ color: M.muted, fontSize: 12, padding: '40px 0' }}>
