@@ -32,19 +32,11 @@ export default function Metronome({ theme = {}, title = 'Metronome' }) {
     accent: theme.accent || '#C4603A',
   };
 
-  if (!started) return (
-    <LandingPage
-      emoji="⏱"
-      title="Metronome"
-      description="Build rock-solid timing and rhythm. Set your BPM, tap tempo, and practice with subdivisions. The foundation of all great playing."
-      difficulty="Beginner"
-      features={['Tap tempo with 3-second window', 'Time signatures: 4/4, 3/4, 6/8', 'Visual beat circles with accent on beat 1']}
-      onStart={() => setStarted(true)}
-      onBack={() => { window.location.hash = ''; }}
-    />
-  );
-
+  // useEffect MUST be called unconditionally — before any early return.
+  // The guard inside (if !started return) keeps it inert until the user
+  // has tapped "Get Started", at which point the DOM elements exist.
   useEffect(() => {
+    if (!started) return;
 
     // ── Audio context ──────────────────────────────────────
     var sharedCtx = null;
@@ -208,6 +200,19 @@ export default function Metronome({ theme = {}, title = 'Metronome' }) {
       if (sharedCtx) sharedCtx.close().catch(function () {});
     };
   }, [started]); // eslint-disable-line
+
+  // Landing page — rendered after all hooks so hook count never changes
+  if (!started) return (
+    <LandingPage
+      emoji="⏱"
+      title="Metronome"
+      description="Build rock-solid timing and rhythm. Set your BPM, tap tempo, and practice with subdivisions. The foundation of all great playing."
+      difficulty="Beginner"
+      features={['Tap tempo with 3-second window', 'Time signatures: 4/4, 3/4, 6/8', 'Visual beat circles with accent on beat 1']}
+      onStart={() => setStarted(true)}
+      onBack={() => { window.location.hash = ''; }}
+    />
+  );
 
   // ── CSS vars derived from theme ────────────────────────────
   const css = `
