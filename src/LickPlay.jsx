@@ -756,7 +756,7 @@ export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
         <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:16,
           padding:'14px 20px', background:M.panel,
           border:`1px solid ${M.border}`, borderRadius:14, marginBottom:10 }}>
-          <button onClick={() => setBpm(b => Math.max(40, b - 10))} disabled={bpm <= 40}
+          <button onClick={() => setBpm(b => Math.max(40, b - 1))} disabled={bpm <= 40}
             style={{ ...btnStyle(false, bpm <= 40), padding:'7px 16px', fontSize:18, lineHeight:1 }}>
             −
           </button>
@@ -765,7 +765,7 @@ export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
             <div style={{ fontSize:10, color:M.muted, textTransform:'uppercase',
               letterSpacing:'0.12em', marginTop:2 }}>BPM</div>
           </div>
-          <button onClick={() => setBpm(b => Math.min(200, b + 10))} disabled={bpm >= 200}
+          <button onClick={() => setBpm(b => Math.min(200, b + 1))} disabled={bpm >= 200}
             style={{ ...btnStyle(false, bpm >= 200), padding:'7px 16px', fontSize:18, lineHeight:1 }}>
             +
           </button>

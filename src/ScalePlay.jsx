@@ -748,14 +748,14 @@ export default function ScalePlay({ isPro = false, onPurchase, onRestore }) {
             padding: '12px 20px', background: M.panel,
             border: `1px solid ${M.border}`, borderRadius: 14, marginBottom: 20,
           }}>
-            <button onClick={() => setBpm(b => Math.max(40, b - 10))} disabled={bpm <= 40}
+            <button onClick={() => setBpm(b => Math.max(40, b - 1))} disabled={bpm <= 40}
               style={{ ...btnStyle(false, bpm <= 40), padding: '6px 14px', fontSize: 18, lineHeight: 1 }}>−</button>
             <div style={{ textAlign: 'center', minWidth: 60 }}>
               <div style={{ fontSize: 26, fontWeight: 800, color: M.accent, lineHeight: 1 }}>{bpm}</div>
               <div style={{ fontSize: 9, color: M.muted, textTransform: 'uppercase',
                 letterSpacing: '0.12em', marginTop: 2 }}>BPM</div>
             </div>
-            <button onClick={() => setBpm(b => Math.min(200, b + 10))} disabled={bpm >= 200}
+            <button onClick={() => setBpm(b => Math.min(200, b + 1))} disabled={bpm >= 200}
               style={{ ...btnStyle(false, bpm >= 200), padding: '6px 14px', fontSize: 18, lineHeight: 1 }}>+</button>
           </div>
 
@@ -897,14 +897,14 @@ export default function ScalePlay({ isPro = false, onPurchase, onRestore }) {
           padding: '12px 20px', background: M.panel,
           border: `1px solid ${M.border}`, borderRadius: 14, marginBottom: 24,
         }}>
-          <button onClick={() => setBpm(b => Math.max(40, b - 10))} disabled={bpm <= 40}
+          <button onClick={() => setBpm(b => Math.max(40, b - 1))} disabled={bpm <= 40}
             style={{ ...btnStyle(false, bpm <= 40), padding: '7px 16px', fontSize: 18, lineHeight: 1 }}>−</button>
           <div style={{ textAlign: 'center', minWidth: 72 }}>
             <div style={{ fontSize: 28, fontWeight: 800, color: M.accent, lineHeight: 1 }}>{bpm}</div>
             <div style={{ fontSize: 10, color: M.muted, textTransform: 'uppercase',
               letterSpacing: '0.12em', marginTop: 2 }}>BPM</div>
           </div>
-          <button onClick={() => setBpm(b => Math.min(200, b + 10))} disabled={bpm >= 200}
+          <button onClick={() => setBpm(b => Math.min(200, b + 1))} disabled={bpm >= 200}
             style={{ ...btnStyle(false, bpm >= 200), padding: '7px 16px', fontSize: 18, lineHeight: 1 }}>+</button>
         </div>
 

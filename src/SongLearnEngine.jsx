@@ -290,7 +290,7 @@ export default function SongLearnEngine({ song }) {
           border: `1px solid ${M.border}`, borderRadius: 14, marginBottom: 28,
         }}>
           <button
-            onClick={() => setBpm(b => Math.max(40, b - 10))}
+            onClick={() => setBpm(b => Math.max(40, b - 1))}
             disabled={bpm <= 40}
             style={{ ...btnStyle(false, bpm <= 40), padding: '7px 16px', fontSize: 18, lineHeight: 1 }}
           >
@@ -308,7 +308,7 @@ export default function SongLearnEngine({ song }) {
             </div>
           </div>
           <button
-            onClick={() => setBpm(b => Math.min(200, b + 10))}
+            onClick={() => setBpm(b => Math.min(200, b + 1))}
             disabled={bpm >= 200}
             style={{ ...btnStyle(false, bpm >= 200), padding: '7px 16px', fontSize: 18, lineHeight: 1 }}
           >
