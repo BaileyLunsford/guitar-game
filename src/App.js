@@ -23,6 +23,7 @@ import UpgradeModal from './UpgradeModal';
 import SettingsModal from './SettingsModal';
 import ProgressTracker, { useProgressTracker, StreakBanner } from './ProgressTracker';
 import SongLibrary from './SongLibrary';
+import TriadsArpeggios from './TriadsArpeggios';
 
 const GUITAR_STRINGS = [
   { label: 'E2', freq: 82.41  },
@@ -540,7 +541,7 @@ const HOME_SECTIONS = [
     items: [
       { icon: '🎸', title: 'CAGED System',       desc: 'One chord. Five positions. The whole neck.',  hash: '#caged', pro: true, soon: false },
       { icon: '🎵', title: 'Lick Play',           desc: 'Classic riffs and phrases by style',          hash: '#lick-play', pro: false },
-      { icon: '🎙', title: 'Triads & Arpeggios',  desc: 'Lead playing essentials',                     hash: null,     pro: true, soon: true  },
+      { icon: '🎙', title: 'Triads & Arpeggios',  desc: 'Lead playing essentials — triads, inversions, arpeggios', hash: '#triads', pro: true, soon: false },
       { icon: '🎛', title: 'Backing Tracks',       desc: 'Full band for every genre',                   hash: null,     pro: true, soon: true  },
     ],
   },
@@ -859,6 +860,7 @@ export default function App() {
   if (hash === '#caged')        return <CAGEDSystem  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
   if (hash === '#flashcards')   return <Flashcards   isPro={isPro} onPurchase={purchase} onRestore={restore} />;
   if (hash === '#metronome')    return <Metronome theme={GUITAR_THEME} title="Guitar Metronome" />;
+  if (hash === '#triads')       return <TriadsArpeggios isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
 
   return (
     <>

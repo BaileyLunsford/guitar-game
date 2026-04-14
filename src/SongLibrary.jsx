@@ -30,6 +30,18 @@ const M = {
 // ── Song data ─────────────────────────────────────────────────────────────────
 // Each note: { string, fret, beat, noteName, duration? }
 // String numbering: 1=high e, 2=B, 3=G, 4=D, 5=A, 6=low E
+// Duration codes: 'q'=quarter(1), 'h'=half(2), 'w'=whole(4),
+//                 'dq'=dotted-quarter(1.5), 'e'=eighth(0.5),
+//                 'qr'=quarter-rest(1), 'hr'=half-rest(2)
+
+const BEAT_MAP = { q: 1, h: 2, w: 4, dq: 1.5, e: 0.5, qr: 1, hr: 2 };
+const REST_CODES = new Set(['qr', 'hr']);
+
+function beatDur(d) {
+  if (!d) return 1;
+  if (typeof d === 'number') return d;
+  return BEAT_MAP[d] || 1;
+}
 
 const SONGS = [
   {
@@ -41,49 +53,96 @@ const SONGS = [
     pro: false,
     bpm: 80,
     measures: [
+      // M1 "Twinkle twinkle"
       [
-        { string:2, fret:1, beat:1, noteName:'C4' },
-        { string:2, fret:1, beat:2, noteName:'C4' },
-        { string:1, fret:3, beat:3, noteName:'G4' },
-        { string:1, fret:3, beat:4, noteName:'G4' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
       ],
+      // M2 "little star"
       [
-        { string:1, fret:5, beat:1, noteName:'A4' },
-        { string:1, fret:5, beat:2, noteName:'A4' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:2 },
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'h' },
       ],
+      // M3 "How I wonder"
       [
-        { string:1, fret:1, beat:1, noteName:'F4' },
-        { string:1, fret:1, beat:2, noteName:'F4' },
-        { string:1, fret:0, beat:3, noteName:'E4' },
-        { string:1, fret:0, beat:4, noteName:'E4' },
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
+        { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
       ],
+      // M4 "what you are"
       [
-        { string:2, fret:3, beat:1, noteName:'D4' },
-        { string:2, fret:3, beat:2, noteName:'D4' },
-        { string:2, fret:1, beat:3, noteName:'C4', duration:2 },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'h' },
       ],
+      // M5 "Up above the"
       [
-        { string:1, fret:3, beat:1, noteName:'G4' },
-        { string:1, fret:3, beat:2, noteName:'G4' },
-        { string:1, fret:1, beat:3, noteName:'F4' },
-        { string:1, fret:1, beat:4, noteName:'F4' },
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
+        { string:1, fret:1, beat:4, noteName:'F4', duration:'q' },
       ],
+      // M6 "world so high"
       [
-        { string:1, fret:0, beat:1, noteName:'E4' },
-        { string:1, fret:0, beat:2, noteName:'E4' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:2 },
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
       ],
+      // M7 "Like a diamond"
       [
-        { string:1, fret:3, beat:1, noteName:'G4' },
-        { string:1, fret:3, beat:2, noteName:'G4' },
-        { string:1, fret:1, beat:3, noteName:'F4' },
-        { string:1, fret:1, beat:4, noteName:'F4' },
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
+        { string:1, fret:1, beat:4, noteName:'F4', duration:'q' },
       ],
+      // M8 "in the sky"
       [
-        { string:1, fret:0, beat:1, noteName:'E4' },
-        { string:1, fret:0, beat:2, noteName:'E4' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:2 },
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
+      ],
+      // M9 "Twinkle twinkle" (reprise bridge)
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
+        { string:1, fret:1, beat:4, noteName:'F4', duration:'q' },
+      ],
+      // M10
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
+      ],
+      // M11 "Twinkle twinkle" (final verse)
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      // M12
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'h' },
+      ],
+      // M13
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
+        { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
+      ],
+      // M14
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'h' },
       ],
     ],
   },
@@ -96,28 +155,59 @@ const SONGS = [
     pro: true,
     bpm: 88,
     measures: [
+      // M1
       [
-        { string:1, fret:0, beat:1, noteName:'E4' },
-        { string:1, fret:0, beat:2, noteName:'E4' },
-        { string:1, fret:1, beat:3, noteName:'F4' },
-        { string:1, fret:3, beat:4, noteName:'G4' },
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
       ],
+      // M2
       [
-        { string:1, fret:3, beat:1, noteName:'G4' },
-        { string:1, fret:1, beat:2, noteName:'F4' },
-        { string:1, fret:0, beat:3, noteName:'E4' },
-        { string:2, fret:3, beat:4, noteName:'D4' },
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
       ],
+      // M3
       [
-        { string:2, fret:1, beat:1, noteName:'C4' },
-        { string:2, fret:1, beat:2, noteName:'C4' },
-        { string:2, fret:3, beat:3, noteName:'D4' },
-        { string:1, fret:0, beat:4, noteName:'E4' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
       ],
+      // M4
       [
-        { string:1, fret:0, beat:1, noteName:'E4' },
-        { string:2, fret:3, beat:2, noteName:'D4' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:2 },
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
+      ],
+      // M5 (repeat)
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      // M6
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
+      // M7
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
+      ],
+      // M8 (cadence)
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'h' },
       ],
     ],
   },
@@ -130,30 +220,49 @@ const SONGS = [
     pro: true,
     bpm: 72,
     measures: [
+      // M1 "A-maz-ing" (3/4: dq+e=2b, q=1b)
       [
-        { string:2, fret:3, beat:1, noteName:'D4' },
-        { string:1, fret:3, beat:2, noteName:'G4' },
-        { string:2, fret:0, beat:3, noteName:'B3' },
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'dq' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
+      // M2 "grace, how"
       [
-        { string:1, fret:3, beat:1, noteName:'G4' },
-        { string:2, fret:0, beat:2, noteName:'B3' },
-        { string:1, fret:5, beat:3, noteName:'A4' },
+        { string:3, fret:2, beat:1, noteName:'D5', duration:'h' },
+        { string:3, fret:2, beat:3, noteName:'D5', duration:'q' },
       ],
+      // M3 "sweet the"
       [
-        { string:1, fret:3, beat:1, noteName:'G4' },
-        { string:1, fret:0, beat:2, noteName:'E4' },
-        { string:2, fret:3, beat:3, noteName:'D4' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'dq' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
       ],
+      // M4 "sound that"
       [
-        { string:1, fret:3, beat:1, noteName:'G4' },
-        { string:2, fret:0, beat:2, noteName:'B3' },
-        { string:3, fret:2, beat:3, noteName:'D5' },
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
       ],
+      // M5 "saved a"
       [
-        { string:3, fret:2, beat:1, noteName:'D5' },
-        { string:2, fret:0, beat:2, noteName:'B3' },
-        { string:1, fret:3, beat:3, noteName:'G4' },
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'dq' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      // M6 "wretch like"
+      [
+        { string:3, fret:2, beat:1, noteName:'D5', duration:'h' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      // M7 "me, I"
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'dq' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'e' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      // M8 "once was"
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
     ],
   },
@@ -164,24 +273,45 @@ const SONGS = [
     difficulty: 'Intermediate',
     durationEst: '0:55',
     pro: true,
-    bpm: 120,
+    bpm: 140,
     measures: [
+      // M1 A-part
       [
-        { string:1, fret:5, beat:1, noteName:'A4' },
-        { string:1, fret:5, beat:2, noteName:'A4' },
-        { string:1, fret:3, beat:3, noteName:'G4' },
-        { string:1, fret:0, beat:4, noteName:'E4' },
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'e' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'e' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'e' },
+        { string:2, fret:3, beat:5, noteName:'D4', duration:'e' },
+        { string:1, fret:0, beat:6, noteName:'E4', duration:'e' },
+        { string:1, fret:3, beat:7, noteName:'G4', duration:'e' },
+        { string:1, fret:5, beat:8, noteName:'A4', duration:'e' },
       ],
+      // M2
       [
-        { string:2, fret:3, beat:1, noteName:'D4' },
-        { string:1, fret:0, beat:2, noteName:'E4' },
-        { string:1, fret:3, beat:3, noteName:'G4' },
-        { string:1, fret:5, beat:4, noteName:'A4' },
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'e' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'e' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:5, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:7, noteName:'D4', duration:'qr' },
       ],
+      // M3 B-part
       [
-        { string:1, fret:3, beat:1, noteName:'G4' },
-        { string:1, fret:0, beat:2, noteName:'E4' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:2 },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'e' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'e' },
+        { string:1, fret:5, beat:5, noteName:'A4', duration:'e' },
+        { string:1, fret:5, beat:6, noteName:'A4', duration:'e' },
+        { string:1, fret:3, beat:7, noteName:'G4', duration:'q' },
+      ],
+      // M4
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'e' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'e' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'e' },
+        { string:2, fret:3, beat:5, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:7, noteName:'C4', duration:'h' },
       ],
     ],
   },
@@ -192,29 +322,51 @@ const SONGS = [
     difficulty: 'Intermediate',
     durationEst: '1:05',
     pro: true,
-    bpm: 96,
+    bpm: 100,
     measures: [
+      // M1 Verse (3/4)
       [
-        { string:1, fret:0, beat:1, noteName:'E4' },
-        { string:1, fret:3, beat:2, noteName:'G4' },
-        { string:1, fret:5, beat:3, noteName:'A4' },
-        { string:1, fret:3, beat:4, noteName:'G4' },
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
       ],
+      // M2
       [
-        { string:1, fret:0, beat:1, noteName:'E4' },
-        { string:2, fret:3, beat:2, noteName:'D4' },
-        { string:1, fret:0, beat:3, noteName:'E4' },
-        { string:1, fret:3, beat:4, noteName:'G4' },
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
       ],
+      // M3
       [
-        { string:1, fret:5, beat:1, noteName:'A4' },
-        { string:2, fret:0, beat:2, noteName:'B3' },
-        { string:1, fret:5, beat:3, noteName:'A4' },
-        { string:1, fret:3, beat:4, noteName:'G4' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
       ],
+      // M4
       [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:2 },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:2 },
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      // M5 Chorus
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+      ],
+      // M6
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+      ],
+      // M7
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+      ],
+      // M8
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'hr' },
       ],
     ],
   },
@@ -227,22 +379,53 @@ const SONGS = [
     pro: true,
     bpm: 104,
     measures: [
+      // M1 "Will the circle"
       [
-        { string:1, fret:3, beat:1, noteName:'G4' },
-        { string:1, fret:3, beat:2, noteName:'G4' },
-        { string:1, fret:3, beat:3, noteName:'G4' },
-        { string:1, fret:0, beat:4, noteName:'E4' },
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
       ],
+      // M2 "be unbroken"
       [
-        { string:2, fret:3, beat:1, noteName:'D4' },
-        { string:1, fret:3, beat:2, noteName:'G4' },
-        { string:1, fret:3, beat:3, noteName:'G4' },
-        { string:1, fret:5, beat:4, noteName:'A4' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'h' },
       ],
+      // M3 "by and by Lord"
       [
-        { string:1, fret:3, beat:1, noteName:'G4' },
-        { string:1, fret:0, beat:2, noteName:'E4' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:2 },
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:1, fret:5, beat:4, noteName:'A4', duration:'q' },
+      ],
+      // M4 "by and by"
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'h' },
+      ],
+      // M5 "In the sky Lord"
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:4, noteName:'A4', duration:'q' },
+      ],
+      // M6 "in the sky"
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
+      ],
+      // M7 "There's a better"
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      // M8 "home a-waiting"
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'w' },
       ],
     ],
   },
@@ -262,9 +445,15 @@ function DiffBadge({ level }) {
 
 // ── Listen mode — plays through full song with note highlighting ───────────────
 function ListenMode({ song, onBack }) {
-  const [playing,    setPlaying]    = useState(false);
-  const [noteIdx,    setNoteIdx]    = useState(-1);
-  const allNotes = song.measures.flat();
+  const [playing,  setPlaying]  = useState(false);
+  const [noteIdx,  setNoteIdx]  = useState(-1);
+
+  const allNotes    = song.measures.flat();
+  // Only show non-rest notes as chips; map each to its index in allNotes for highlighting
+  const displayNotes = allNotes
+    .map((n, i) => ({ ...n, allIdx: i }))
+    .filter(n => !REST_CODES.has(n.duration));
+
   const timerRef = useRef(null);
   const beatMs   = 60000 / song.bpm;
 
@@ -273,7 +462,6 @@ function ListenMode({ song, onBack }) {
   function play() {
     if (playing) return;
     setPlaying(true);
-    setNoteIdx(0);
     playNote(0);
   }
 
@@ -285,8 +473,10 @@ function ListenMode({ song, onBack }) {
     }
     setNoteIdx(idx);
     const note = allNotes[idx];
-    guitarSampler.playNote(note.noteName);
-    const dur = (note.duration || 1) * beatMs;
+    if (!REST_CODES.has(note.duration)) {
+      guitarSampler.playNote(note.noteName);
+    }
+    const dur = beatDur(note.duration) * beatMs;
     timerRef.current = setTimeout(() => playNote(idx + 1), dur);
   }
 
@@ -315,12 +505,12 @@ function ListenMode({ song, onBack }) {
         padding: '20px 16px', marginBottom: 20, minHeight: 80,
         display: 'flex', flexWrap: 'wrap', gap: 6, alignContent: 'flex-start',
       }}>
-        {allNotes.map((n, i) => (
+        {displayNotes.map((n, i) => (
           <span key={i} style={{
             padding: '4px 10px', borderRadius: 8, fontSize: 13, fontWeight: 700,
-            background: i === noteIdx ? M.accent : 'rgba(255,255,255,0.05)',
-            color: i === noteIdx ? '#fff' : M.muted,
-            border: `1px solid ${i === noteIdx ? M.accent : M.border}`,
+            background: n.allIdx === noteIdx ? M.accent : 'rgba(255,255,255,0.05)',
+            color: n.allIdx === noteIdx ? '#fff' : M.muted,
+            border: `1px solid ${n.allIdx === noteIdx ? M.accent : M.border}`,
             transition: 'background 0.1s, color 0.1s',
           }}>{n.noteName}</span>
         ))}

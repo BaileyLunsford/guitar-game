@@ -170,7 +170,7 @@ export default function Metronome({ theme = {}, title = 'Metronome' }) {
       if (now - smLastTap > 3000) tapTimes = [];
       smLastTap = now;
       tapTimes.push(now);
-      if (tapTimes.length > 8) tapTimes = tapTimes.slice(-8);
+      if (tapTimes.length > 4) tapTimes = tapTimes.slice(-4);
       if (tapTimes.length >= 2) {
         var intervals = [];
         for (var i = 1; i < tapTimes.length; i++) intervals.push(tapTimes[i] - tapTimes[i - 1]);
@@ -181,6 +181,12 @@ export default function Metronome({ theme = {}, title = 'Metronome' }) {
       var self = this;
       setTimeout(function () { self.style.background = 'rgba(199,125,255,0.12)'; }, 100);
     });
+
+    // BPM ±1 buttons
+    var minusBtn = document.getElementById('gm-bpm-minus');
+    var plusBtn  = document.getElementById('gm-bpm-plus');
+    if (minusBtn) minusBtn.addEventListener('click', function () { smUpdateBpm(smBpm - 1); });
+    if (plusBtn)  plusBtn.addEventListener('click',  function () { smUpdateBpm(smBpm + 1); });
 
     // Tuner link
     var tunerLink = document.getElementById('gm-tuner-link');
@@ -291,12 +297,30 @@ export default function Metronome({ theme = {}, title = 'Metronome' }) {
       {/* Beat circles */}
       <div id="gm-beat-display" style={{ display: 'flex', gap: 12, justifyContent: 'center', alignItems: 'center', margin: '8px 0 16px' }} />
 
-      {/* BPM display */}
-      <div style={{ textAlign: 'center', marginBottom: 12 }}>
-        <div id="gm-bpm-display" style={{ fontSize: 80, fontWeight: 900, color: '#fff', lineHeight: 1, textShadow: '0 0 30px rgba(255,255,255,0.2)' }}>
-          60
+      {/* BPM display with ±1 buttons */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 12 }}>
+        <button id="gm-bpm-minus" style={{
+          width: 40, height: 40, borderRadius: '50%',
+          background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)',
+          color: 'rgba(255,255,255,0.7)', fontSize: 22, fontWeight: 900,
+          cursor: 'pointer', fontFamily: 'Georgia, serif',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          lineHeight: 1, flexShrink: 0,
+        }}>−</button>
+        <div style={{ textAlign: 'center' }}>
+          <div id="gm-bpm-display" style={{ fontSize: 80, fontWeight: 900, color: '#fff', lineHeight: 1, textShadow: '0 0 30px rgba(255,255,255,0.2)' }}>
+            60
+          </div>
+          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.2em', marginTop: -8 }}>BPM</div>
         </div>
-        <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.2em', marginTop: -8 }}>BPM</div>
+        <button id="gm-bpm-plus" style={{
+          width: 40, height: 40, borderRadius: '50%',
+          background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)',
+          color: 'rgba(255,255,255,0.7)', fontSize: 22, fontWeight: 900,
+          cursor: 'pointer', fontFamily: 'Georgia, serif',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          lineHeight: 1, flexShrink: 0,
+        }}>+</button>
       </div>
 
       {/* Slider */}
