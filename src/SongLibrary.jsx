@@ -13,6 +13,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import SongLearnEngine from './SongLearnEngine';
 import { guitarSampler } from './guitarSampler';
+import useBackingTrack from './useBackingTrack';
+import { getAudioContext } from './audioContext';
 
 const M = {
   bg:      '#120A04',
@@ -36,6 +38,16 @@ const M = {
 
 const BEAT_MAP = { q: 1, h: 2, w: 4, dq: 1.5, e: 0.5, qr: 1, hr: 2 };
 const REST_CODES = new Set(['qr', 'hr']);
+
+// Map song genre labels → backing track genre keys (blues / rock / country)
+const GENRE_TO_TRACK = {
+  'Children':           'blues',
+  'Classical':          'blues',
+  'Hymn':               'blues',
+  'Folk':               'blues',
+  'Bluegrass':          'country',
+  'Gospel / Bluegrass': 'country',
+};
 
 function beatDur(d) {
   if (!d) return 1;
@@ -449,7 +461,6 @@ function ListenMode({ song, onBack }) {
   const [noteIdx,  setNoteIdx]  = useState(-1);
 
   const allNotes    = song.measures.flat();
-  // Only show non-rest notes as chips; map each to its index in allNotes for highlighting
   const displayNotes = allNotes
     .map((n, i) => ({ ...n, allIdx: i }))
     .filter(n => !REST_CODES.has(n.duration));
@@ -457,10 +468,27 @@ function ListenMode({ song, onBack }) {
   const timerRef = useRef(null);
   const beatMs   = 60000 / song.bpm;
 
-  useEffect(() => () => clearTimeout(timerRef.current), []);
+  // Backing track — genre-mapped, synced to song BPM
+  const trackGenre = GENRE_TO_TRACK[song.genre] || 'blues';
+  const { trackOn, toggleTrack, stopTrack, syncToTime } = useBackingTrack(trackGenre, song.bpm);
+
+  // Cleanup: stop timer + backing track when component unmounts or user goes back
+  useEffect(() => () => {
+    clearTimeout(timerRef.current);
+    stopTrack();
+  }, []); // eslint-disable-line
 
   function play() {
     if (playing) return;
+    guitarSampler.resume?.();
+    // Anchor backing track to the same start time as note playback
+    const ctx = getAudioContext();
+    const startTime = ctx.currentTime + 0.05;
+    if (trackOn) {
+      syncToTime(startTime);
+    } else {
+      toggleTrack(); // auto-start; useBackingTrack effect fires on next cycle at ~startTime
+    }
     setPlaying(true);
     playNote(0);
   }
@@ -469,6 +497,7 @@ function ListenMode({ song, onBack }) {
     if (idx >= allNotes.length) {
       setPlaying(false);
       setNoteIdx(-1);
+      stopTrack(); // auto-stop when song finishes
       return;
     }
     setNoteIdx(idx);
@@ -484,19 +513,25 @@ function ListenMode({ song, onBack }) {
     clearTimeout(timerRef.current);
     setPlaying(false);
     setNoteIdx(-1);
+    stopTrack();
+  }
+
+  function handleBack() {
+    stop();
+    onBack();
   }
 
   return (
     <div style={{ padding: '0 20px', maxWidth: 480, margin: '0 auto' }}>
       <div style={{ marginBottom: 20 }}>
-        <button onClick={onBack} style={backBtn}>‹ Back</button>
+        <button onClick={handleBack} style={backBtn}>‹ Back</button>
         <div style={{ fontSize: 13, color: M.muted, marginBottom: 4 }}>{song.genre}</div>
         <h2 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 4px',
           background: `linear-gradient(135deg,${M.accent},${M.hi})`,
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           {song.title}
         </h2>
-        <div style={{ fontSize: 12, color: M.muted }}>Listen Mode · {song.durationEst}</div>
+        <div style={{ fontSize: 12, color: M.muted }}>Listen Mode · {song.durationEst} · {song.bpm} BPM</div>
       </div>
 
       {/* Note display */}
@@ -516,12 +551,26 @@ function ListenMode({ song, onBack }) {
         ))}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
+      {/* Controls */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
         {!playing ? (
           <button onClick={play} style={primaryBtn}>▶ Play</button>
         ) : (
           <button onClick={stop} style={primaryBtn}>⏹ Stop</button>
         )}
+        <button
+          onClick={toggleTrack}
+          style={{
+            padding: '14px 20px', borderRadius: 14, cursor: 'pointer',
+            border: `1px solid ${trackOn ? M.borderHi : M.border}`,
+            background: trackOn ? 'rgba(232,131,58,0.18)' : 'rgba(196,100,40,0.08)',
+            color: trackOn ? M.hi : M.muted,
+            fontFamily: "Georgia, serif", fontSize: 14, fontWeight: 700,
+            transition: 'all 0.15s',
+          }}
+        >
+          🥁 {trackOn ? 'Track On' : 'Track Off'}
+        </button>
       </div>
     </div>
   );
