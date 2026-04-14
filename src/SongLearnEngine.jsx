@@ -15,6 +15,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import TabNotationDisplay from './TabNotationDisplay';
 import LandingPage from './LandingPage';
 import { guitarSampler } from './guitarSampler';
+import useBackingTrack from './useBackingTrack';
 
 // ─── Mahogany palette ────────────────────────────────────────────────────────
 const M = {
@@ -59,6 +60,8 @@ export default function SongLearnEngine({ song }) {
 
   const loopTimerRef  = useRef(null);
   const noteTimersRef = useRef([]);
+
+  const { trackOn, toggleTrack, stopTrack } = useBackingTrack('blues', bpm);
 
   const measures       = song?.measures ?? [];
   const total          = measures.length;
@@ -162,6 +165,7 @@ export default function SongLearnEngine({ song }) {
   // Navigate to the full-song playback screen
   function handlePlaySong() {
     setLoop(false);
+    stopTrack();
     window.location.hash = '#song-play';
   }
 
@@ -265,13 +269,14 @@ export default function SongLearnEngine({ song }) {
           </button>
         </div>
 
-        {/* ── Play full song + Loop ─────────────────────────────────────── */}
+        {/* ── Play full song + Loop + Track ────────────────────────────── */}
         <div style={{
           display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 20,
+          flexWrap: 'wrap',
         }}>
           <button
             onClick={handlePlaySong}
-            style={{ ...btnStyle(false, false), paddingLeft: 26, paddingRight: 26 }}
+            style={{ ...btnStyle(false, false), paddingLeft: 22, paddingRight: 22 }}
           >
             ▶ Play Full Song
           </button>
@@ -280,6 +285,12 @@ export default function SongLearnEngine({ song }) {
             style={btnStyle(loop, false)}
           >
             🔁 {loop ? 'Loop On' : 'Loop Off'}
+          </button>
+          <button
+            onClick={toggleTrack}
+            style={btnStyle(trackOn, false)}
+          >
+            🥁 {trackOn ? 'Track On' : 'Track Off'}
           </button>
         </div>
 
@@ -318,7 +329,11 @@ export default function SongLearnEngine({ song }) {
 
         {/* ── Back link ─────────────────────────────────────────────────── */}
         <div style={{ textAlign: 'center', paddingBottom: 40 }}>
-          <a href="#" style={{ color: M.muted, fontSize: 13, textDecoration: 'none' }}>
+          <a
+            href="#"
+            onClick={() => stopTrack()}
+            style={{ color: M.muted, fontSize: 13, textDecoration: 'none' }}
+          >
             ← Back to home
           </a>
         </div>

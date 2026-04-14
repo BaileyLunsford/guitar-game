@@ -188,10 +188,15 @@ function TriadsSection() {
   const [groupIdx,    setGroupIdx]    = useState(0);
   const [root,        setRoot]        = useState('G');
   const [inversion,   setInversion]   = useState(0);
-  const [playing,     setPlaying]     = useState(false);
+  const [playMode,    setPlayMode]    = useState(null); // null | 'chord' | 'arp'
+  const [triadBpm,    setTriadBpm]    = useState(80);
   const playTimerRef = useRef(null);
+  const arpTimersRef = useRef([]);
 
-  useEffect(() => () => clearTimeout(playTimerRef.current), []);
+  useEffect(() => () => {
+    clearTimeout(playTimerRef.current);
+    arpTimersRef.current.forEach(t => clearTimeout(t));
+  }, []);
 
   const group  = STRING_GROUPS[groupIdx];
   const shapes = computeTriad(group.asc, ROOT_SEMI[root], INTERVALS[quality]);
@@ -201,22 +206,45 @@ function TriadsSection() {
     ? buildDiagramFrets(group.asc, shape.relFrets)
     : [-1,-1,-1,-1,-1,-1];
 
-  function hearTriad() {
-    if (!shape) return;
-    guitarSampler.resume?.();
-    shape.guitarFrets.forEach((f, i) => {
-      const semi = OPEN_SEMI[group.asc[i]] + f;
-      guitarSampler.playNote(semToName(semi));
-    });
-    setPlaying(true);
+  function stopPlay() {
     clearTimeout(playTimerRef.current);
-    playTimerRef.current = setTimeout(() => setPlaying(false), 1200);
+    arpTimersRef.current.forEach(t => clearTimeout(t));
+    arpTimersRef.current = [];
+    setPlayMode(null);
   }
 
-  // Triad note label: e.g. "G B D"
-  const triadNoteLabels = shape
-    ? shape.noteNames.map(n => n.replace(/\d/,'')).join(' – ')
-    : '—';
+  function playChord() {
+    if (!shape) return;
+    stopPlay();
+    guitarSampler.resume?.();
+    shape.guitarFrets.forEach((f, i) => {
+      guitarSampler.playNote(semToName(OPEN_SEMI[group.asc[i]] + f));
+    });
+    setPlayMode('chord');
+    playTimerRef.current = setTimeout(() => setPlayMode(null), 1200);
+  }
+
+  function playArpeggio() {
+    if (!shape) return;
+    stopPlay();
+    guitarSampler.resume?.();
+    const beatMs = 60000 / triadBpm;
+    shape.guitarFrets.forEach((f, i) => {
+      const t = setTimeout(() => {
+        guitarSampler.playNote(semToName(OPEN_SEMI[group.asc[i]] + f));
+        if (i === shape.guitarFrets.length - 1) {
+          playTimerRef.current = setTimeout(() => setPlayMode(null), beatMs);
+        }
+      }, i * beatMs);
+      arpTimersRef.current.push(t);
+    });
+    setPlayMode('arp');
+  }
+
+  function playSingleNote(noteNameFull) {
+    guitarSampler.resume?.();
+    guitarSampler.playNote(noteNameFull);
+  }
 
   const rootQualLabel = root + (quality === 'minor' ? 'm' : '');
 
@@ -291,31 +319,88 @@ function TriadsSection() {
           </div>
         )}
 
-        {/* Note names */}
+        {/* Individual note pills */}
         {shape && (
-          <div style={{ fontSize: 13, color: M.muted, marginTop: 4, marginBottom: 16 }}>
-            {triadNoteLabels}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 4, marginBottom: 14 }}>
+            {shape.noteNames.map((nn, i) => (
+              <button
+                key={i}
+                onClick={() => playSingleNote(nn)}
+                style={{
+                  padding: '6px 14px', borderRadius: 20,
+                  border: `1px solid ${M.borderHi}`,
+                  background: 'rgba(232,131,58,0.10)',
+                  color: M.hi, fontFamily: "Georgia, serif",
+                  fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  transition: 'background 0.12s',
+                }}
+              >
+                {nn.replace(/\d/, '')}
+              </button>
+            ))}
           </div>
         )}
 
-        {/* Hear button */}
-        <button
-          onClick={hearTriad}
-          disabled={!shape}
-          style={{
-            padding: '12px 28px', borderRadius: 12,
-            border: `1px solid ${playing ? M.accent : M.borderHi}`,
-            background: playing
-              ? `linear-gradient(135deg,${M.accent},${M.hi})`
-              : 'rgba(232,131,58,0.12)',
-            color: playing ? '#fff' : M.accent,
-            fontFamily: "Georgia, serif", fontSize: 14, fontWeight: 700,
-            cursor: shape ? 'pointer' : 'not-allowed',
-            transition: 'all 0.15s',
-          }}
-        >
-          {playing ? '♪ Playing…' : '🎵 Hear Triad'}
-        </button>
+        {/* Chord / Arpeggio buttons + BPM */}
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={playChord}
+            disabled={!shape}
+            style={{
+              padding: '10px 20px', borderRadius: 12,
+              border: `1px solid ${playMode === 'chord' ? M.accent : M.borderHi}`,
+              background: playMode === 'chord'
+                ? `linear-gradient(135deg,${M.accent},${M.hi})`
+                : 'rgba(232,131,58,0.12)',
+              color: playMode === 'chord' ? '#fff' : M.accent,
+              fontFamily: "Georgia, serif", fontSize: 13, fontWeight: 700,
+              cursor: shape ? 'pointer' : 'not-allowed',
+              transition: 'all 0.15s',
+            }}
+          >
+            {playMode === 'chord' ? '♪ Playing…' : '♪ Chord'}
+          </button>
+          <button
+            onClick={playArpeggio}
+            disabled={!shape}
+            style={{
+              padding: '10px 20px', borderRadius: 12,
+              border: `1px solid ${playMode === 'arp' ? M.accent : M.borderHi}`,
+              background: playMode === 'arp'
+                ? `linear-gradient(135deg,${M.accent},${M.hi})`
+                : 'rgba(232,131,58,0.12)',
+              color: playMode === 'arp' ? '#fff' : M.accent,
+              fontFamily: "Georgia, serif", fontSize: 13, fontWeight: 700,
+              cursor: shape ? 'pointer' : 'not-allowed',
+              transition: 'all 0.15s',
+            }}
+          >
+            {playMode === 'arp' ? '♩ Playing…' : '♩ Arpeggio'}
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button
+              onClick={() => setTriadBpm(b => Math.max(40, b - 5))}
+              style={{
+                width: 28, height: 28, borderRadius: 8, border: `1px solid ${M.border}`,
+                background: 'rgba(196,100,40,0.08)', color: M.muted,
+                fontFamily: "Georgia, serif", fontSize: 16, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >−</button>
+            <span style={{ fontSize: 13, color: M.muted, minWidth: 44, textAlign: 'center' }}>
+              {triadBpm} <span style={{ fontSize: 10 }}>bpm</span>
+            </span>
+            <button
+              onClick={() => setTriadBpm(b => Math.min(200, b + 5))}
+              style={{
+                width: 28, height: 28, borderRadius: 8, border: `1px solid ${M.border}`,
+                background: 'rgba(196,100,40,0.08)', color: M.muted,
+                fontFamily: "Georgia, serif", fontSize: 16, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >+</button>
+          </div>
+        </div>
       </div>
 
       {/* Prev / Next inversions */}
