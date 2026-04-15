@@ -712,7 +712,13 @@ function Home({ ambOn, ambToggle, onShowTour, onShowSettings, isPro, onUpgrade, 
                 <a
                   key={f.title}
                   href={(!f.soon && f.hash) ? f.hash : undefined}
-                  onClick={isLocked ? (e) => { e.preventDefault(); onUpgrade(); } : undefined}
+                  onClick={
+                    isLocked
+                      ? (e) => { e.preventDefault(); onUpgrade(); }
+                      : (!f.soon && f.hash)
+                        ? (e) => { e.preventDefault(); window.location.hash = f.hash; }
+                        : undefined
+                  }
                   className={`feat-card${f.soon ? ' soon' : ''}`}
                   style={isLocked ? { cursor: 'pointer', pointerEvents: 'auto', opacity: 0.55 } : undefined}
                 >

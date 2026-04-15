@@ -151,9 +151,9 @@ export default function CircleOfFifths({ isPro, onUpgrade }) {
               const isActive = selected === i;
               const color    = keyColor(item.sharps);
 
-              // Wedge path
-              const a1 = ((i * 30 - 15) * Math.PI) / 180;
-              const a2 = ((i * 30 + 15) * Math.PI) / 180;
+              // Wedge path — must use same -90° offset as text positions
+              const a1 = ((i * 30 - 90 - 15) * Math.PI) / 180;
+              const a2 = ((i * 30 - 90 + 15) * Math.PI) / 180;
               const ox1 = CX + R_OUTER * Math.cos(a1), oy1 = CY + R_OUTER * Math.sin(a1);
               const ox2 = CX + R_OUTER * Math.cos(a2), oy2 = CY + R_OUTER * Math.sin(a2);
               const ix1 = CX + R_INNER * Math.cos(a1), iy1 = CY + R_INNER * Math.sin(a1);
