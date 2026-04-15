@@ -16,6 +16,7 @@ import TabNotationDisplay from './TabNotationDisplay';
 import LandingPage from './LandingPage';
 import { guitarSampler } from './guitarSampler';
 import useBackingTrack from './useBackingTrack';
+import useMetronome from './useMetronome';
 import { getAudioContext } from './audioContext';
 
 // ─── Mahogany palette ────────────────────────────────────────────────────────
@@ -63,6 +64,7 @@ export default function SongLearnEngine({ song }) {
   const noteTimersRef = useRef([]);
 
   const { trackOn, toggleTrack, stopTrack, syncToTime } = useBackingTrack('blues', bpm);
+  const { clickOn, toggleClick, stopClick }              = useMetronome(bpm);
 
   const measures       = song?.measures ?? [];
   const total          = measures.length;
@@ -146,7 +148,8 @@ export default function SongLearnEngine({ song }) {
   useEffect(() => () => {
     clearTimeout(loopTimerRef.current);
     clearNoteTimers();
-  }, []);
+    stopClick();
+  }, []); // eslint-disable-line
 
   // ── Controls ──────────────────────────────────────────────────────────────
 
@@ -170,6 +173,7 @@ export default function SongLearnEngine({ song }) {
   function handlePlaySong() {
     setLoop(false);
     stopTrack();
+    stopClick();
     window.location.hash = '#song-play';
   }
 
@@ -329,13 +333,19 @@ export default function SongLearnEngine({ song }) {
           >
             +
           </button>
+          <button
+            onClick={toggleClick}
+            style={{ ...btnStyle(clickOn, false), padding: '7px 14px', fontSize: 13 }}
+          >
+            🎵 {clickOn ? 'Met On' : 'Met Off'}
+          </button>
         </div>
 
         {/* ── Back link ─────────────────────────────────────────────────── */}
         <div style={{ textAlign: 'center', paddingBottom: 40 }}>
           <a
             href="#"
-            onClick={() => stopTrack()}
+            onClick={() => { stopTrack(); stopClick(); }}
             style={{ color: M.muted, fontSize: 13, textDecoration: 'none' }}
           >
             ← Back to home

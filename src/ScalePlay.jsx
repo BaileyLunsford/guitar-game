@@ -11,6 +11,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import TabNotationDisplay from './TabNotationDisplay';
 import UpgradeModal from './UpgradeModal';
 import { guitarSampler } from './guitarSampler';
+import useMetronome from './useMetronome';
 
 // ─── Mahogany palette ────────────────────────────────────────────────────────
 const M = {
@@ -505,6 +506,7 @@ export default function ScalePlay({ isPro = false, onPurchase, onRestore }) {
   const [noteIdx,    setNoteIdx]   = useState(0);
   const [bpm,        setBpm]       = useState(80);
   const [loop,       setLoop]      = useState(false);
+  const { clickOn, toggleClick, stopClick } = useMetronome(bpm);
   const [loopTick,   setLoopTick]  = useState(0);
   const [activeNote,     setActiveNote]     = useState(null); // null or noteIdx when playing
   const [hearActiveFret, setHearActiveFret] = useState(null); // {string,fret} during Hear the Scale
@@ -757,6 +759,10 @@ export default function ScalePlay({ isPro = false, onPurchase, onRestore }) {
             </div>
             <button onClick={() => setBpm(b => Math.min(200, b + 1))} disabled={bpm >= 200}
               style={{ ...btnStyle(false, bpm >= 200), padding: '6px 14px', fontSize: 18, lineHeight: 1 }}>+</button>
+            <button onClick={toggleClick}
+              style={{ ...btnStyle(clickOn, false), padding: '6px 12px', fontSize: 12 }}>
+              🎵 {clickOn ? 'Met On' : 'Met Off'}
+            </button>
           </div>
 
           {/* Start Drill */}
@@ -772,7 +778,7 @@ export default function ScalePlay({ isPro = false, onPurchase, onRestore }) {
 
           {/* Back */}
           <div style={{ textAlign: 'center', paddingBottom: 40 }}>
-            <a href="#" style={{ color: M.muted, fontSize: 13, textDecoration: 'none' }}>
+            <a href="#" onClick={() => stopClick()} style={{ color: M.muted, fontSize: 13, textDecoration: 'none' }}>
               ← Back to home
             </a>
           </div>

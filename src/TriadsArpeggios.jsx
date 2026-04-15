@@ -10,6 +10,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ChordDiagram from './ChordDiagram';
 import { guitarSampler } from './guitarSampler';
 import LandingPage from './LandingPage';
+import useMetronome from './useMetronome';
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 const M = {
@@ -430,8 +431,9 @@ function ArpeggiosSection() {
   const [playing,  setPlaying]  = useState(false);
   const [activeIdx,setActiveIdx]= useState(-1);
   const timerRef   = useRef(null);
+  const { clickOn, toggleClick, stopClick } = useMetronome(bpm);
 
-  useEffect(() => () => clearTimeout(timerRef.current), []);
+  useEffect(() => () => { clearTimeout(timerRef.current); stopClick(); }, []); // eslint-disable-line
 
   const ascending  = computeArpeggio(ROOT_SEMI[root], INTERVALS[quality]);
   const descending = [...ascending].reverse();
@@ -553,8 +555,8 @@ function ArpeggiosSection() {
         }}>{bpm}</span>
       </div>
 
-      {/* Play button */}
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
+      {/* Play + Met buttons */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
         <button onClick={playArpeggio} style={{
           padding: '14px 40px', borderRadius: 14,
           border: `1px solid ${playing ? M.accent : M.borderHi}`,
@@ -567,6 +569,16 @@ function ArpeggiosSection() {
           transition: 'all 0.15s',
         }}>
           {playing ? '⏹ Stop' : '▶ Play Arpeggio'}
+        </button>
+        <button onClick={toggleClick} style={{
+          padding: '14px 20px', borderRadius: 14,
+          border: `1px solid ${clickOn ? M.accent : M.borderHi}`,
+          background: clickOn ? 'rgba(232,131,58,0.22)' : 'rgba(196,100,40,0.10)',
+          color: clickOn ? M.hi : M.muted,
+          fontFamily: "Georgia, serif", fontWeight: 700, fontSize: 14, cursor: 'pointer',
+          transition: 'all 0.15s',
+        }}>
+          🎵 {clickOn ? 'Met On' : 'Met Off'}
         </button>
       </div>
     </div>

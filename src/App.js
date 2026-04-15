@@ -12,7 +12,7 @@ import BarreChords from './BarreChords';
 import CAGEDSystem from './CAGEDSystem';
 import ScalePlay from './ScalePlay';
 import useIAP from './useIAP';
-import useAmbience from './useAmbience';
+import useCrowdAmbience from './useCrowdAmbience';
 import LandingPage from './LandingPage';
 import AuditionGame from './AuditionGame';
 import LickPlay from './LickPlay';
@@ -24,6 +24,10 @@ import SettingsModal from './SettingsModal';
 import ProgressTracker, { useProgressTracker, StreakBanner } from './ProgressTracker';
 import SongLibrary from './SongLibrary';
 import TriadsArpeggios from './TriadsArpeggios';
+import SongBackingTracks from './SongBackingTracks';
+import CircleOfFifths from './CircleOfFifths';
+import NashvilleNumbers from './NashvilleNumbers';
+import FretboardTheory from './FretboardTheory';
 
 const GUITAR_STRINGS = [
   { label: 'E2', freq: 82.41  },
@@ -45,106 +49,67 @@ const GUITAR_THEME = { bg: '#120A04', card: '#2A1208', amber: '#E8A050', accent:
 // #7B9E6B  sage green          (correct feedback)
 // #C4603A  ember               (wrong feedback)
 
-// ─── Song-learn data: Twinkle Twinkle — 14 measures, strings 1-2 ─────────────
-// String 1 = high E (E4 open): fret0=E4, fret1=F4, fret3=G4, fret5=A4
+// ─── Song-learn data: Ode to Joy — 8 measures, strings 1-2 ──────────────────
+// String 1 = high E (E4 open): fret0=E4, fret1=F4, fret3=G4
 // String 2 = B (B3 open):      fret1=C4, fret3=D4
-// duration:2 = half note (occupies beats 3-4); measureMs uses max beat,
-// so a half note on beat 3 with duration:2 correctly spans to beat 4.
-const TWINKLE_SONG = {
-  title: 'Twinkle Twinkle Little Star',
-  bpm: 80,
+// dq = dotted quarter (1.5 beats), e = eighth (0.5 beats), h = half (2 beats)
+const ODE_TO_JOY = {
+  title: 'Ode to Joy',
+  bpm: 120,
   measures: [
-    // M1: C C G G
+    // M1: E4-q E4-q F4-q G4-q
+    [
+      { string: 1, fret: 0, beat: 1, noteName: 'E4' },
+      { string: 1, fret: 0, beat: 2, noteName: 'E4' },
+      { string: 1, fret: 1, beat: 3, noteName: 'F4' },
+      { string: 1, fret: 3, beat: 4, noteName: 'G4' },
+    ],
+    // M2: G4-q F4-q E4-q D4-q
+    [
+      { string: 1, fret: 3, beat: 1, noteName: 'G4' },
+      { string: 1, fret: 1, beat: 2, noteName: 'F4' },
+      { string: 1, fret: 0, beat: 3, noteName: 'E4' },
+      { string: 2, fret: 3, beat: 4, noteName: 'D4' },
+    ],
+    // M3: C4-q C4-q D4-q E4-q
     [
       { string: 2, fret: 1, beat: 1, noteName: 'C4' },
       { string: 2, fret: 1, beat: 2, noteName: 'C4' },
-      { string: 1, fret: 3, beat: 3, noteName: 'G4' },
-      { string: 1, fret: 3, beat: 4, noteName: 'G4' },
-    ],
-    // M2: A A G G
-    [
-      { string: 1, fret: 5, beat: 1, noteName: 'A4' },
-      { string: 1, fret: 5, beat: 2, noteName: 'A4' },
-      { string: 1, fret: 3, beat: 3, noteName: 'G4' },
-      { string: 1, fret: 3, beat: 4, noteName: 'G4' },
-    ],
-    // M3: F F E E
-    [
-      { string: 1, fret: 1, beat: 1, noteName: 'F4' },
-      { string: 1, fret: 1, beat: 2, noteName: 'F4' },
-      { string: 1, fret: 0, beat: 3, noteName: 'E4' },
+      { string: 2, fret: 3, beat: 3, noteName: 'D4' },
       { string: 1, fret: 0, beat: 4, noteName: 'E4' },
     ],
-    // M4: D D C(half)
+    // M4: E4-dq D4-e D4-h
     [
-      { string: 2, fret: 3, beat: 1, noteName: 'D4' },
-      { string: 2, fret: 3, beat: 2, noteName: 'D4' },
-      { string: 2, fret: 1, beat: 3, noteName: 'C4', duration: 2 },
+      { string: 1, fret: 0, beat: 1,   noteName: 'E4', duration: 1.5 },
+      { string: 2, fret: 3, beat: 2.5, noteName: 'D4', duration: 0.5 },
+      { string: 2, fret: 3, beat: 3,   noteName: 'D4', duration: 2   },
     ],
-    // M5: G G F F
-    [
-      { string: 1, fret: 3, beat: 1, noteName: 'G4' },
-      { string: 1, fret: 3, beat: 2, noteName: 'G4' },
-      { string: 1, fret: 1, beat: 3, noteName: 'F4' },
-      { string: 1, fret: 1, beat: 4, noteName: 'F4' },
-    ],
-    // M6: E E D(half)
+    // M5: E4-q E4-q F4-q G4-q
     [
       { string: 1, fret: 0, beat: 1, noteName: 'E4' },
       { string: 1, fret: 0, beat: 2, noteName: 'E4' },
-      { string: 2, fret: 3, beat: 3, noteName: 'D4', duration: 2 },
+      { string: 1, fret: 1, beat: 3, noteName: 'F4' },
+      { string: 1, fret: 3, beat: 4, noteName: 'G4' },
     ],
-    // M7: G G F F
+    // M6: G4-q F4-q E4-q D4-q
     [
       { string: 1, fret: 3, beat: 1, noteName: 'G4' },
-      { string: 1, fret: 3, beat: 2, noteName: 'G4' },
-      { string: 1, fret: 1, beat: 3, noteName: 'F4' },
-      { string: 1, fret: 1, beat: 4, noteName: 'F4' },
+      { string: 1, fret: 1, beat: 2, noteName: 'F4' },
+      { string: 1, fret: 0, beat: 3, noteName: 'E4' },
+      { string: 2, fret: 3, beat: 4, noteName: 'D4' },
     ],
-    // M8: E E D(half)
-    [
-      { string: 1, fret: 0, beat: 1, noteName: 'E4' },
-      { string: 1, fret: 0, beat: 2, noteName: 'E4' },
-      { string: 2, fret: 3, beat: 3, noteName: 'D4', duration: 2 },
-    ],
-    // M9: G G F F
-    [
-      { string: 1, fret: 3, beat: 1, noteName: 'G4' },
-      { string: 1, fret: 3, beat: 2, noteName: 'G4' },
-      { string: 1, fret: 1, beat: 3, noteName: 'F4' },
-      { string: 1, fret: 1, beat: 4, noteName: 'F4' },
-    ],
-    // M10: E E D(half)
-    [
-      { string: 1, fret: 0, beat: 1, noteName: 'E4' },
-      { string: 1, fret: 0, beat: 2, noteName: 'E4' },
-      { string: 2, fret: 3, beat: 3, noteName: 'D4', duration: 2 },
-    ],
-    // M11: C C G G  (Twinkle twinkle reprise)
+    // M7: C4-q C4-q D4-q E4-q
     [
       { string: 2, fret: 1, beat: 1, noteName: 'C4' },
       { string: 2, fret: 1, beat: 2, noteName: 'C4' },
-      { string: 1, fret: 3, beat: 3, noteName: 'G4' },
-      { string: 1, fret: 3, beat: 4, noteName: 'G4' },
-    ],
-    // M12: A A G(half)
-    [
-      { string: 1, fret: 5, beat: 1, noteName: 'A4' },
-      { string: 1, fret: 5, beat: 2, noteName: 'A4' },
-      { string: 1, fret: 3, beat: 3, noteName: 'G4', duration: 2 },
-    ],
-    // M13: F F E E
-    [
-      { string: 1, fret: 1, beat: 1, noteName: 'F4' },
-      { string: 1, fret: 1, beat: 2, noteName: 'F4' },
-      { string: 1, fret: 0, beat: 3, noteName: 'E4' },
+      { string: 2, fret: 3, beat: 3, noteName: 'D4' },
       { string: 1, fret: 0, beat: 4, noteName: 'E4' },
     ],
-    // M14: D D C(half)
+    // M8: D4-dq C4-e C4-h
     [
-      { string: 2, fret: 3, beat: 1, noteName: 'D4' },
-      { string: 2, fret: 3, beat: 2, noteName: 'D4' },
-      { string: 2, fret: 1, beat: 3, noteName: 'C4', duration: 2 },
+      { string: 2, fret: 3, beat: 1,   noteName: 'D4', duration: 1.5 },
+      { string: 2, fret: 1, beat: 2.5, noteName: 'C4', duration: 0.5 },
+      { string: 2, fret: 1, beat: 3,   noteName: 'C4', duration: 2   },
     ],
   ],
 };
@@ -522,7 +487,7 @@ const HOME_SECTIONS = [
     label: 'Beginner', sectionBadge: 'FREE', sectionBadgeClass: 'badge-free',
     items: [
       { icon: '🎯', title: 'Audition Game',  desc: 'Sight-read notes with real-time mic pitch detection', hash: '#audition',      pro: false },
-      { icon: '📚', title: 'Song Library',   desc: 'Twinkle free · 5 more songs with PRO',               hash: '#song-library',  pro: false },
+      { icon: '📚', title: 'Song Library',   desc: 'Ode to Joy free · 5 more songs with PRO',            hash: '#song-library',  pro: false },
       { icon: '🎵', title: 'Song Learn',     desc: 'Measure-by-measure playback with notation & tab',    hash: '#song-learn',    pro: false },
       { icon: '🃏', title: 'Flashcards',     desc: 'Drill notes, chords, tab & theory — flip to check', hash: '#flashcards',    pro: false },
     ],
@@ -542,7 +507,10 @@ const HOME_SECTIONS = [
       { icon: '🎸', title: 'CAGED System',       desc: 'One chord. Five positions. The whole neck.',  hash: '#caged', pro: true, soon: false },
       { icon: '🎵', title: 'Lick Play',           desc: 'Classic riffs and phrases by style',          hash: '#lick-play', pro: false },
       { icon: '🎙', title: 'Triads & Arpeggios',  desc: 'Lead playing essentials — triads, inversions, arpeggios', hash: '#triads', pro: true, soon: false },
-      { icon: '🎛', title: 'Backing Tracks',       desc: 'Full band for every genre',                   hash: null,     pro: true, soon: true  },
+      { icon: '🎛', title: 'Song Backing Tracks',   desc: 'Drums, bass & click for every genre',         hash: '#backing-tracks', pro: false, soon: false },
+      { icon: '🔵', title: 'Circle of Fifths',     desc: 'All 12 keys, chords & key signatures',        hash: '#circle-fifths',  pro: true,  soon: false },
+      { icon: '🎼', title: 'Nashville Numbers',     desc: '1-4-5 chord charts in any key',               hash: '#nashville',      pro: true,  soon: false },
+      { icon: '📐', title: 'Fretboard Theory',      desc: 'Scales, keys & chords from first principles', hash: '#fretboard-theory',pro: true, soon: false },
     ],
   },
   {
@@ -787,7 +755,7 @@ export default function App() {
   const [showUpgrade,  setShowUpgrade]  = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
   const { isPro, purchase, restore, restorePurchases, devToggle } = useIAP();
-  const { ambOn, ambToggle, ambStop } = useAmbience('/orchestra.wav');
+  const { ambOn, ambToggle, ambStop } = useCrowdAmbience();
   const { getTodayMinutes } = useProgressTracker();
 
   // Guard: auto-show tour only on first launch. Never re-trigger after guitar_tour_seen is set.
@@ -848,8 +816,8 @@ export default function App() {
 
   if (hash === '#audition')     return <AuditionGame />;
   if (hash === '#tab-test')     return <TabTest />;
-  if (hash === '#song-learn')   return <SongLearnEngine song={TWINKLE_SONG} />;
-  if (hash === '#song-play')    return <SongPlayScreen  song={TWINKLE_SONG} />;
+  if (hash === '#song-learn')   return <SongLearnEngine song={ODE_TO_JOY} />;
+  if (hash === '#song-play')    return <SongPlayScreen  song={ODE_TO_JOY} />;
   if (hash === '#song-library') return <SongLibrary isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
   if (hash === '#progress')     return <ProgressTracker isPro={isPro} getTodayMinutes={getTodayMinutes} />;
   if (hash === '#tuner')        return <Tuner strings={GUITAR_STRINGS} theme={GUITAR_THEME} title="Tune Your Guitar" />;
@@ -860,7 +828,11 @@ export default function App() {
   if (hash === '#caged')        return <CAGEDSystem  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
   if (hash === '#flashcards')   return <Flashcards   isPro={isPro} onPurchase={purchase} onRestore={restore} />;
   if (hash === '#metronome')    return <Metronome theme={GUITAR_THEME} title="Guitar Metronome" />;
-  if (hash === '#triads')       return <TriadsArpeggios isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
+  if (hash === '#triads')          return <TriadsArpeggios   isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
+  if (hash === '#backing-tracks')  return <SongBackingTracks />;
+  if (hash === '#circle-fifths')   return <CircleOfFifths    isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
+  if (hash === '#nashville')       return <NashvilleNumbers  isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
+  if (hash === '#fretboard-theory')return <FretboardTheory   isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
 
   return (
     <>

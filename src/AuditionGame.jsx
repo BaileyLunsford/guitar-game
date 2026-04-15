@@ -172,14 +172,24 @@ function detectPitch(buf, sr) {
   return { freq: best !== -1 ? sr / best : -1, rms };
 }
 
+// Formula approach: A4=440 Hz reference, 12-TET
+// noteIndex = round(12 * log2(freq / 440)) + 69  (MIDI note number)
+// Verified: F#2=92.50Hz→18→F#2 ✓  A4=440Hz→69→A4 ✓  E4=329.63Hz→64→E4 ✓
+const NOTE_NAMES_CHROMATIC = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const CENTS_TOLERANCE = 50; // ±50 cents = ±half semitone
+
 function freqToNote(freq) {
-  if (!freq || freq < 70) return null;
-  let best = null, minD = Infinity;
-  for (const [n, f] of Object.entries(NOTE_FREQ)) {
-    const d = Math.abs(freq - f);
-    if (d < minD) { minD = d; best = n; }
-  }
-  return minD < NOTE_TOL ? best : null;
+  if (!freq || freq < 70 || freq > 1400) return null;
+  const noteIndex  = Math.round(12 * Math.log2(freq / 440)) + 69;
+  if (noteIndex < 28 || noteIndex > 88) return null; // E2–E5 range
+  const octave     = Math.floor(noteIndex / 12) - 1;
+  const name       = NOTE_NAMES_CHROMATIC[noteIndex % 12] + octave;
+  // Reject if the note is not in our game's NOTE_FREQ table
+  if (!(name in NOTE_FREQ)) return null;
+  // Cents-based tolerance check — rejects if detection is more than ±50¢ off
+  const exactFreq  = NOTE_FREQ[name];
+  const cents      = Math.abs(1200 * Math.log2(freq / exactFreq));
+  return cents < CENTS_TOLERANCE ? name : null;
 }
 
 function buildQueue(lvl) {
@@ -198,8 +208,8 @@ const M = {
 const RING_R = 44;
 const RING_C = 2 * Math.PI * RING_R;
 
-// Standard position marker frets (single dot; 12 gets double dot)
-const POSITION_DOTS = new Set([3, 5, 7, 9, 12]);
+// Standard guitar position marker frets (single dot; 12 & 24 get double dot)
+const POSITION_DOTS = new Set([3, 5, 7, 9, 12, 15, 17]);
 
 // ── Inline mini-fretboard hint ────────────────────────────────────────────────
 function FretHint({ note }) {

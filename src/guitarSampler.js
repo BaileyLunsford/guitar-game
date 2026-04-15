@@ -93,6 +93,8 @@ export class InstrumentSampler {
 
   async playNote(note, { volume = null, detune = null } = {}) {
     const ctx = this._getCtx();
+    // Resume AudioContext if browser suspended it (tab switch, iOS autoplay policy, etc.)
+    if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (_) {} }
 
     let buffer;
     try {
@@ -184,6 +186,11 @@ export class InstrumentSampler {
 export const guitarSampler = new InstrumentSampler({
   basePath:   'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/acoustic_guitar_steel-mp3',
   polyphonic: true, // guitar strings ring independently
+});
+
+// Resume AudioContext when user returns to the tab (handles browser suspension)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) guitarSampler.resume();
 });
 
 // Warm the open strings + key fretted notes on load so first play is instant.

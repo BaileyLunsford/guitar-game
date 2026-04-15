@@ -1,8 +1,8 @@
 /**
  * SongLibrary.jsx — song list → detail → Listen / Learn / Play
  *
- * FREE: Twinkle Twinkle Little Star
- * PRO:  Ode to Joy, Amazing Grace, Cripple Creek, Shady Grove,
+ * FREE: Ode to Joy
+ * PRO:  Twinkle Twinkle Little Star, Amazing Grace, Cripple Creek, Shady Grove,
  *       Will the Circle Be Unbroken
  *
  * Props:
@@ -14,6 +14,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import SongLearnEngine from './SongLearnEngine';
 import { guitarSampler } from './guitarSampler';
 import useBackingTrack from './useBackingTrack';
+import useMetronome from './useMetronome';
 import { getAudioContext } from './audioContext';
 
 const M = {
@@ -57,12 +58,77 @@ function beatDur(d) {
 
 const SONGS = [
   {
+    id: 'ode',
+    title: 'Ode to Joy',
+    genre: 'Classical',
+    difficulty: 'Beginner',
+    durationEst: '1:00',
+    pro: false,
+    bpm: 88,
+    measures: [
+      // M1
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      // M2
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
+      // M3
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
+      ],
+      // M4
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
+      ],
+      // M5 (repeat)
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      // M6
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
+      // M7
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
+      ],
+      // M8 (cadence)
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'h' },
+      ],
+    ],
+  },
+  {
     id: 'twinkle',
     title: 'Twinkle Twinkle Little Star',
     genre: 'Children',
     difficulty: 'Beginner',
     durationEst: '1:20',
-    pro: false,
+    pro: true,
     bpm: 80,
     measures: [
       // M1 "Twinkle twinkle"
@@ -154,71 +220,6 @@ const SONGS = [
       [
         { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
         { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
-        { string:2, fret:1, beat:3, noteName:'C4', duration:'h' },
-      ],
-    ],
-  },
-  {
-    id: 'ode',
-    title: 'Ode to Joy',
-    genre: 'Classical',
-    difficulty: 'Beginner',
-    durationEst: '1:00',
-    pro: true,
-    bpm: 88,
-    measures: [
-      // M1
-      [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
-        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
-        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
-        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
-      ],
-      // M2
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
-        { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
-        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
-        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
-      ],
-      // M3
-      [
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
-        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
-        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
-      ],
-      // M4
-      [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
-        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
-      ],
-      // M5 (repeat)
-      [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
-        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
-        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
-        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
-      ],
-      // M6
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
-        { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
-        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
-        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
-      ],
-      // M7
-      [
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
-        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
-        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
-      ],
-      // M8 (cadence)
-      [
-        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
-        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
         { string:2, fret:1, beat:3, noteName:'C4', duration:'h' },
       ],
     ],
@@ -468,14 +469,16 @@ function ListenMode({ song, onBack }) {
   const timerRef = useRef(null);
   const beatMs   = 60000 / song.bpm;
 
-  // Backing track — genre-mapped, synced to song BPM
+  // Backing track + metronome — genre-mapped, synced to song BPM
   const trackGenre = GENRE_TO_TRACK[song.genre] || 'blues';
   const { trackOn, toggleTrack, stopTrack, syncToTime } = useBackingTrack(trackGenre, song.bpm);
+  const { clickOn, toggleClick, stopClick }              = useMetronome(song.bpm);
 
-  // Cleanup: stop timer + backing track when component unmounts or user goes back
+  // Cleanup: stop timer + backing track + metronome on unmount / back
   useEffect(() => () => {
     clearTimeout(timerRef.current);
     stopTrack();
+    stopClick();
   }, []); // eslint-disable-line
 
   function play() {
@@ -511,6 +514,7 @@ function ListenMode({ song, onBack }) {
     setPlaying(false);
     setNoteIdx(-1);
     stopTrack();
+    stopClick();
   }
 
   function handleBack() {
@@ -567,6 +571,19 @@ function ListenMode({ song, onBack }) {
           }}
         >
           🥁 {trackOn ? 'Track On' : 'Track Off'}
+        </button>
+        <button
+          onClick={toggleClick}
+          style={{
+            padding: '14px 20px', borderRadius: 14, cursor: 'pointer',
+            border: `1px solid ${clickOn ? M.borderHi : M.border}`,
+            background: clickOn ? 'rgba(232,131,58,0.18)' : 'rgba(196,100,40,0.08)',
+            color: clickOn ? M.hi : M.muted,
+            fontFamily: "Georgia, serif", fontSize: 14, fontWeight: 700,
+            transition: 'all 0.15s',
+          }}
+        >
+          🎵 {clickOn ? 'Met On' : 'Met Off'}
         </button>
       </div>
     </div>
