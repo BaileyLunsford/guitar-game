@@ -9,8 +9,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import LandingPage    from './LandingPage';
-import useMetronome   from './useMetronome';
+import LandingPage     from './LandingPage';
 import useBackingTrack from './useBackingTrack';
 import { guitarSampler } from './guitarSampler';
 import { getAudioContext } from './audioContext';
@@ -37,6 +36,20 @@ function playStrum(direction) {
   guitarSampler.resume?.();
   const notes = direction === 'D' ? G_DOWN : G_UP;
   notes.forEach((n, i) => setTimeout(() => guitarSampler.playNote(n), i * 14));
+}
+
+// Web Audio synthesized click — scheduled ahead of time so it fires precisely
+function scheduleClick(ctx, t) {
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type            = 'sine';
+  osc.frequency.value = 1000;
+  gain.gain.setValueAtTime(0.28, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 0.045);
 }
 
 // ── Pattern data ──────────────────────────────────────────────────────────────
@@ -139,6 +152,10 @@ function StepCell({ step, active, stepNum }) {
   );
 }
 
+// ── Scheduler constants ───────────────────────────────────────────────────────
+const LOOKAHEAD_S = 0.12;  // seconds ahead to schedule audio
+const POLL_MS     = 30;    // scheduler poll interval
+
 // ── Pattern player ────────────────────────────────────────────────────────────
 function PatternPlayer({ pattern, isPro, onUpgrade, onBack }) {
   const [playing,     setPlaying]     = useState(false);
@@ -149,53 +166,96 @@ function PatternPlayer({ pattern, isPro, onUpgrade, onBack }) {
   const [metOn,       setMetOn]       = useState(false);
   const [currentStep, setCurrentStep] = useState(null);
 
-  const intervalRef = useRef(null);
-  const stepRef     = useRef(0);
+  // All mutable scheduler state lives in a ref — no stale closure issues
+  const schedRef = useRef({
+    timerId:     null,
+    nextTime:    0,
+    nextIdx:     0,
+    playing:     false,
+    stepDur:     0,
+    stepsPerBeat: 2,
+    metOn:        false,
+  });
 
   const effectiveGenre = playing && (drumsOn || bassOn) ? GENRE_MAP[genre] : null;
-
   const { trackOn, toggleTrack, stopTrack, syncToTime } = useBackingTrack(effectiveGenre, bpm);
-  const { clickOn, toggleClick, stopClick, syncToTime: metSync } = useMetronome(bpm);
 
-  // Interval scheduler — restart when playing or bpm changes
-  useEffect(() => {
-    if (!playing) {
-      clearInterval(intervalRef.current);
-      setCurrentStep(null);
-      return;
+  // Keep metOn flag in sync so the running scheduler picks it up immediately
+  useEffect(() => { schedRef.current.metOn = metOn; }, [metOn]);
+
+  // ── Web Audio lookahead scheduler ─────────────────────────────────────────
+  // Strum samples:   scheduled via setTimeout derived from ctx.currentTime
+  // Click:           synthesized in Web Audio — scheduled precisely ahead of time
+  // Visual step:     setTimeout aligned to the same strum time
+  // All three share the same clock (ctx.currentTime), so they can't drift apart.
+  function startStrumScheduler(fromTime) {
+    const ref = schedRef.current;
+    clearInterval(ref.timerId);
+    ref.nextTime = fromTime;
+    ref.nextIdx  = 0;
+    ref.playing  = true;
+
+    const ctx = getAudioContext();
+
+    function tick() {
+      const now = ctx.currentTime;
+      while (ref.nextTime < now + LOOKAHEAD_S) {
+        const idx       = ref.nextIdx % pattern.steps.length;
+        const t         = ref.nextTime;
+        const msFromNow = Math.max(0, (t - now) * 1000);
+
+        // Strum: setTimeout so the sample plays at Web Audio time t
+        if (pattern.steps[idx] !== '-') {
+          const dir = pattern.steps[idx];
+          setTimeout(() => { if (schedRef.current.playing) playStrum(dir); }, msFromNow);
+        }
+
+        // Click: synthesized and scheduled precisely in Web Audio time
+        if (ref.metOn && ref.nextIdx % ref.stepsPerBeat === 0) {
+          scheduleClick(ctx, t);
+        }
+
+        // Visual: update step indicator at the same moment as the strum
+        setTimeout(() => { if (schedRef.current.playing) setCurrentStep(idx); }, msFromNow);
+
+        ref.nextTime += ref.stepDur;
+        ref.nextIdx++;
+      }
     }
-    const stepMs = pattern.sub === 'eighth'
-      ? Math.round(30000 / bpm)
-      : Math.round(60000 / bpm);
 
-    stepRef.current = 0;
-    clearInterval(intervalRef.current);
+    tick();
+    ref.timerId = setInterval(tick, POLL_MS);
+  }
 
-    // Fire first step immediately
-    const fire = () => {
-      const idx = stepRef.current % pattern.steps.length;
-      setCurrentStep(idx);
-      if (pattern.steps[idx] !== '-') playStrum(pattern.steps[idx]);
-      stepRef.current++;
-    };
-    fire();
-    intervalRef.current = setInterval(fire, stepMs);
-    return () => clearInterval(intervalRef.current);
-  }, [playing, bpm]); // eslint-disable-line
+  function stopStrumScheduler() {
+    clearInterval(schedRef.current.timerId);
+    schedRef.current.timerId = null;
+    schedRef.current.playing = false;
+    setCurrentStep(null);
+  }
 
-  // Stop audio when playing goes false
+  // BPM change while playing → restart strum scheduler + re-anchor backing track
+  useEffect(() => {
+    if (!playing) return;
+    const ctx      = getAudioContext();
+    const t0       = ctx.currentTime + 0.05;
+    schedRef.current.stepDur = pattern.sub === 'eighth' ? 30 / bpm : 60 / bpm;
+    startStrumScheduler(t0);
+    syncToTime(t0);
+  }, [bpm]); // eslint-disable-line
+
+  // Stop everything when playing goes false
   useEffect(() => {
     if (!playing) {
+      stopStrumScheduler();
       stopTrack();
-      if (metOn) stopClick();
     }
   }, [playing]); // eslint-disable-line
 
   // Cleanup on unmount
   useEffect(() => () => {
-    clearInterval(intervalRef.current);
+    stopStrumScheduler();
     stopTrack();
-    stopClick();
   }, []); // eslint-disable-line
 
   function handlePlayToggle() {
@@ -203,20 +263,31 @@ function PatternPlayer({ pattern, isPro, onUpgrade, onBack }) {
       setPlaying(false);
       return;
     }
-    const ctx = getAudioContext();
-    const t   = ctx.currentTime + 0.05;
-    if (drumsOn || bassOn) setTimeout(() => syncToTime(t), 50);
-    if (metOn) metSync(t);
+
+    const ctx  = getAudioContext();
+    const t0   = ctx.currentTime + 0.05;
+
+    // ── Backing track ──────────────────────────────────────────────────────
+    // Must call toggleTrack() to set on=true — useBackingTrack only runs when
+    // on===true. syncToTime re-anchors beat 1 after the React effect has run.
+    if (drumsOn || bassOn) {
+      if (!trackOn) toggleTrack();
+      setTimeout(() => syncToTime(t0), 50);
+    }
+
+    // ── Strum + click scheduler ────────────────────────────────────────────
+    const ref         = schedRef.current;
+    ref.stepDur       = pattern.sub === 'eighth' ? 30 / bpm : 60 / bpm;
+    ref.stepsPerBeat  = pattern.sub === 'eighth' ? 2 : 1;
+    ref.metOn         = metOn;
+
+    startStrumScheduler(t0);
     setPlaying(true);
   }
 
   function handleMetToggle() {
-    const next = !metOn;
-    setMetOn(next);
-    if (playing) {
-      toggleClick();
-      if (next) metSync(getAudioContext().currentTime + 0.05);
-    }
+    setMetOn(prev => !prev);
+    // schedRef.current.metOn is updated via useEffect — scheduler picks it up on next tick
   }
 
   if (!isPro && pattern.pro) return (
