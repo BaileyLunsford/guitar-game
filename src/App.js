@@ -28,6 +28,8 @@ import SongBackingTracks from './SongBackingTracks';
 import CircleOfFifths from './CircleOfFifths';
 import NashvilleNumbers from './NashvilleNumbers';
 import FretboardTheory from './FretboardTheory';
+import FretboardNotes from './FretboardNotes';
+import StrumPatterns from './StrumPatterns';
 
 const GUITAR_STRINGS = [
   { label: 'E2', freq: 82.41  },
@@ -486,19 +488,21 @@ const HOME_SECTIONS = [
   {
     label: 'Beginner', sectionBadge: 'FREE', sectionBadgeClass: 'badge-free',
     items: [
-      { icon: '🎯', title: 'Audition Game',  desc: 'Sight-read notes with real-time mic pitch detection', hash: '#audition',      pro: false },
-      { icon: '📚', title: 'Song Library',   desc: 'Ode to Joy free · 5 more songs with PRO',            hash: '#song-library',  pro: false },
-      { icon: '🎵', title: 'Song Learn',     desc: 'Measure-by-measure playback with notation & tab',    hash: '#song-learn',    pro: false },
-      { icon: '🃏', title: 'Flashcards',     desc: 'Drill notes, chords, tab & theory — flip to check', hash: '#flashcards',    pro: false },
+      { icon: '🎯', title: 'Audition Game',  desc: 'Sight-read notes with real-time mic pitch detection', hash: '#audition',        pro: false },
+      { icon: '📚', title: 'Song Library',   desc: 'Ode to Joy free · 5 more songs with PRO',            hash: '#song-library',    pro: false },
+      { icon: '🎵', title: 'Song Learn',     desc: 'Measure-by-measure playback with notation & tab',    hash: '#song-learn',      pro: false },
+      { icon: '🎶', title: 'Strum Patterns', desc: 'Folk, country, reggae, funk — 6 free + 6 PRO',       hash: '#strum-patterns',  pro: false },
+      { icon: '🃏', title: 'Flashcards',     desc: 'Drill notes, chords, tab & theory — flip to check', hash: '#flashcards',      pro: false },
     ],
   },
   {
     label: 'Intermediate', sectionBadge: null,
     items: [
-      { icon: '🎹', title: 'Scale Play',    desc: 'Interactive scale patterns across the fretboard',  hash: '#scale-play',   pro: false },
-      { icon: '🎼', title: 'Tab & Notation',desc: 'Standard notation with guitar tablature overlay',  hash: '#tab-test',     pro: false },
-      { icon: '🤘', title: 'Barre Chords',  desc: 'Moveable E and A shapes in every key',             hash: '#barre-chords', pro: false },
-      { icon: '🎸', title: 'Chord Play',    desc: 'Open chords, voicings & I–IV–V progressions',      hash: '#chord-play',   pro: true  },
+      { icon: '🎹', title: 'Scale Play',      desc: 'Interactive scale patterns across the fretboard',     hash: '#scale-play',      pro: false },
+      { icon: '🎼', title: 'Tab & Notation', desc: 'Standard notation with guitar tablature overlay',     hash: '#tab-test',        pro: false },
+      { icon: '🎸', title: 'Fretboard Notes',desc: 'All 78 notes — explore, game & flashcard modes',      hash: '#fretboard-notes', pro: false },
+      { icon: '🤘', title: 'Barre Chords',   desc: 'Moveable E and A shapes in every key',                hash: '#barre-chords',    pro: false },
+      { icon: '🎸', title: 'Chord Play',     desc: 'Open chords, voicings & I–IV–V progressions',         hash: '#chord-play',      pro: true  },
     ],
   },
   {
@@ -839,6 +843,8 @@ export default function App() {
   if (hash === '#circle-fifths')   return <CircleOfFifths    isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
   if (hash === '#nashville')       return <NashvilleNumbers  isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
   if (hash === '#fretboard-theory')return <FretboardTheory   isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
+  if (hash === '#fretboard-notes') return <FretboardNotes    isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
+  if (hash === '#strum-patterns')  return <StrumPatterns     isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
 
   return (
     <>
