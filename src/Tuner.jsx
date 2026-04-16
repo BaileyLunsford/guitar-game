@@ -53,19 +53,9 @@ export default function Tuner({ strings = [], theme = {}, title = 'Tune Your Ins
     accent: theme.accent || '#C4603A',
   };
 
-  if (!started) return (
-    <LandingPage
-      emoji="🎸"
-      title="Guitar Tuner"
-      description="Keep your guitar in perfect pitch. Chromatic tuner detects all 6 strings in real time. Essential before every practice session."
-      difficulty="Beginner"
-      features={['Detects all 6 strings (EADGBE)', 'Real-time chromatic pitch detection', 'Visual needle + sharp/flat indicator']}
-      onStart={() => setStarted(true)}
-      onBack={() => { window.location.hash = ''; }}
-    />
-  );
-
   useEffect(() => {
+    if (!started) return;
+
     // Capture prop values at mount time for the DOM-based logic
     var strArr = strings;  // [{ label, freq }]
 
@@ -308,6 +298,18 @@ export default function Tuner({ strings = [], theme = {}, title = 'Tune Your Ins
       if (sharedCtx) sharedCtx.close().catch(function () {});
     };
   }, [started]); // eslint-disable-line
+
+  if (!started) return (
+    <LandingPage
+      emoji="🎸"
+      title="Guitar Tuner"
+      description="Keep your guitar in perfect pitch. Chromatic tuner detects all 6 strings in real time. Essential before every practice session."
+      difficulty="Beginner"
+      features={['Detects all 6 strings (EADGBE)', 'Real-time chromatic pitch detection', 'Visual needle + sharp/flat indicator']}
+      onStart={() => setStarted(true)}
+      onBack={() => { window.location.hash = ''; }}
+    />
+  );
 
   // ── Render ────────────────────────────────────────────────
   return (
