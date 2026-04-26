@@ -329,9 +329,9 @@ export default function SongBackingTracks() {
                 onKeyDown={e => e.key === 'Enter' && handleSavePreset()}
                 placeholder={`${genre} ${bpm} BPM`}
                 style={{
-                  flex: 1, padding: '7px 10px', borderRadius: 8, fontSize: 12,
+                  flex: 1, minWidth: 0, width: '100%', padding: '7px 10px', borderRadius: 8, fontSize: 12,
                   border: `1px solid ${M.border}`, background: '#1A0C05',
-                  color: M.text, fontFamily: "Georgia, serif", outline: 'none',
+                  color: M.text, fontFamily: "Georgia, serif", outline: 'none', boxSizing: 'border-box',
                 }}
               />
               <button onClick={handleSavePreset} style={{

@@ -3,14 +3,15 @@
  *
  * Features:
  *   - Key / BPM / Time Signature settings
- *   - Chord chart grid (each cell = one measure)
+ *   - Chord chart with named sections (Verse/Chorus/Bridge/etc.)
  *   - Toggle between chord names and Nashville numbers
+ *   - Play button that cycles through measures at tempo
  *   - Lyrics textarea
  *   - Save/load multiple songs via localStorage
- *   - Add/remove measures
+ *   - Inline title and section label editing
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 const M = {
@@ -29,6 +30,7 @@ const M = {
 const KEYS = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
 const TIME_SIGS = ['2/4','3/4','4/4','6/8'];
 const STORAGE_KEY = 'songwriterSongs';
+const SECTION_PRESETS = ['Intro','Verse','Pre-Chorus','Chorus','Bridge','Outro','Solo','Turnaround'];
 
 // Nashville number degrees (major scale Roman numerals)
 const DEGREES = ['I','II','III','IV','V','VI','VII'];
@@ -36,7 +38,6 @@ const DEGREES = ['I','II','III','IV','V','VI','VII'];
 // Chromatic semitones from C
 const NOTE_SEMI = { C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11 };
 
-// Given a key root, the major scale degree notes (Roman numeral ↔ chord root)
 function majorScaleDegrees(root) {
   const base = NOTE_SEMI[root] ?? 0;
   const intervals = [0, 2, 4, 5, 7, 9, 11];
@@ -46,7 +47,6 @@ function majorScaleDegrees(root) {
   });
 }
 
-// Try to convert a chord like "G", "Am", "F#m7" to a Nashville number given a key
 function chordToNashville(chord, key) {
   if (!chord.trim()) return chord;
   const match = chord.trim().match(/^([A-G][b#]?)(.*)/);
@@ -66,6 +66,18 @@ function saveSongs(songs) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(songs)); } catch {}
 }
 
+// Migrate old flat-measures songs to sections format
+function normalizeSong(song) {
+  if (!song.sections) {
+    return {
+      ...song,
+      sections: [{ label: 'Verse', measures: song.measures || [] }],
+      measures: undefined,
+    };
+  }
+  return song;
+}
+
 function defaultSong() {
   return {
     id: Date.now(),
@@ -73,9 +85,23 @@ function defaultSong() {
     key: 'G',
     bpm: 120,
     timeSig: '4/4',
-    measures: ['G', 'G', 'C', 'D', 'G', 'G', 'C', 'D'],
+    sections: [
+      { label: 'Verse',  measures: ['G', 'G', 'C', 'D'] },
+      { label: 'Chorus', measures: ['G', 'G', 'C', 'D'] },
+    ],
     lyrics: '',
   };
+}
+
+// Returns a flat array of { secIdx, mIdx, chord } for play cursor
+function flatMeasures(sections) {
+  const out = [];
+  (sections || []).forEach((sec, si) => {
+    (sec.measures || []).forEach((chord, mi) => {
+      out.push({ secIdx: si, mIdx: mi, chord });
+    });
+  });
+  return out;
 }
 
 // ── Small input helper ────────────────────────────────────────────────────────
@@ -101,23 +127,49 @@ function selStyle(active) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Songwriter() {
-  const [songs,      setSongs]      = useState(loadSongs);
+  const [songs,      setSongs]      = useState(() => loadSongs().map(normalizeSong));
   const [activeSong, setActiveSong] = useState(() => {
-    const saved = loadSongs();
+    const saved = loadSongs().map(normalizeSong);
     return saved.length > 0 ? { ...saved[0] } : defaultSong();
   });
   const [nashville,  setNashville]  = useState(false);
-  const [editingIdx, setEditingIdx] = useState(null);
-  const [editVal,    setEditVal]    = useState('');
-  const [nameEdit,   setNameEdit]   = useState(false);
+
+  // Measure editing
+  const [editingMeasure, setEditingMeasure] = useState(null); // {secIdx, mIdx}
+  const [editVal,        setEditVal]        = useState('');
+
+  // Section label editing
+  const [editingLabel,   setEditingLabel]   = useState(null); // secIdx
+  const [labelVal,       setLabelVal]       = useState('');
+  const [labelDropdown,  setLabelDropdown]  = useState(null); // secIdx for preset picker
+
+  // Title editing
+  const [nameEdit, setNameEdit] = useState(false);
+
+  // Chip name editing
+  const [editingChipId, setEditingChipId] = useState(null);
+  const [chipNameVal,   setChipNameVal]   = useState('');
+
+  // Save feedback
+  const [savedFlash,  setSavedFlash]  = useState(false);
+  const savedTimerRef = useRef(null);
+
+  // Play state
+  const [playing,           setPlaying]           = useState(false);
+  const [currentMeasureKey, setCurrentMeasureKey] = useState(null);
+  const playIntervalRef = useRef(null);
+  const playIdxRef      = useRef(0);
+  const playMeasuresRef = useRef([]);
 
   const persist = useCallback((song) => {
-    const updated = songs.find(s => s.id === song.id)
-      ? songs.map(s => s.id === song.id ? song : s)
-      : [...songs, song];
-    setSongs(updated);
-    saveSongs(updated);
-  }, [songs]);
+    setSongs(prev => {
+      const updated = prev.find(s => s.id === song.id)
+        ? prev.map(s => s.id === song.id ? song : s)
+        : [...prev, song];
+      saveSongs(updated);
+      return updated;
+    });
+  }, []);
 
   function update(field, value) {
     const next = { ...activeSong, [field]: value };
@@ -125,54 +177,184 @@ export default function Songwriter() {
     persist(next);
   }
 
+  function updateSections(sections) {
+    update('sections', sections);
+  }
+
+  // ── Section operations ────────────────────────────────────────────────────
+  function updateSectionLabel(secIdx, label) {
+    const next = activeSong.sections.map((sec, si) =>
+      si === secIdx ? { ...sec, label } : sec
+    );
+    updateSections(next);
+  }
+
+  function addMeasureToSection(secIdx) {
+    const next = activeSong.sections.map((sec, si) =>
+      si === secIdx ? { ...sec, measures: [...sec.measures, ''] } : sec
+    );
+    updateSections(next);
+  }
+
+  function removeMeasureFromSection(secIdx) {
+    const next = activeSong.sections.map((sec, si) => {
+      if (si !== secIdx || sec.measures.length <= 1) return sec;
+      return { ...sec, measures: sec.measures.slice(0, -1) };
+    });
+    updateSections(next);
+  }
+
+  function addSection() {
+    const next = [...activeSong.sections, { label: 'Verse', measures: ['', '', '', ''] }];
+    updateSections(next);
+  }
+
+  function removeSection(secIdx) {
+    if (activeSong.sections.length <= 1) return;
+    updateSections(activeSong.sections.filter((_, si) => si !== secIdx));
+  }
+
+  function setMeasureInSection(secIdx, mIdx, val) {
+    const next = activeSong.sections.map((sec, si) => {
+      if (si !== secIdx) return sec;
+      const m = [...sec.measures];
+      m[mIdx] = val;
+      return { ...sec, measures: m };
+    });
+    updateSections(next);
+  }
+
+  // ── Measure editing ───────────────────────────────────────────────────────
+  function startEditMeasure(secIdx, mIdx) {
+    setEditingMeasure({ secIdx, mIdx });
+    setEditVal(activeSong.sections[secIdx].measures[mIdx]);
+  }
+
+  function commitEditMeasure() {
+    if (editingMeasure) {
+      setMeasureInSection(editingMeasure.secIdx, editingMeasure.mIdx, editVal);
+    }
+    setEditingMeasure(null);
+    setEditVal('');
+  }
+
+  // ── Label editing ─────────────────────────────────────────────────────────
+  function startEditLabel(secIdx) {
+    setEditingLabel(secIdx);
+    setLabelVal(activeSong.sections[secIdx].label);
+    setLabelDropdown(null);
+  }
+
+  function commitEditLabel() {
+    if (editingLabel !== null) updateSectionLabel(editingLabel, labelVal);
+    setEditingLabel(null);
+    setLabelVal('');
+  }
+
+  // ── Song management ───────────────────────────────────────────────────────
   function newSong() {
     const s = defaultSong();
-    const updated = [...songs, s];
-    setSongs(updated);
-    saveSongs(updated);
+    setSongs(prev => {
+      const updated = [...prev, s];
+      saveSongs(updated);
+      return updated;
+    });
     setActiveSong(s);
   }
 
   function deleteSong(id) {
-    const updated = songs.filter(s => s.id !== id);
-    setSongs(updated);
-    saveSongs(updated);
-    if (activeSong.id === id) {
-      setActiveSong(updated.length > 0 ? { ...updated[0] } : defaultSong());
+    setSongs(prev => {
+      const updated = prev.filter(s => s.id !== id);
+      saveSongs(updated);
+      if (activeSong.id === id) {
+        setActiveSong(updated.length > 0 ? { ...updated[0] } : defaultSong());
+      }
+      return updated;
+    });
+  }
+
+  function handleSave() {
+    persist(activeSong);
+    setSavedFlash(true);
+    clearTimeout(savedTimerRef.current);
+    savedTimerRef.current = setTimeout(() => setSavedFlash(false), 1500);
+  }
+
+  // ── Chip name editing ─────────────────────────────────────────────────────
+  function startEditChip(id, name) {
+    setEditingChipId(id);
+    setChipNameVal(name);
+  }
+
+  function commitChipName() {
+    if (editingChipId !== null) {
+      setSongs(prev => {
+        const updated = prev.map(s =>
+          s.id === editingChipId ? { ...s, title: chipNameVal } : s
+        );
+        saveSongs(updated);
+        return updated;
+      });
+      if (activeSong.id === editingChipId) {
+        setActiveSong(a => ({ ...a, title: chipNameVal }));
+      }
     }
+    setEditingChipId(null);
+    setChipNameVal('');
   }
 
-  function addMeasure() {
-    update('measures', [...activeSong.measures, '']);
+  // ── Play / Stop ───────────────────────────────────────────────────────────
+  function handlePlay() {
+    if (playing) {
+      clearInterval(playIntervalRef.current);
+      setPlaying(false);
+      setCurrentMeasureKey(null);
+      playIdxRef.current = 0;
+      return;
+    }
+    const all = flatMeasures(activeSong.sections);
+    if (all.length === 0) return;
+    playMeasuresRef.current = all;
+    playIdxRef.current = 0;
+    const beatsPerMeasure = parseInt(activeSong.timeSig?.split('/')[0] || '4');
+    const msPerMeasure    = (60000 / activeSong.bpm) * beatsPerMeasure;
+    const firstKey = `${all[0].secIdx}-${all[0].mIdx}`;
+    setCurrentMeasureKey(firstKey);
+    setPlaying(true);
+    playIntervalRef.current = setInterval(() => {
+      playIdxRef.current = (playIdxRef.current + 1) % playMeasuresRef.current.length;
+      const m = playMeasuresRef.current[playIdxRef.current];
+      setCurrentMeasureKey(`${m.secIdx}-${m.mIdx}`);
+    }, msPerMeasure);
   }
 
-  function removeMeasure() {
-    if (activeSong.measures.length <= 1) return;
-    update('measures', activeSong.measures.slice(0, -1));
-  }
+  // Stop play when BPM or timeSig changes while playing
+  useEffect(() => {
+    if (playing) {
+      clearInterval(playIntervalRef.current);
+      const all = flatMeasures(activeSong.sections);
+      playMeasuresRef.current = all;
+      const beatsPerMeasure = parseInt(activeSong.timeSig?.split('/')[0] || '4');
+      const msPerMeasure    = (60000 / activeSong.bpm) * beatsPerMeasure;
+      playIntervalRef.current = setInterval(() => {
+        playIdxRef.current = (playIdxRef.current + 1) % playMeasuresRef.current.length;
+        const m = playMeasuresRef.current[playIdxRef.current];
+        setCurrentMeasureKey(`${m.secIdx}-${m.mIdx}`);
+      }, msPerMeasure);
+    }
+  }, [activeSong.bpm, activeSong.timeSig]); // eslint-disable-line
 
-  function setMeasure(idx, val) {
-    const m = [...activeSong.measures];
-    m[idx] = val;
-    update('measures', m);
-  }
-
-  function startEdit(idx) {
-    setEditingIdx(idx);
-    setEditVal(activeSong.measures[idx]);
-  }
-
-  function commitEdit() {
-    if (editingIdx !== null) setMeasure(editingIdx, editVal);
-    setEditingIdx(null);
-    setEditVal('');
-  }
+  // Cleanup on unmount
+  useEffect(() => () => {
+    clearInterval(playIntervalRef.current);
+    clearTimeout(savedTimerRef.current);
+  }, []);
 
   const displayChord = (chord) =>
     nashville && chord ? chordToNashville(chord, activeSong.key) : chord;
 
-  // Beats per measure from time sig
   const beatsPerMeasure = parseInt(activeSong.timeSig?.split('/')[0] || '4');
+  const cols = Math.min(beatsPerMeasure, 4);
 
   return (
     <div style={{
@@ -182,10 +364,10 @@ export default function Songwriter() {
       {/* ── Header ── */}
       <div style={{
         background: M.panel, borderBottom: `1px solid ${M.border}`,
-        padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10,
+        padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8,
       }}>
         <a href="#" style={{ color: M.muted, fontSize: 22, textDecoration: 'none', lineHeight: 1 }}>‹</a>
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           {nameEdit ? (
             <input
               value={activeSong.title}
@@ -194,38 +376,53 @@ export default function Songwriter() {
               onKeyDown={e => e.key === 'Enter' && setNameEdit(false)}
               autoFocus
               style={{
-                background: 'transparent', border: 'none', borderBottom: `1px solid ${M.borderHi}`,
+                background: 'transparent', border: 'none',
+                borderBottom: `1px solid ${M.borderHi}`,
                 color: M.text, fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 800,
                 outline: 'none', width: '100%',
               }}
             />
           ) : (
-            <div
-              onClick={() => setNameEdit(true)}
-              style={{ fontSize: 16, fontWeight: 800, cursor: 'text',
+            <div onClick={() => setNameEdit(true)} style={{
+              fontSize: 16, fontWeight: 800, cursor: 'text',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              <span style={{
                 background: `linear-gradient(135deg,${M.accent},${M.hi})`,
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              {activeSong.title || 'Untitled'}
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              }}>{activeSong.title || 'Untitled'}</span>
+              <span style={{ fontSize: 11, color: M.muted, opacity: 0.65, lineHeight: 1 }}>✎</span>
             </div>
           )}
-          <div style={{ fontSize: 10, color: M.muted, marginTop: 1 }}>
-            ✏️ Songwriter
-          </div>
+          <div style={{ fontSize: 10, color: M.muted, marginTop: 1 }}>✏️ Songwriter</div>
         </div>
+
+        {/* Save button */}
+        <button onClick={handleSave} style={{
+          padding: '5px 10px', borderRadius: 10, fontSize: 11, fontWeight: 700,
+          border: `1px solid ${savedFlash ? 'rgba(74,222,128,0.5)' : M.border}`,
+          background: savedFlash ? 'rgba(74,222,128,0.10)' : 'rgba(196,100,40,0.06)',
+          color: savedFlash ? '#4ade80' : M.muted,
+          cursor: 'pointer', fontFamily: "Georgia, serif", transition: 'all 0.2s', flexShrink: 0,
+        }}>
+          {savedFlash ? '✓ Saved' : '💾 Save'}
+        </button>
+
+        {/* Chords / Numbers toggle */}
         <button onClick={() => setNashville(n => !n)} style={{
-          padding: '5px 12px', borderRadius: 10, fontSize: 11, fontWeight: 700,
+          padding: '5px 10px', borderRadius: 10, fontSize: 11, fontWeight: 700,
           border: `1px solid ${nashville ? M.borderHi : M.border}`,
           background: nashville ? 'rgba(232,131,58,0.18)' : 'rgba(196,100,40,0.08)',
           color: nashville ? M.hi : M.muted,
-          cursor: 'pointer', fontFamily: "Georgia, serif",
+          cursor: 'pointer', fontFamily: "Georgia, serif", flexShrink: 0,
         }}>
-          {nashville ? '1–4–5' : 'A–G'}
+          {nashville ? 'Numbers' : 'Chords'}
         </button>
       </div>
 
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '16px' }}>
 
-        {/* ── Song list chips ── */}
+        {/* ── Song tabs ── */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
           {songs.map(s => (
             <div key={s.id} style={{
@@ -234,11 +431,31 @@ export default function Songwriter() {
               background: s.id === activeSong.id ? 'rgba(232,131,58,0.18)' : 'rgba(196,100,40,0.08)',
               border: `1px solid ${s.id === activeSong.id ? M.borderHi : M.border}`,
             }}>
-              <button onClick={() => setActiveSong({ ...s })} style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                color: s.id === activeSong.id ? M.hi : M.text,
-                fontFamily: "Georgia, serif", fontSize: 12, fontWeight: 600, padding: 0,
-              }}>{s.title || 'Untitled'}</button>
+              {editingChipId === s.id ? (
+                <input
+                  value={chipNameVal}
+                  onChange={e => setChipNameVal(e.target.value)}
+                  onBlur={commitChipName}
+                  onKeyDown={e => e.key === 'Enter' && commitChipName()}
+                  autoFocus
+                  style={{
+                    background: 'transparent', border: 'none',
+                    borderBottom: `1px solid ${M.borderHi}`,
+                    color: M.hi, fontFamily: "Georgia, serif",
+                    fontSize: 12, fontWeight: 600, outline: 'none', width: 80,
+                  }}
+                />
+              ) : (
+                <button
+                  onClick={() => setActiveSong({ ...s })}
+                  onDoubleClick={() => startEditChip(s.id, s.title || '')}
+                  title="Double-tap to rename"
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: s.id === activeSong.id ? M.hi : M.text,
+                    fontFamily: "Georgia, serif", fontSize: 12, fontWeight: 600, padding: 0,
+                  }}>{s.title || 'Untitled'}</button>
+              )}
               <button onClick={() => deleteSong(s.id)} style={{
                 background: 'none', border: 'none', cursor: 'pointer',
                 color: M.muted, fontSize: 14, lineHeight: 1, padding: '0 0 0 2px',
@@ -270,8 +487,7 @@ export default function Songwriter() {
               onChange={e => update('bpm', Math.min(240, Math.max(40, +e.target.value)))}
               style={{
                 ...selStyle(false), width: '100%', boxSizing: 'border-box',
-                textAlign: 'center', appearance: 'none',
-                MozAppearance: 'textfield',
+                textAlign: 'center', appearance: 'none', MozAppearance: 'textfield',
               }}
             />
           </Field>
@@ -288,69 +504,159 @@ export default function Songwriter() {
           background: M.surface, borderRadius: 14, border: `1px solid ${M.border}`,
           padding: '14px 16px', marginBottom: 18,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          {/* Toolbar */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em',
               textTransform: 'uppercase', color: M.muted }}>
               Chord Chart — {activeSong.timeSig}
             </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={removeMeasure} style={{
-                width: 28, height: 28, borderRadius: 8, border: `1px solid ${M.border}`,
-                background: 'rgba(196,100,40,0.1)', color: M.muted,
-                cursor: 'pointer', fontSize: 16, lineHeight: 1,
-              }}>−</button>
-              <button onClick={addMeasure} style={{
-                width: 28, height: 28, borderRadius: 8, border: `1px solid ${M.border}`,
-                background: 'rgba(196,100,40,0.1)', color: M.text,
-                cursor: 'pointer', fontSize: 16, lineHeight: 1,
-              }}>+</button>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              {/* Play / Stop */}
+              <button onClick={handlePlay} style={{
+                width: 32, height: 32, borderRadius: 10,
+                border: `1px solid ${playing ? M.borderHi : M.border}`,
+                background: playing ? 'rgba(232,131,58,0.22)' : 'rgba(196,100,40,0.10)',
+                color: playing ? M.hi : M.text,
+                cursor: 'pointer', fontSize: 14, lineHeight: 1,
+              }}>{playing ? '⏹' : '▶'}</button>
+              {/* Add section */}
+              <button onClick={addSection} style={{
+                padding: '5px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700,
+                border: `1px solid ${M.border}`, background: 'rgba(196,100,40,0.08)',
+                color: M.muted, cursor: 'pointer', fontFamily: "Georgia, serif",
+              }}>+ Section</button>
             </div>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${Math.min(beatsPerMeasure, 4)}, 1fr)`,
-            gap: 6,
-          }}>
-            {activeSong.measures.map((chord, idx) => (
-              <div key={idx} style={{ position: 'relative' }}>
-                {editingIdx === idx ? (
-                  <input
-                    value={editVal}
-                    onChange={e => setEditVal(e.target.value)}
-                    onBlur={commitEdit}
-                    onKeyDown={e => (e.key === 'Enter' || e.key === 'Tab') && commitEdit()}
-                    autoFocus
-                    placeholder="e.g. Am7"
-                    style={{
-                      width: '100%', boxSizing: 'border-box',
-                      padding: '10px 6px', borderRadius: 10, textAlign: 'center',
-                      border: `1px solid ${M.borderHi}`, background: '#1A0C05',
-                      color: M.text, fontFamily: "Georgia, serif",
-                      fontSize: 16, fontWeight: 800, outline: 'none',
-                    }}
-                  />
+          {/* Sections */}
+          {activeSong.sections.map((section, secIdx) => (
+            <div key={secIdx} style={{ marginBottom: 18 }}>
+              {/* Section header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                {editingLabel === secIdx ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <input
+                      value={labelVal}
+                      onChange={e => setLabelVal(e.target.value)}
+                      onBlur={commitEditLabel}
+                      onKeyDown={e => e.key === 'Enter' && commitEditLabel()}
+                      autoFocus
+                      style={{
+                        background: 'transparent', border: 'none',
+                        borderBottom: `1px solid ${M.borderHi}`,
+                        color: M.accent, fontFamily: "Georgia, serif",
+                        fontSize: 11, fontWeight: 800, outline: 'none', width: 80,
+                        textTransform: 'uppercase', letterSpacing: '0.08em',
+                      }}
+                    />
+                    {/* Preset dropdown */}
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        onClick={() => setLabelDropdown(labelDropdown === secIdx ? null : secIdx)}
+                        style={{
+                          padding: '2px 6px', borderRadius: 6, fontSize: 9, fontWeight: 700,
+                          border: `1px solid ${M.border}`, background: 'rgba(196,100,40,0.1)',
+                          color: M.muted, cursor: 'pointer', fontFamily: "Georgia, serif",
+                        }}>▾</button>
+                      {labelDropdown === secIdx && (
+                        <div style={{
+                          position: 'absolute', top: '100%', left: 0, zIndex: 10, marginTop: 2,
+                          background: M.panel, border: `1px solid ${M.border}`,
+                          borderRadius: 8, overflow: 'hidden', minWidth: 110,
+                        }}>
+                          {SECTION_PRESETS.map(p => (
+                            <button key={p} onClick={() => { setLabelVal(p); setLabelDropdown(null); }}
+                              style={{
+                                display: 'block', width: '100%', padding: '7px 12px',
+                                textAlign: 'left', background: 'none', border: 'none',
+                                color: M.text, fontFamily: "Georgia, serif",
+                                fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                              }}>{p}</button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 ) : (
-                  <button
-                    onClick={() => startEdit(idx)}
-                    style={{
-                      width: '100%', padding: '10px 6px', borderRadius: 10,
-                      border: `1px solid ${chord ? M.border : 'rgba(196,100,40,0.12)'}`,
-                      background: chord ? 'rgba(196,100,40,0.10)' : 'rgba(196,100,40,0.04)',
-                      color: chord ? M.text : M.muted,
-                      fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 800,
-                      cursor: 'pointer', textAlign: 'center', minHeight: 44,
-                    }}>
-                    <div>{displayChord(chord) || <span style={{ fontSize: 20, opacity: 0.3 }}>+</span>}</div>
-                    <div style={{ fontSize: 8, color: M.muted, marginTop: 2 }}>m{idx + 1}</div>
+                  <button onClick={() => startEditLabel(secIdx)} style={{
+                    padding: '3px 10px', borderRadius: 20, fontSize: 9, fontWeight: 800,
+                    letterSpacing: '0.1em', textTransform: 'uppercase',
+                    border: `1px solid ${M.border}`, background: 'rgba(232,131,58,0.08)',
+                    color: M.accent, cursor: 'pointer', fontFamily: "Georgia, serif",
+                  }}>
+                    {section.label || `Section ${secIdx + 1}`} ✎
                   </button>
                 )}
+                <button onClick={() => removeMeasureFromSection(secIdx)} style={{
+                  width: 22, height: 22, borderRadius: 6, border: `1px solid ${M.border}`,
+                  background: 'rgba(196,100,40,0.08)', color: M.muted,
+                  cursor: 'pointer', fontSize: 13, lineHeight: 1,
+                }}>−</button>
+                <button onClick={() => addMeasureToSection(secIdx)} style={{
+                  width: 22, height: 22, borderRadius: 6, border: `1px solid ${M.border}`,
+                  background: 'rgba(196,100,40,0.08)', color: M.text,
+                  cursor: 'pointer', fontSize: 13, lineHeight: 1,
+                }}>+</button>
+                {activeSong.sections.length > 1 && (
+                  <button onClick={() => removeSection(secIdx)} style={{
+                    width: 22, height: 22, borderRadius: 6, border: `1px solid rgba(210,50,50,0.3)`,
+                    background: 'rgba(210,50,50,0.08)', color: 'rgba(248,113,113,0.7)',
+                    cursor: 'pointer', fontSize: 11, lineHeight: 1,
+                  }}>✕</button>
+                )}
               </div>
-            ))}
-          </div>
+
+              {/* Measures grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 6 }}>
+                {section.measures.map((chord, mIdx) => {
+                  const isEditing  = editingMeasure?.secIdx === secIdx && editingMeasure?.mIdx === mIdx;
+                  const isCurrent  = currentMeasureKey === `${secIdx}-${mIdx}`;
+                  return (
+                    <div key={mIdx} style={{ position: 'relative' }}>
+                      {isEditing ? (
+                        <input
+                          value={editVal}
+                          onChange={e => setEditVal(e.target.value)}
+                          onBlur={commitEditMeasure}
+                          onKeyDown={e => (e.key === 'Enter' || e.key === 'Tab') && commitEditMeasure()}
+                          autoFocus
+                          placeholder="e.g. Am7"
+                          style={{
+                            width: '100%', boxSizing: 'border-box',
+                            padding: '10px 6px', borderRadius: 10, textAlign: 'center',
+                            border: `1px solid ${M.borderHi}`, background: '#1A0C05',
+                            color: M.text, fontFamily: "Georgia, serif",
+                            fontSize: 16, fontWeight: 800, outline: 'none',
+                          }}
+                        />
+                      ) : (
+                        <button
+                          onClick={() => startEditMeasure(secIdx, mIdx)}
+                          style={{
+                            width: '100%', padding: '10px 6px', borderRadius: 10,
+                            border: `1px solid ${isCurrent ? M.hi : chord ? M.border : 'rgba(196,100,40,0.12)'}`,
+                            background: isCurrent
+                              ? 'rgba(245,166,91,0.18)'
+                              : chord ? 'rgba(196,100,40,0.10)' : 'rgba(196,100,40,0.04)',
+                            color: chord ? M.text : M.muted,
+                            fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 800,
+                            cursor: 'pointer', textAlign: 'center', minHeight: 44,
+                            boxShadow: isCurrent ? '0 0 8px rgba(245,166,91,0.25)' : 'none',
+                            transition: 'all 0.12s',
+                          }}>
+                          <div>{displayChord(chord) || <span style={{ fontSize: 20, opacity: 0.3 }}>+</span>}</div>
+                          <div style={{ fontSize: 8, color: M.muted, marginTop: 2 }}>m{mIdx + 1}</div>
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
 
           {nashville && (
-            <div style={{ fontSize: 10, color: M.muted, marginTop: 10, textAlign: 'center', fontStyle: 'italic' }}>
+            <div style={{ fontSize: 10, color: M.muted, marginTop: 4, textAlign: 'center', fontStyle: 'italic' }}>
               Nashville numbers in key of {activeSong.key}
             </div>
           )}

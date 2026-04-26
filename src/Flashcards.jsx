@@ -458,71 +458,81 @@ export default function Flashcards({ isPro = false, onPurchase, onRestore }) {
               <div className={`fc-inner${flipped ? ' flipped' : ''}`}>
 
                 {/* Front */}
-                <div className="fc-face"
-                  style={{ background:M.surface, border:`1px solid ${M.border}` }}>
-                  <div style={{ fontSize:11, color:M.muted, letterSpacing:'0.1em',
-                    textTransform:'uppercase', marginBottom:16 }}>
-                    {deck === 'notes'  ? 'What note is this?' :
-                     deck === 'chords' ? 'Show the chord shape' :
-                     deck === 'tab'    ? 'What note?' :
-                                         'Name this symbol'}
-                  </div>
-                  {deck === 'notes'  && <MiniStaff step={card.step} />}
-                  {deck === 'chords' && (
-                    <div style={{ fontSize:52, fontWeight:800, color:M.accent,
-                      lineHeight:1, marginBottom:8 }}>{card.name}</div>
-                  )}
-                  {deck === 'tab'    && <TabDiagram string={card.string} fret={card.fret} />}
-                  {deck === 'theory' && <TheorySymbol type={card.symbol} />}
-                  <div style={{ fontSize:11, color:'rgba(160,120,90,0.6)',
-                    marginTop:16, letterSpacing:'0.05em' }}>Tap to flip</div>
-                </div>
+                {(() => {
+                  const isNotes  = deck === 'notes-basic' || deck === 'notes-pro';
+                  const isChords = deck === 'chords-open' || deck === 'chords-barre';
+                  const isTab    = deck === 'tab' || deck === 'tab-pro';
+                  const isTheory = deck === 'theory';
+                  return (
+                    <>
+                      <div className="fc-face"
+                        style={{ background:M.surface, border:`1px solid ${M.border}` }}>
+                        <div style={{ fontSize:11, color:M.muted, letterSpacing:'0.1em',
+                          textTransform:'uppercase', marginBottom:16 }}>
+                          {isNotes  ? 'What note is this?' :
+                           isChords ? 'Show the chord shape' :
+                           isTab    ? 'What note?' :
+                                      'Name this symbol'}
+                        </div>
+                        {isNotes  && <MiniStaff step={card.step} />}
+                        {isChords && (
+                          <div style={{ fontSize:52, fontWeight:800, color:M.accent,
+                            lineHeight:1, marginBottom:8 }}>{card.name}</div>
+                        )}
+                        {isTab    && <TabDiagram string={card.string} fret={card.fret} />}
+                        {isTheory && <TheorySymbol type={card.symbol} />}
+                        <div style={{ fontSize:11, color:'rgba(160,120,90,0.6)',
+                          marginTop:16, letterSpacing:'0.05em' }}>Tap to flip</div>
+                      </div>
 
-                {/* Back */}
-                <div className="fc-face fc-back"
-                  style={{ background:M.panel, border:`1px solid ${M.borderHi}` }}>
-                  {deck === 'notes' && (
-                    <>
-                      <div style={{ fontSize:44, fontWeight:800, color:M.hi,
-                        lineHeight:1, marginBottom:8 }}>{card.name}</div>
-                      <div style={{ fontSize:13, color:M.muted }}>{card.sub}</div>
-                      <button onClick={e => { e.stopPropagation(); guitarSampler.resume(); guitarSampler.playNote(card.note, {volume:0.9}); }}
-                        style={{ marginTop:14, ...btn(false), padding:'6px 16px', fontSize:12 }}>
-                        🎸 Hear
-                      </button>
-                    </>
-                  )}
-                  {deck === 'chords' && (
-                    <>
-                      <div style={{ fontSize:15, fontWeight:700, color:M.hi, marginBottom:8 }}>
-                        {card.full}
+                      {/* Back */}
+                      <div className="fc-face fc-back"
+                        style={{ background:M.panel, border:`1px solid ${M.borderHi}` }}>
+                        {isNotes && (
+                          <>
+                            <div style={{ fontSize:44, fontWeight:800, color:M.hi,
+                              lineHeight:1, marginBottom:8 }}>{card.name}</div>
+                            <div style={{ fontSize:13, color:M.muted }}>{card.sub}</div>
+                            <button onClick={e => { e.stopPropagation(); guitarSampler.resume(); guitarSampler.playNote(card.note, {volume:0.9}); }}
+                              style={{ marginTop:14, ...btn(false), padding:'6px 16px', fontSize:12 }}>
+                              🎸 Hear
+                            </button>
+                          </>
+                        )}
+                        {isChords && (
+                          <>
+                            <div style={{ fontSize:15, fontWeight:700, color:M.hi, marginBottom:8 }}>
+                              {card.full}
+                            </div>
+                            <div style={{ width:'100%', maxWidth:160 }}>
+                              <ChordDiagram frets={card.frets} baseFret={1} barre={card.barre} playing={false}/>
+                            </div>
+                            <button onClick={e => {
+                              e.stopPropagation();
+                              guitarSampler.resume();
+                              card.notes.forEach((n,i) => setTimeout(() => guitarSampler.playNote(n,{volume:0.85}), i*40));
+                            }} style={{ marginTop:8, ...btn(false), padding:'5px 14px', fontSize:12 }}>
+                              🎸 Hear
+                            </button>
+                          </>
+                        )}
+                        {isTab && (
+                          <div style={{ fontSize:44, fontWeight:800, color:M.hi, lineHeight:1 }}>
+                            {card.note}
+                          </div>
+                        )}
+                        {isTheory && (
+                          <>
+                            <div style={{ fontSize:16, fontWeight:800, color:M.hi,
+                              marginBottom:10 }}>{card.name}</div>
+                            <div style={{ fontSize:13, color:M.text, lineHeight:1.7,
+                              textAlign:'center', maxWidth:260 }}>{card.answer}</div>
+                          </>
+                        )}
                       </div>
-                      <div style={{ width:'100%', maxWidth:160 }}>
-                        <ChordDiagram frets={card.frets} baseFret={1} barre={card.barre} playing={false}/>
-                      </div>
-                      <button onClick={e => {
-                        e.stopPropagation();
-                        guitarSampler.resume();
-                        card.notes.forEach((n,i) => setTimeout(() => guitarSampler.playNote(n,{volume:0.85}), i*40));
-                      }} style={{ marginTop:8, ...btn(false), padding:'5px 14px', fontSize:12 }}>
-                        🎸 Hear
-                      </button>
                     </>
-                  )}
-                  {deck === 'tab' && (
-                    <div style={{ fontSize:44, fontWeight:800, color:M.hi, lineHeight:1 }}>
-                      {card.note}
-                    </div>
-                  )}
-                  {deck === 'theory' && (
-                    <>
-                      <div style={{ fontSize:16, fontWeight:800, color:M.hi,
-                        marginBottom:10 }}>{card.name}</div>
-                      <div style={{ fontSize:13, color:M.text, lineHeight:1.7,
-                        textAlign:'center', maxWidth:260 }}>{card.answer}</div>
-                    </>
-                  )}
-                </div>
+                  );
+                })()}
               </div>
             </div>
 

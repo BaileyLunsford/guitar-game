@@ -167,8 +167,8 @@ function FretboardSVG({ mode, targetLetter, onTap, flashPos, flashResult, foundK
         </text>
       ))}
 
-      {/* Fret number labels */}
-      {[3, 5, 7, 9, 12].map(f => (
+      {/* Fret number labels — all frets 0–12 */}
+      {Array.from({ length: 13 }, (_, i) => i).map(f => (
         <text key={f} x={PL + f * fw + fw / 2} y={PT - 5}
           textAnchor="middle" fontSize="7" fontFamily="Georgia, serif"
           fill="rgba(160,120,90,0.45)">
@@ -325,36 +325,41 @@ function GameMode({ isPro, onUpgrade }) {
 }
 
 // ── Flashcard mode ────────────────────────────────────────────────────────────
+function makeCardAndOptions() {
+  const c = makeRandomCard();
+  return { card: c, options: makeOptions(c) };
+}
+
 function FlashcardMode({ isPro, onUpgrade }) {
-  const [score,   setScore]   = useState(0);
-  const [streak,  setStreak]  = useState(0);
-  const [card,    setCard]    = useState(makeRandomCard);
-  const [options, setOptions] = useState(() => makeOptions(makeRandomCard()));
-  const [chosen,  setChosen]  = useState(null);
+  const [score,  setScore]  = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [{ card, options }, setCardAndOptions] = useState(makeCardAndOptions);
+  const [chosen, setChosen] = useState(null);
 
   if (!isPro) return <ProGate label="Flashcard Mode" onUpgrade={onUpgrade} />;
+
+  const correct = noteLetter(card.answer);
 
   function handleChoice(opt) {
     if (chosen) return;
     setChosen(opt);
-    const correct = noteLetter(card.answer);
     if (opt === correct) {
       guitarSampler.resume?.();
       guitarSampler.playNote(card.answer);
       setScore(s => s + 1);
       setStreak(s => s + 1);
+      // User must click "Next Note →" to advance
     } else {
       setStreak(0);
+      // Flash red, then reset so they can try again
+      setTimeout(() => setChosen(null), 900);
     }
-    setTimeout(() => {
-      const next = makeRandomCard();
-      setCard(next);
-      setOptions(makeOptions(next));
-      setChosen(null);
-    }, 950);
   }
 
-  const correct = noteLetter(card.answer);
+  function handleNext() {
+    setCardAndOptions(makeCardAndOptions());
+    setChosen(null);
+  }
 
   return (
     <>
@@ -374,17 +379,17 @@ function FlashcardMode({ isPro, onUpgrade }) {
         padding: '18px 16px', marginBottom: 14, textAlign: 'center',
       }}>
         <div style={{ fontSize: 10, color: M.muted, letterSpacing: '0.1em', marginBottom: 10 }}>WHAT NOTE IS THIS?</div>
-        <div style={{ fontSize: 26, fontWeight: 900, color: M.text, marginBottom: 4 }}>
+        <div style={{ fontSize: 26, fontWeight: 900, color: M.text }}>
           {STR_LABELS[card.si]}-string · Fret {card.fret}
-        </div>
-        <div style={{ fontSize: 11, color: M.muted }}>
-          {card.fret === 0 ? 'Open string' : `${card.fret}th fret`}
         </div>
       </div>
       <div style={{ overflowX: 'auto', marginBottom: 14 }}>
-        <FretboardSVG mode="explorer" flashPos={card} flashResult="correct" onTap={null} />
+        <FretboardSVG mode="explorer"
+          flashPos={chosen ? card : null}
+          flashResult={chosen === correct ? 'correct' : 'wrong'}
+          onTap={null} />
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
         {options.map(opt => {
           let bg = 'rgba(255,255,255,0.05)';
           let border = M.border;
@@ -403,6 +408,19 @@ function FlashcardMode({ isPro, onUpgrade }) {
           );
         })}
       </div>
+      {chosen === correct && (
+        <button onClick={handleNext} style={{
+          width: '100%', padding: '12px', borderRadius: 12,
+          background: 'rgba(80,200,80,0.15)', border: '1px solid #5dc85d',
+          color: '#5dc85d', fontFamily: "Georgia, serif",
+          fontWeight: 800, fontSize: 15, cursor: 'pointer',
+        }}>Next Note →</button>
+      )}
+      {chosen && chosen !== correct && (
+        <div style={{ textAlign: 'center', fontSize: 13, color: '#f87171', fontWeight: 700, padding: '8px 0' }}>
+          Try again
+        </div>
+      )}
     </>
   );
 }

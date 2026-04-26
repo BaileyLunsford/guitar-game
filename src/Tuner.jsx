@@ -122,12 +122,10 @@ export default function Tuner({ strings = [], theme = {}, title = 'Tune Your Ins
     // ── Mic access ─────────────────────────────────────────
     function startMic() {
       if (micGranted) return Promise.resolve();
-      // Always request default device — ensures built-in mic over AirPods output
-      var baseAudio = { deviceId: 'default' };
-      var constraints = IS_IOS
-        ? { audio: Object.assign(baseAudio, { echoCancellation: false, noiseSuppression: false, autoGainControl: false, sampleRate: 44100 }) }
-        : { audio: baseAudio };
-      return navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+      var iosExtra = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, sampleRate: 44100 };
+      var firstConstraints = IS_IOS ? { audio: iosExtra } : { audio: true };
+
+      function doConnect(stream) {
         micStream = stream;
         var ctx = getCtx();
         analyser = ctx.createAnalyser();
@@ -138,13 +136,23 @@ export default function Tuner({ strings = [], theme = {}, title = 'Tune Your Ins
         tunerAnalyser = analyser;
         var micBtn = document.getElementById('gt-mic-btn');
         if (micBtn) micBtn.style.display = 'none';
-      }).catch(function (e) {
-        console.warn('Tuner mic error:', e);
-        // NotReadableError typically means the mic is occupied by Bluetooth (AirPods)
-        if (e.name === 'NotReadableError' || e.name === 'AbortError') {
-          setAirpodsWarningRef.current(true);
-        }
-      });
+      }
+
+      return navigator.mediaDevices.getUserMedia(firstConstraints)
+        .then(doConnect)
+        .catch(function (e) {
+          console.warn('Tuner mic error:', e);
+          if (e.name === 'NotReadableError' || e.name === 'AbortError') {
+            // AirPods/Bluetooth mic busy — show warning and try explicit default device
+            setAirpodsWarningRef.current(true);
+            var fallbackConstraints = IS_IOS
+              ? { audio: Object.assign({ deviceId: 'default' }, iosExtra) }
+              : { audio: { deviceId: 'default' } };
+            return navigator.mediaDevices.getUserMedia(fallbackConstraints)
+              .then(doConnect)
+              .catch(function (e2) { console.warn('Tuner mic fallback error:', e2); });
+          }
+        });
     }
 
     // ── Needle colour zones ────────────────────────────────

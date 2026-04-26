@@ -1,18 +1,20 @@
 /**
  * useCrowdAmbience.js — Web Audio bar/restaurant crowd atmosphere
  *
- * Warm, low background murmur — like being in a busy restaurant.
- * Two soft bandpass layers (200–600 Hz) + gentle room rumble.
- * Periodic slight swell (natural conversation ebb/flow).
- * No harsh high-frequency filters.
+ * Pure synthesis approach:
+ *   - Three narrow bandpass voices (200Hz, 350Hz, 500Hz) each with a slow LFO
+ *   - Periodic glass clink transients (800–1200Hz sine burst, fast decay)
+ *   - Low room rumble oscillator (80–120Hz) with slow tremolo
+ *   - No broadband white/pink noise
+ *   - Master gain ~0.12
  *
- * API (same shape as useAmbience):
- *   const { ambOn, ambToggle, ambStart, ambStop } = useCrowdAmbience()
+ * API: { ambOn, ambToggle, ambStart, ambStop }
  */
 
 import { useState, useCallback, useRef } from 'react';
 
-const MASTER_GAIN = 0.18;
+const MASTER_GAIN = 0.12;
+const VOICE_FREQS = [200, 350, 500];
 
 function getCtx() {
   if (!getCtx._ctx) {
@@ -22,10 +24,10 @@ function getCtx() {
   return getCtx._ctx;
 }
 
-// Pink noise buffer — Voss-McCartney
+// Short pink noise buffer used only as source for narrow bandpass voices
 function makePinkNoiseBuffer(ctx) {
   const sr  = ctx.sampleRate;
-  const len = Math.ceil(sr * 3.0);
+  const len = Math.ceil(sr * 4.0);
   const buf = ctx.createBuffer(1, len, sr);
   const d   = buf.getChannelData(0);
   let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
@@ -43,8 +45,8 @@ function makePinkNoiseBuffer(ctx) {
   return buf;
 }
 
-// Crowd murmur layer: pink noise → lowpass to kill harshness → wide bandpass for warmth
-function makeMurmurLayer(ctx, mg, pinkBuf, bpFreq, gainVal) {
+// Narrow bandpass voice: noise source → narrow BP filter → gain with slow LFO
+function makeVoice(ctx, mg, pinkBuf, freq, baseGain) {
   const src = ctx.createBufferSource();
   src.buffer    = pinkBuf;
   src.loop      = true;
@@ -52,62 +54,91 @@ function makeMurmurLayer(ctx, mg, pinkBuf, bpFreq, gainVal) {
   src.loopEnd   = pinkBuf.duration;
   src.start(0, Math.random() * pinkBuf.duration);
 
-  // First: kill everything above 700 Hz so no static
-  const lp = ctx.createBiquadFilter();
-  lp.type            = 'lowpass';
-  lp.frequency.value = 700;
-  lp.Q.value         = 0.5;
-
-  // Then: gentle bandpass to shape the warmth band
   const bp = ctx.createBiquadFilter();
   bp.type            = 'bandpass';
-  bp.frequency.value = bpFreq;
-  bp.Q.value         = 0.6;  // wide, not harsh
+  bp.frequency.value = freq;
+  bp.Q.value         = 4.0;  // narrow resonance
 
   const gain = ctx.createGain();
-  gain.gain.value = gainVal;
+  gain.gain.value = baseGain;
 
-  src.connect(lp);
-  lp.connect(bp);
+  // Slow random-phase LFO for natural amplitude variation
+  const lfo = ctx.createOscillator();
+  const lfoG = ctx.createGain();
+  lfo.type            = 'sine';
+  lfo.frequency.value = 0.07 + Math.random() * 0.18;  // 0.07–0.25 Hz
+  lfoG.gain.value     = baseGain * 0.45;               // 45% modulation depth
+  lfo.connect(lfoG);
+  lfoG.connect(gain.gain);
+  lfo.start(0);
+
+  src.connect(bp);
   bp.connect(gain);
   gain.connect(mg);
-  return { src, gain };
+  return { src, lfo };
 }
 
-// Room rumble: low sine with gentle tremolo
+// Low room rumble at random 80–120 Hz with gentle tremolo
 function makeRumble(ctx, mg) {
+  const freq = 80 + Math.random() * 40;
   const osc  = ctx.createOscillator();
   const gain = ctx.createGain();
   const lfo  = ctx.createOscillator();
   const lfoG = ctx.createGain();
 
   osc.type            = 'sine';
-  osc.frequency.value = 100;   // room resonance frequency
-  gain.gain.value     = 0.04;  // very quiet
+  osc.frequency.value = freq;
+  gain.gain.value     = 0.06;
 
   lfo.type            = 'sine';
-  lfo.frequency.value = 0.06;  // slow 16-second cycle
-  lfoG.gain.value     = 0.015;
+  lfo.frequency.value = 0.04 + Math.random() * 0.04;
+  lfoG.gain.value     = 0.025;
 
   lfo.connect(lfoG);
   lfoG.connect(gain.gain);
   osc.connect(gain);
   gain.connect(mg);
-  osc.start();
-  lfo.start();
+  osc.start(0);
+  lfo.start(0);
   return { osc, lfo };
 }
 
-// Crowd swell: every 12–22s, gently raise the master gain by ~25%, then back down
+// Schedule glass clink transients: sine burst at random 800–1200 Hz, fast exponential decay
+function scheduleGlassClinks(ctx, mg, clinkRef) {
+  function next() {
+    const delay = 9000 + Math.random() * 22000;  // 9–31 seconds between clinks
+    clinkRef.current = setTimeout(() => {
+      try {
+        const freq  = 800 + Math.random() * 400;
+        const now   = ctx.currentTime;
+        const osc   = ctx.createOscillator();
+        const gain  = ctx.createGain();
+        osc.type            = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.07, now);
+        gain.gain.linearRampToValueAtTime(0.07, now + 0.006);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+        osc.connect(gain);
+        gain.connect(mg);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      } catch (_) {}
+      next();
+    }, delay);
+  }
+  next();
+}
+
+// Crowd swell: every 15–28s, raise master gain ~20%, then back down
 function scheduleSwell(ctx, mg, swellRef) {
-  const delay = 12000 + Math.random() * 10000;
+  const delay = 15000 + Math.random() * 13000;
   swellRef.current = setTimeout(() => {
     try {
       const t0       = ctx.currentTime;
-      const riseTime = 1.8 + Math.random() * 1.0;
-      const holdTime = 1.0 + Math.random() * 1.5;
-      const fallTime = 2.5 + Math.random() * 1.5;
-      const peak     = MASTER_GAIN * (1.2 + Math.random() * 0.15);
+      const riseTime = 2.0 + Math.random() * 1.2;
+      const holdTime = 1.2 + Math.random() * 1.8;
+      const fallTime = 2.8 + Math.random() * 1.5;
+      const peak     = MASTER_GAIN * (1.18 + Math.random() * 0.14);
 
       mg.gain.setValueAtTime(MASTER_GAIN, t0);
       mg.gain.linearRampToValueAtTime(peak, t0 + riseTime);
@@ -119,13 +150,16 @@ function scheduleSwell(ctx, mg, swellRef) {
 }
 
 export default function useCrowdAmbience() {
-  const [on,   setOn]   = useState(false);
-  const nodes  = useRef({ mg: null, layers: [], rumble: null, pinkBuf: null });
+  const [on, setOn] = useState(false);
+  const nodes    = useRef({ mg: null, voices: [], rumble: null, pinkBuf: null });
   const swellRef = useRef(null);
+  const clinkRef = useRef(null);
 
   const stop = useCallback(() => {
     clearTimeout(swellRef.current);
+    clearTimeout(clinkRef.current);
     swellRef.current = null;
+    clinkRef.current = null;
     const n = nodes.current;
     try {
       if (n.mg) {
@@ -135,8 +169,11 @@ export default function useCrowdAmbience() {
         n.mg.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
       }
     } catch (_) {}
-    n.layers.forEach(({ src }) => { try { src.stop(); src.disconnect(); } catch (_) {} });
-    n.layers = [];
+    n.voices.forEach(({ src, lfo }) => {
+      try { src.stop(); src.disconnect(); } catch (_) {}
+      try { lfo.stop(); lfo.disconnect(); } catch (_) {}
+    });
+    n.voices = [];
     if (n.rumble) {
       try { n.rumble.osc.stop(); } catch (_) {}
       try { n.rumble.lfo.stop(); } catch (_) {}
@@ -153,23 +190,25 @@ export default function useCrowdAmbience() {
 
       const mg = ctx.createGain();
       mg.gain.setValueAtTime(0, ctx.currentTime);
-      mg.gain.linearRampToValueAtTime(MASTER_GAIN, ctx.currentTime + 3.0);
+      mg.gain.linearRampToValueAtTime(MASTER_GAIN, ctx.currentTime + 3.5);
       mg.connect(ctx.destination);
       n.mg = mg;
 
       if (!n.pinkBuf) n.pinkBuf = makePinkNoiseBuffer(ctx);
       const pb = n.pinkBuf;
 
-      // Two warm murmur layers — low-mid frequencies only, no harshness
-      n.layers = [
-        makeMurmurLayer(ctx, mg, pb, 250, 0.45),  // low body warmth
-        makeMurmurLayer(ctx, mg, pb, 480, 0.30),  // mid speech blur
-      ];
+      // Three narrow bandpass voices with independent LFOs
+      n.voices = VOICE_FREQS.map((freq, i) =>
+        makeVoice(ctx, mg, pb, freq, 0.28 - i * 0.04)
+      );
 
       n.rumble = makeRumble(ctx, mg);
 
-      // Start swell cycle after initial fade-in settles
-      setTimeout(() => scheduleSwell(ctx, mg, swellRef), 5000);
+      // Start clinks and swell after initial fade-in
+      setTimeout(() => {
+        scheduleGlassClinks(ctx, mg, clinkRef);
+        scheduleSwell(ctx, mg, swellRef);
+      }, 4000);
     } catch (e) {
       console.warn('[useCrowdAmbience] start error:', e.message);
     }
