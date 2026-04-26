@@ -30,6 +30,7 @@ import NashvilleNumbers from './NashvilleNumbers';
 import FretboardTheory from './FretboardTheory';
 import FretboardNotes from './FretboardNotes';
 import StrumPatterns from './StrumPatterns';
+import Songwriter from './Songwriter';
 
 const GUITAR_STRINGS = [
   { label: 'E2', freq: 82.41  },
@@ -493,6 +494,8 @@ const HOME_SECTIONS = [
       { icon: '🎵', title: 'Song Learn',     desc: 'Measure-by-measure playback with notation & tab',    hash: '#song-learn',      pro: false },
       { icon: '🎶', title: 'Strum Patterns', desc: 'Folk, country, reggae, funk — 6 free + 6 PRO',       hash: '#strum-patterns',  pro: false },
       { icon: '🃏', title: 'Flashcards',     desc: 'Drill notes, chords, tab & theory — flip to check', hash: '#flashcards',      pro: false },
+      { icon: '🎸', title: 'Chord Play',     desc: 'Open chords, voicings & I–IV–V progressions',       hash: '#chord-play',      pro: false },
+      { icon: '✏️', title: 'Songwriter',     desc: 'Chord charts, Nashville numbers & lyrics editor',   hash: '#songwriter',      pro: false },
     ],
   },
   {
@@ -502,7 +505,6 @@ const HOME_SECTIONS = [
       { icon: '🎼', title: 'Tab & Notation', desc: 'Standard notation with guitar tablature overlay',     hash: '#tab-test',        pro: false },
       { icon: '🎸', title: 'Fretboard Notes',desc: 'All 78 notes — explore, game & flashcard modes',      hash: '#fretboard-notes', pro: false },
       { icon: '🤘', title: 'Barre Chords',   desc: 'Moveable E and A shapes in every key',                hash: '#barre-chords',    pro: false },
-      { icon: '🎸', title: 'Chord Play',     desc: 'Open chords, voicings & I–IV–V progressions',         hash: '#chord-play',      pro: true  },
     ],
   },
   {
@@ -845,6 +847,7 @@ export default function App() {
   if (hash === '#fretboard-theory')return <FretboardTheory   isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
   if (hash === '#fretboard-notes') return <FretboardNotes    isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
   if (hash === '#strum-patterns')  return <StrumPatterns     isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
+  if (hash === '#songwriter')      return <Songwriter />;
 
   return (
     <>

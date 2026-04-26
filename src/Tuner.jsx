@@ -46,6 +46,9 @@ const CHROM_FREQS = [
 
 export default function Tuner({ strings = [], theme = {}, title = 'Tune Your Instrument' }) {
   const [started, setStarted] = useState(false);
+  const [airpodsWarning, setAirpodsWarning] = useState(false);
+  const setAirpodsWarningRef = React.useRef(setAirpodsWarning);
+  React.useEffect(() => { setAirpodsWarningRef.current = setAirpodsWarning; });
   const T = {
     bg:     theme.bg     || '#120A04',
     card:   theme.card   || '#2A1208',
@@ -119,9 +122,11 @@ export default function Tuner({ strings = [], theme = {}, title = 'Tune Your Ins
     // ── Mic access ─────────────────────────────────────────
     function startMic() {
       if (micGranted) return Promise.resolve();
+      // Always request default device — ensures built-in mic over AirPods output
+      var baseAudio = { deviceId: 'default' };
       var constraints = IS_IOS
-        ? { audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, sampleRate: 44100 } }
-        : { audio: true };
+        ? { audio: Object.assign(baseAudio, { echoCancellation: false, noiseSuppression: false, autoGainControl: false, sampleRate: 44100 }) }
+        : { audio: baseAudio };
       return navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
         micStream = stream;
         var ctx = getCtx();
@@ -133,7 +138,13 @@ export default function Tuner({ strings = [], theme = {}, title = 'Tune Your Ins
         tunerAnalyser = analyser;
         var micBtn = document.getElementById('gt-mic-btn');
         if (micBtn) micBtn.style.display = 'none';
-      }).catch(function (e) { console.warn('Tuner mic error:', e); });
+      }).catch(function (e) {
+        console.warn('Tuner mic error:', e);
+        // NotReadableError typically means the mic is occupied by Bluetooth (AirPods)
+        if (e.name === 'NotReadableError' || e.name === 'AbortError') {
+          setAirpodsWarningRef.current(true);
+        }
+      });
     }
 
     // ── Needle colour zones ────────────────────────────────
@@ -396,6 +407,20 @@ export default function Tuner({ strings = [], theme = {}, title = 'Tune Your Ins
         transition: 'color 0.15s' }}>
         Play a string to begin tuning
       </div>
+
+      {/* AirPods warning */}
+      {airpodsWarning && (
+        <div style={{
+          width: '100%', maxWidth: 360, padding: '10px 14px', borderRadius: 10, marginBottom: 10,
+          background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.4)',
+          color: '#fca5a5', fontSize: 12, fontWeight: 700, textAlign: 'center',
+        }}>
+          🎧 Switch to Built-in Microphone for tuning with AirPods.<br />
+          <span style={{ fontWeight: 400, opacity: 0.8 }}>
+            Settings → Bluetooth → Connect a different output, then try again.
+          </span>
+        </div>
+      )}
 
       {/* Mic button */}
       <button id="gt-mic-btn" style={{

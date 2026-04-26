@@ -35,7 +35,7 @@
  *                          No-op if track is off.
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { getAudioContext } from './audioContext';
 
 const LOOKAHEAD_S = 0.12;
@@ -180,8 +180,6 @@ function scheduleRhythm(ctx, mg, t, rootHz, stepDur, genreId) {
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
 export default function useBackingTrack(genre, bpm) {
-  const [on, setOn] = useState(false);
-
   const r = useRef({
     masterGain:   null,
     noiseBuffer:  null,
@@ -189,13 +187,11 @@ export default function useBackingTrack(genre, bpm) {
     nextStepTime: 0,
     nextStepIdx:  0,
     // mirrors — kept current for use inside callbacks
-    on:    false,
     genre: null,
     bpm:   120,
   });
 
-  // Keep mirrors in sync with props/state
-  useEffect(() => { r.current.on    = on;    }, [on]);
+  // Keep mirrors in sync with props
   useEffect(() => { r.current.genre = genre; }, [genre]);
   useEffect(() => { r.current.bpm   = bpm;   }, [bpm]);
 
@@ -266,16 +262,17 @@ export default function useBackingTrack(genre, bpm) {
     ref.timerId = setInterval(tick, INTERVAL_MS);
   }
 
-  // ── Effect: respond to on/genre/bpm changes ───────────────────────────────
+  // ── Effect: start/stop based on genre (non-null = playing) ─────────────────
   useEffect(() => {
     const ref = r.current;
-    if (!on || !genre) {
+    if (!genre) {
       clearInterval(ref.timerId);
       ref.timerId = null;
       return;
     }
     const ctx = boot();
-    if (!ctx) { setOn(false); return; }
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume();
 
     startScheduler(ctx.currentTime + 0.05);
 
@@ -283,21 +280,21 @@ export default function useBackingTrack(genre, bpm) {
       clearInterval(ref.timerId);
       ref.timerId = null;
     };
-  }, [on, genre, bpm]); // eslint-disable-line
+  }, [genre, bpm]); // eslint-disable-line
 
   // Cleanup on unmount
   useEffect(() => () => clearInterval(r.current.timerId), []);
 
-  const toggleTrack = useCallback(() => setOn(v => !v), []);
-  const stopTrack   = useCallback(() => setOn(false), []);
-
   // syncToTime: externally align the pattern to a shared start time.
-  // Only acts when the backing track is already running.
-  const syncToTime  = useCallback((ctxTime) => {
-    if (!r.current.on || !r.current.genre) return;
+  const syncToTime = useCallback((ctxTime) => {
+    if (!r.current.genre) return;
     boot();
     startScheduler(ctxTime);
   }, []); // startScheduler only closes over stable `r` — no stale deps
 
-  return { trackOn: on, toggleTrack, stopTrack, syncToTime };
+  // stopTrack kept for API compatibility — setting genre=null from the caller stops it
+  const stopTrack   = useCallback(() => {}, []);
+  const toggleTrack = useCallback(() => {}, []);
+
+  return { trackOn: !!genre, toggleTrack, stopTrack, syncToTime };
 }

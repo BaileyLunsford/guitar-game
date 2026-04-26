@@ -61,7 +61,8 @@ function acc(noteName) {
 function ledgerPositions(pos) {
   const out = [];
   if (pos <= 0) {                        // C4 and below
-    const floor = pos % 2 === 0 ? pos : pos - 1;
+    // Round toward 0 for odd positions so we don't draw a ledger below the note
+    const floor = pos % 2 === 0 ? pos : pos + 1;
     for (let p = 0; p >= floor; p -= 2) out.push(p);
   }
   if (pos >= 12) {                       // A5 and above

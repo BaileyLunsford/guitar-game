@@ -88,7 +88,7 @@ export class InstrumentSampler {
   // Keeps playback feeling "played" rather than mechanical:
   //   velocity : ±15 % gain variation
   //   pitch    : ±3 cents random detune
-  static _humanVol()    { return 0.85 + Math.random() * 0.30; }   // 0.85–1.15
+  static _humanVol()    { return 1.20 + Math.random() * 0.30; }   // 1.20–1.50
   static _humanDetune() { return (Math.random() - 0.5) * 6; }     // –3 … +3 cents
 
   async playNote(note, { volume = null, detune = null } = {}) {

@@ -239,11 +239,32 @@ const THEORY_CARDS = [
   { symbol:'3-4',          name:'3/4 Time Signature', answer:'3 beats per measure — quarter note gets 1 beat. Common in waltzes.' },
 ];
 
-const DECKS = [
-  { id:'notes',  label:'Notes'  },
-  { id:'chords', label:'Chords' },
-  { id:'tab',    label:'Tab'    },
-  { id:'theory', label:'Theory' },
+const DECK_SECTIONS = [
+  {
+    level: 'Beginner',
+    color: { bg:'rgba(123,158,107,0.12)', border:'rgba(123,158,107,0.4)', text:'#7B9E6B' },
+    decks: [
+      { id:'notes-basic',  label:'Open Notes',   sub:'Strings 1–2' },
+      { id:'chords-open',  label:'Open Chords',  sub:'G C D Em Am' },
+      { id:'theory',       label:'Theory',       sub:'Note values & time' },
+    ],
+  },
+  {
+    level: 'Intermediate',
+    color: { bg:'rgba(232,131,58,0.12)', border:'rgba(232,131,58,0.4)', text:'#E8833A' },
+    decks: [
+      { id:'tab',          label:'Tab Reading',  sub:'Strings 1–3' },
+      { id:'notes-pro',    label:'Notes (PRO)',   sub:'Strings 3–6', pro:true },
+    ],
+  },
+  {
+    level: 'Advanced',
+    color: { bg:'rgba(196,60,40,0.12)', border:'rgba(196,60,40,0.4)', text:'#E06040' },
+    decks: [
+      { id:'chords-barre', label:'Barre Chords', sub:'F B Bm F#m', pro:true },
+      { id:'tab-pro',      label:'Tab (PRO)',     sub:'Strings 4–6', pro:true },
+    ],
+  },
 ];
 
 function btn(active = false, disabled = false) {
@@ -260,30 +281,38 @@ function btn(active = false, disabled = false) {
   };
 }
 
+function getDeckCards(deckId) {
+  switch (deckId) {
+    case 'notes-basic':  return NOTES_FREE;
+    case 'notes-pro':    return NOTES_PRO;
+    case 'chords-open':  return CHORDS_FREE;
+    case 'chords-barre': return CHORDS_PRO;
+    case 'tab':          return TAB_FREE;
+    case 'tab-pro':      return TAB_PRO;
+    case 'theory':       return THEORY_CARDS;
+    default:             return [];
+  }
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function Flashcards({ isPro = false, onPurchase, onRestore }) {
-  const [deck,    setDeck]    = useState('notes');
+  const [deck,    setDeck]    = useState('notes-basic');
   const [cardIdx, setCardIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [score,   setScore]   = useState(0);
   const [done,    setDone]    = useState(false);
   const [modal,   setModal]   = useState(null);
 
+  const allDecksFlat = DECK_SECTIONS.flatMap(s => s.decks);
+  const activeDeckMeta = allDecksFlat.find(d => d.id === deck);
+  const isProDeck = activeDeckMeta?.pro && !isPro;
+
   // Build active card list
-  const cards = (() => {
-    switch (deck) {
-      case 'notes':  return isPro ? [...NOTES_FREE, ...NOTES_PRO]  : NOTES_FREE;
-      case 'chords': return isPro ? [...CHORDS_FREE, ...CHORDS_PRO] : CHORDS_FREE;
-      case 'tab':    return isPro ? [...TAB_FREE, ...TAB_PRO]       : TAB_FREE;
-      case 'theory': return THEORY_CARDS;
-      default:       return [];
-    }
-  })();
+  const cards = isProDeck ? [] : getDeckCards(deck);
 
   const card    = cards[cardIdx];
   const total   = cards.length;
   const atEnd   = cardIdx >= total - 1;
-  const isProCard = card?.pro && !isPro;
 
   function switchDeck(id) {
     setDeck(id); setCardIdx(0); setFlipped(false); setScore(0); setDone(false);
@@ -371,22 +400,41 @@ export default function Flashcards({ isPro = false, onPurchase, onRestore }) {
           </p>
         </div>
 
-        {/* Deck tabs */}
-        <div style={{ display:'flex', gap:6, justifyContent:'center', marginBottom:20, flexWrap:'wrap' }}>
-          {DECKS.map(d => (
-            <button key={d.id} onClick={() => switchDeck(d.id)} style={{
-              padding:'6px 14px', borderRadius:10,
-              border:`1px solid ${deck === d.id ? M.borderHi : M.border}`,
-              background: deck === d.id ? 'rgba(232,131,58,0.18)' : 'rgba(196,100,40,0.06)',
-              color: deck === d.id ? M.hi : M.muted,
-              fontFamily:"Georgia,serif", fontWeight:700, fontSize:12,
-              cursor:'pointer', transition:'all 0.15s',
-            }}>{d.label}</button>
+        {/* Deck sections */}
+        <div style={{ marginBottom: 20 }}>
+          {DECK_SECTIONS.map(sec => (
+            <div key={sec.level} style={{ marginBottom: 12 }}>
+              <div style={{
+                fontSize: 9, fontWeight: 800, letterSpacing: '0.12em',
+                textTransform: 'uppercase', color: sec.color.text,
+                marginBottom: 6, paddingLeft: 2,
+              }}>{sec.level}</div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {sec.decks.map(d => {
+                  const isSel = deck === d.id;
+                  const isLocked = d.pro && !isPro;
+                  return (
+                    <button key={d.id} onClick={() => switchDeck(d.id)} style={{
+                      padding: '6px 12px', borderRadius: 10, textAlign: 'left',
+                      border: `1px solid ${isSel ? sec.color.border : isLocked ? 'rgba(160,120,90,0.2)' : M.border}`,
+                      background: isSel ? sec.color.bg : isLocked ? 'rgba(160,120,90,0.04)' : 'rgba(196,100,40,0.06)',
+                      color: isSel ? sec.color.text : isLocked ? 'rgba(160,120,90,0.45)' : M.muted,
+                      fontFamily: "Georgia,serif", fontWeight: 700, fontSize: 12,
+                      cursor: 'pointer', transition: 'all 0.15s',
+                    }}>
+                      {isLocked && <span style={{ fontSize: 9, marginRight: 4 }}>🔒</span>}
+                      {d.label}
+                      <div style={{ fontSize: 9, fontWeight: 400, opacity: 0.7, marginTop: 1 }}>{d.sub}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           ))}
         </div>
 
-        {/* PRO gate for pro cards */}
-        {isProCard ? (
+        {/* PRO gate for pro decks */}
+        {isProDeck ? (
           <div style={{ textAlign:'center', padding:'48px 20px',
             background:M.surface, borderRadius:16,
             border:`1px solid ${M.border}`, marginBottom:20 }}>

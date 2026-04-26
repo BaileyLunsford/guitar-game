@@ -53,6 +53,15 @@ function calcTapBpm(taps) {
   return Math.round(60000 / avg);
 }
 
+const PRESETS_KEY = 'songBackingPresets';
+
+function loadPresets() {
+  try { return JSON.parse(localStorage.getItem(PRESETS_KEY) || '[]'); } catch { return []; }
+}
+function savePresets(presets) {
+  try { localStorage.setItem(PRESETS_KEY, JSON.stringify(presets)); } catch {}
+}
+
 export default function SongBackingTracks() {
   const [started,  setStarted]  = useState(false);
   const [playing,  setPlaying]  = useState(false);
@@ -62,6 +71,9 @@ export default function SongBackingTracks() {
   const [drumsOn,  setDrumsOn]  = useState(true);
   const [bassOn,   setBassOn]   = useState(true);
   const [metOn,    setMetOn]    = useState(false);
+  const [presets,  setPresets]  = useState(loadPresets);
+  const [saving,   setSaving]   = useState(false);
+  const [presetName, setPresetName] = useState('');
   const tapsRef = useRef([]);
 
   // Backing track: genre controls drums + bass pattern
@@ -84,12 +96,38 @@ export default function SongBackingTracks() {
 
   useEffect(() => () => { stopTrack(); stopClick(); }, []); // eslint-disable-line
 
+  function handleLoadPreset(p) {
+    setGenre(p.genre);
+    setTimeSig(p.timeSig);
+    setBpm(p.bpm);
+    setDrumsOn(p.drumsOn);
+    setBassOn(p.bassOn);
+    setMetOn(p.metOn);
+  }
+
+  function handleDeletePreset(idx) {
+    const next = presets.filter((_, i) => i !== idx);
+    setPresets(next);
+    savePresets(next);
+  }
+
+  function handleSavePreset() {
+    const name = presetName.trim() || `${genre} ${bpm} BPM`;
+    const p = { name, genre, timeSig, bpm, drumsOn, bassOn, metOn };
+    const next = [...presets, p];
+    setPresets(next);
+    savePresets(next);
+    setPresetName('');
+    setSaving(false);
+  }
+
   function handleStart() {
     if (playing) {
       setPlaying(false);
       return;
     }
     const ctx = getAudioContext();
+    if (ctx.state === 'suspended') ctx.resume();
     const t   = ctx.currentTime + 0.05;
 
     if (drumsOn || bassOn) {
@@ -265,6 +303,68 @@ export default function SongBackingTracks() {
               🎵 {metOn ? 'Click On' : 'Click Off'}
             </button>
           </div>
+        </div>
+
+        {/* Presets */}
+        <div style={{
+          background: M.surface, borderRadius: 14, border: `1px solid ${M.border}`,
+          padding: '14px 16px', marginBottom: 24,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em',
+              textTransform: 'uppercase', color: M.muted }}>Presets</div>
+            <button onClick={() => setSaving(s => !s)} style={{
+              padding: '4px 12px', borderRadius: 10, fontSize: 11, fontWeight: 700,
+              border: `1px solid ${M.borderHi}`, background: 'rgba(232,131,58,0.12)',
+              color: M.accent, cursor: 'pointer', fontFamily: "Georgia, serif",
+            }}>
+              {saving ? 'Cancel' : '+ Save'}
+            </button>
+          </div>
+          {saving && (
+            <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+              <input
+                value={presetName}
+                onChange={e => setPresetName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSavePreset()}
+                placeholder={`${genre} ${bpm} BPM`}
+                style={{
+                  flex: 1, padding: '7px 10px', borderRadius: 8, fontSize: 12,
+                  border: `1px solid ${M.border}`, background: '#1A0C05',
+                  color: M.text, fontFamily: "Georgia, serif", outline: 'none',
+                }}
+              />
+              <button onClick={handleSavePreset} style={{
+                padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+                border: 'none', background: M.accent, color: '#fff',
+                cursor: 'pointer', fontFamily: "Georgia, serif",
+              }}>Save</button>
+            </div>
+          )}
+          {presets.length === 0 ? (
+            <div style={{ fontSize: 11, color: 'rgba(160,120,90,0.4)', fontStyle: 'italic' }}>
+              No presets saved yet
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {presets.map((p, i) => (
+                <div key={i} style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  padding: '5px 10px 5px 12px', borderRadius: 20,
+                  background: 'rgba(196,100,40,0.12)', border: `1px solid ${M.border}`,
+                }}>
+                  <button onClick={() => handleLoadPreset(p)} style={{
+                    background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                    color: M.text, fontFamily: "Georgia, serif", fontSize: 12, fontWeight: 600,
+                  }}>{p.name}</button>
+                  <button onClick={() => handleDeletePreset(i)} style={{
+                    background: 'none', border: 'none', padding: '0 0 0 4px', cursor: 'pointer',
+                    color: M.muted, fontSize: 14, lineHeight: 1,
+                  }}>×</button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Big START / STOP */}

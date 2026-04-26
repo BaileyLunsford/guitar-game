@@ -304,6 +304,7 @@ export default function AuditionGame() {
 
   // ── Mutable refs (hot loop & timers) ─────────────────────────────────────
   const analyserRef      = useRef(null);
+  const micStreamRef     = useRef(null);
   const animFrameRef     = useRef(null);
   const timerIntervalRef = useRef(null);
   const feedbackTimerRef = useRef(null);
@@ -334,6 +335,7 @@ export default function AuditionGame() {
       ? { audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false, sampleRate:44100 } }
       : { audio: true };
     return navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+      micStreamRef.current = stream;
       const ctx      = new (window.AudioContext || window.webkitAudioContext)();
       const analyser = ctx.createAnalyser();
       analyser.fftSize = IS_IOS ? 8192 : 4096;
@@ -549,6 +551,10 @@ export default function AuditionGame() {
       clearTimeout(feedbackTimerRef.current);
       clearTimeout(cooldownTimerRef.current);
       clearTimeout(flashTimerRef.current);
+      if (micStreamRef.current) {
+        micStreamRef.current.getTracks().forEach(t => t.stop());
+        micStreamRef.current = null;
+      }
     };
   }, []);
 

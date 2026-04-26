@@ -66,16 +66,19 @@ function makeOptions(card) {
 }
 
 // ── Shared fretboard SVG ──────────────────────────────────────────────────────
-function FretboardSVG({ mode, targetLetter, onTap, flashPos, flashResult }) {
+function FretboardSVG({ mode, targetLetter, onTap, flashPos, flashResult, foundKeys, fretWidth = FW }) {
+  const fw = fretWidth;
+  const boardW = PL + 13 * fw + 10;
   const cells = [];
 
   for (let s = 0; s < 6; s++) {
     for (let f = 0; f <= 12; f++) {
       const note   = noteAt(s, f);
       const letter = noteLetter(note);
-      const cx     = colX(f);
+      const cx     = PL + f * fw + fw / 2;
       const cy     = strY(s);
       const isFlash = flashPos && flashPos.si === s && flashPos.fret === f;
+      const isFound = foundKeys && foundKeys.has(`${s}-${f}`);
 
       let fill   = 'rgba(255,255,255,0.07)';
       let stroke = 'rgba(196,100,40,0.28)';
@@ -83,7 +86,12 @@ function FretboardSVG({ mode, targetLetter, onTap, flashPos, flashResult }) {
       let r      = 9;
       let showLabel = mode === 'explorer';
 
-      if (isFlash) {
+      if (isFound && !isFlash) {
+        fill   = 'rgba(80,200,80,0.40)';
+        stroke = '#5dc85d';
+        tColor = '#fff';
+        showLabel = true;
+      } else if (isFlash) {
         fill   = flashResult === 'correct' ? 'rgba(80,200,80,0.55)' : 'rgba(210,50,50,0.55)';
         stroke = flashResult === 'correct' ? '#5dc85d' : '#d23232';
         tColor = '#fff';
@@ -98,12 +106,12 @@ function FretboardSVG({ mode, targetLetter, onTap, flashPos, flashResult }) {
           onClick={() => onTap && onTap(s, f, note)}
           style={{ cursor: onTap ? 'pointer' : 'default' }}>
           {/* Invisible hit area */}
-          <rect x={PL + f * FW} y={PT + s * SH - SH / 2}
-            width={FW} height={SH} fill="transparent" />
+          <rect x={PL + f * fw} y={PT + s * SH - SH / 2}
+            width={fw} height={SH} fill="transparent" />
           <circle cx={cx} cy={cy} r={r} fill={fill} stroke={stroke} strokeWidth={0.8} />
           {showLabel && (
             <text x={cx} y={cy + 3} textAnchor="middle"
-              fontSize="7" fontFamily="Georgia, serif"
+              fontSize={mode === 'explorer' ? '8' : '7'} fontFamily="Georgia, serif"
               fill={tColor} fontWeight="700" pointerEvents="none">
               {letter}
             </text>
@@ -114,16 +122,17 @@ function FretboardSVG({ mode, targetLetter, onTap, flashPos, flashResult }) {
   }
 
   return (
-    <svg viewBox={`0 0 ${BOARD_W} ${BOARD_H}`}
-      style={{ width: '100%', maxWidth: BOARD_W, display: 'block' }}>
+    <svg viewBox={`0 0 ${boardW} ${BOARD_H}`}
+      width={boardW} height={BOARD_H}
+      style={{ display: 'block' }}>
 
       {/* Fretboard body */}
-      <rect x={NUT_X} y={PT - 12} width={BOARD_W - NUT_X - 6} height={5 * SH + 24}
+      <rect x={NUT_X} y={PT - 12} width={boardW - NUT_X - 6} height={5 * SH + 24}
         rx={3} fill="#1E0D06" stroke="rgba(196,100,40,0.2)" strokeWidth={0.7} />
 
       {/* String lines */}
       {[0,1,2,3,4,5].map(i => (
-        <line key={i} x1={PL + 2} y1={strY(i)} x2={BOARD_W - 8} y2={strY(i)}
+        <line key={i} x1={PL + 2} y1={strY(i)} x2={boardW - 8} y2={strY(i)}
           stroke="rgba(245,232,216,0.28)"
           strokeWidth={i < 2 ? 0.7 : i < 4 ? 1.1 : 1.5} />
       ))}
@@ -135,20 +144,20 @@ function FretboardSVG({ mode, targetLetter, onTap, flashPos, flashResult }) {
       {/* Fret wires */}
       {[1,2,3,4,5,6,7,8,9,10,11,12].map(k => (
         <line key={k}
-          x1={PL + (k + 1) * FW} y1={PT - 8}
-          x2={PL + (k + 1) * FW} y2={PT + 5 * SH + 8}
+          x1={PL + (k + 1) * fw} y1={PT - 8}
+          x2={PL + (k + 1) * fw} y2={PT + 5 * SH + 8}
           stroke="rgba(160,100,50,0.45)" strokeWidth={0.7} />
       ))}
 
       {/* Position markers — inlaid between strings */}
       {[3, 5, 7, 9].map(f => (
-        <circle key={f} cx={colX(f)}
+        <circle key={f} cx={PL + f * fw + fw / 2}
           cy={PT + 2.5 * SH}
           r={3} fill="rgba(196,100,40,0.35)" />
       ))}
       {/* Fret 12 — double dot */}
-      <circle cx={colX(12)} cy={PT + 1.5 * SH} r={3} fill="rgba(196,100,40,0.35)" />
-      <circle cx={colX(12)} cy={PT + 3.5 * SH} r={3} fill="rgba(196,100,40,0.35)" />
+      <circle cx={PL + 12 * fw + fw / 2} cy={PT + 1.5 * SH} r={3} fill="rgba(196,100,40,0.35)" />
+      <circle cx={PL + 12 * fw + fw / 2} cy={PT + 3.5 * SH} r={3} fill="rgba(196,100,40,0.35)" />
 
       {/* String labels (left of nut) */}
       {[0,1,2,3,4,5].map(i => (
@@ -160,7 +169,7 @@ function FretboardSVG({ mode, targetLetter, onTap, flashPos, flashResult }) {
 
       {/* Fret number labels */}
       {[3, 5, 7, 9, 12].map(f => (
-        <text key={f} x={colX(f)} y={PT - 5}
+        <text key={f} x={PL + f * fw + fw / 2} y={PT - 5}
           textAnchor="middle" fontSize="7" fontFamily="Georgia, serif"
           fill="rgba(160,120,90,0.45)">
           {f}
@@ -206,12 +215,13 @@ function ExplorerMode() {
           <div style={{ fontSize: 12, color: M.muted }}>Tap any fret to hear and see the note</div>
         )}
       </div>
-      <div style={{ overflowX: 'auto' }}>
-        <FretboardSVG mode="explorer" onTap={handleTap}
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch',
+        borderRadius: 10, paddingBottom: 4 }}>
+        <FretboardSVG mode="explorer" onTap={handleTap} fretWidth={38}
           flashPos={tapped} flashResult="correct" />
       </div>
       <div style={{ fontSize: 10, color: M.muted, textAlign: 'center', marginTop: 6 }}>
-        6 strings · frets 0–12
+        6 strings · frets 0–12 · scroll →
       </div>
     </>
   );
@@ -227,34 +237,55 @@ function GameMode({ isPro, onUpgrade }) {
   );
   const [flashPos, setFlashPos] = useState(null);
   const [flashRes, setFlashRes] = useState(null);
+  const [found,    setFound]    = useState(() => new Set());
   const [locked,   setLocked]   = useState(false);
 
   if (!isPro) return <ProGate label="Fretboard Game" onUpgrade={onUpgrade} />;
 
+  // All fretboard positions (strings 0-5, frets 0-12) where the target note lives
+  const allPositions = React.useMemo(() => {
+    const out = [];
+    for (let s = 0; s < 6; s++)
+      for (let f = 0; f <= 12; f++)
+        if (noteLetter(noteAt(s, f)) === target) out.push(`${s}-${f}`);
+    return out;
+  }, [target]);
+
   function nextTarget() {
     setTarget(NATURAL_NOTES[Math.floor(Math.random() * NATURAL_NOTES.length)]);
     setFlashPos(null); setFlashRes(null); setLocked(false);
+    setFound(new Set());
   }
 
   function handleTap(si, fret, note) {
     if (locked) return;
     setAttempts(a => a + 1);
-    setFlashPos({ si, fret });
     if (noteLetter(note) === target) {
+      const key = `${si}-${fret}`;
       guitarSampler.resume?.();
       guitarSampler.playNote(note);
+      setFlashPos({ si, fret });
       setFlashRes('correct');
       setScore(s => s + 1);
-      setStreak(s => s + 1);
-      setLocked(true);
-      setTimeout(nextTarget, 900);
+      const newFound = new Set(found);
+      newFound.add(key);
+      setFound(newFound);
+      if (newFound.size >= allPositions.length) {
+        setStreak(s => s + 1);
+        setLocked(true);
+        setTimeout(nextTarget, 900);
+      }
     } else {
+      setFlashPos({ si, fret });
       setFlashRes('wrong');
       setStreak(0);
       setLocked(true);
       setTimeout(() => { setFlashPos(null); setFlashRes(null); setLocked(false); }, 600);
     }
   }
+
+  const foundCount = found.size;
+  const totalCount = allPositions.length;
 
   return (
     <>
@@ -279,10 +310,14 @@ function GameMode({ isPro, onUpgrade }) {
           background: `linear-gradient(135deg,${M.accent},${M.hi})`,
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
         }}>{target}</div>
-        <div style={{ fontSize: 11, color: M.muted, marginTop: 6 }}>Tap all correct positions on the neck</div>
+        <div style={{ fontSize: 13, fontWeight: 700, marginTop: 8,
+          color: foundCount > 0 ? '#5dc85d' : M.muted }}>
+          {foundCount} of {totalCount} found
+        </div>
+        <div style={{ fontSize: 10, color: M.muted, marginTop: 2 }}>Tap all positions on the neck</div>
       </div>
-      <div style={{ overflowX: 'auto' }}>
-        <FretboardSVG mode="game" targetLetter={target}
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <FretboardSVG mode="game" targetLetter={target} foundKeys={found}
           onTap={handleTap} flashPos={flashPos} flashResult={flashRes} />
       </div>
     </>
