@@ -13,6 +13,8 @@
 
 import { useState, useCallback, useRef } from 'react';
 
+console.log('AMBIENCE V2 LOADED');
+
 const MASTER_GAIN = 0.12;
 const VOICE_FREQS = [200, 350, 500];
 

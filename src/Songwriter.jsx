@@ -12,6 +12,9 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import useBackingTrack from './useBackingTrack';
+import useMetronome from './useMetronome';
+import { getAudioContext } from './audioContext';
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 const M = {
@@ -29,6 +32,8 @@ const M = {
 
 const KEYS = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
 const TIME_SIGS = ['2/4','3/4','4/4','6/8'];
+const GENRES = ['Blues', 'Country', 'Rock', 'Folk'];
+const GENRE_MAP = { Blues:'blues', Country:'country', Rock:'rock', Folk:'blues' };
 const STORAGE_KEY = 'songwriterSongs';
 const SECTION_PRESETS = ['Intro','Verse','Pre-Chorus','Chorus','Bridge','Outro','Solo','Turnaround'];
 
@@ -133,6 +138,10 @@ export default function Songwriter() {
     return saved.length > 0 ? { ...saved[0] } : defaultSong();
   });
   const [nashville,  setNashville]  = useState(false);
+  const [genre,      setGenre]      = useState('Blues');
+  const [drumsOn,    setDrumsOn]    = useState(true);
+  const [bassOn,     setBassOn]     = useState(true);
+  const [metOn,      setMetOn]      = useState(false);
 
   // Measure editing
   const [editingMeasure, setEditingMeasure] = useState(null); // {secIdx, mIdx}
@@ -160,6 +169,14 @@ export default function Songwriter() {
   const playIntervalRef = useRef(null);
   const playIdxRef      = useRef(0);
   const playMeasuresRef = useRef([]);
+
+  const effectiveGenre = (!drumsOn && !bassOn) ? null : playing ? GENRE_MAP[genre] : null;
+  const { stopTrack, syncToTime }          = useBackingTrack(effectiveGenre, activeSong.bpm);
+  const { stopClick, syncToTime: metSync } = useMetronome(activeSong.bpm);
+
+  useEffect(() => {
+    if (!playing) { stopTrack(); stopClick(); }
+  }, [playing]); // eslint-disable-line
 
   const persist = useCallback((song) => {
     setSongs(prev => {
@@ -303,10 +320,17 @@ export default function Songwriter() {
     setChipNameVal('');
   }
 
+  function handleMetToggle() {
+    const next = !metOn;
+    setMetOn(next);
+  }
+
   // ── Play / Stop ───────────────────────────────────────────────────────────
   function handlePlay() {
     if (playing) {
       clearInterval(playIntervalRef.current);
+      stopTrack();
+      stopClick();
       setPlaying(false);
       setCurrentMeasureKey(null);
       playIdxRef.current = 0;
@@ -314,6 +338,13 @@ export default function Songwriter() {
     }
     const all = flatMeasures(activeSong.sections);
     if (all.length === 0) return;
+
+    const ctx = getAudioContext();
+    if (ctx.state === 'suspended') ctx.resume();
+    const t = ctx.currentTime + 0.05;
+    if (drumsOn || bassOn) setTimeout(() => syncToTime(t), 50);
+    if (metOn) metSync(t);
+
     playMeasuresRef.current = all;
     playIdxRef.current = 0;
     const beatsPerMeasure = parseInt(activeSong.timeSig?.split('/')[0] || '4');
@@ -348,7 +379,9 @@ export default function Songwriter() {
   useEffect(() => () => {
     clearInterval(playIntervalRef.current);
     clearTimeout(savedTimerRef.current);
-  }, []);
+    stopTrack();
+    stopClick();
+  }, []); // eslint-disable-line
 
   const displayChord = (chord) =>
     nashville && chord ? chordToNashville(chord, activeSong.key) : chord;
@@ -482,14 +515,14 @@ export default function Songwriter() {
             </select>
           </Field>
           <Field label="BPM">
-            <input
-              type="number" min="40" max="240" value={activeSong.bpm}
-              onChange={e => update('bpm', Math.min(240, Math.max(40, +e.target.value)))}
-              style={{
-                ...selStyle(false), width: '100%', boxSizing: 'border-box',
-                textAlign: 'center', appearance: 'none', MozAppearance: 'textfield',
-              }}
-            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <button onClick={() => update('bpm', Math.max(40, activeSong.bpm - 1))}
+                style={{ ...selStyle(false), padding: '4px 9px', fontSize: 16, lineHeight: 1 }}>−</button>
+              <span style={{ ...selStyle(false), flex: 1, textAlign: 'center',
+                padding: '5px 4px', minWidth: 34 }}>{activeSong.bpm}</span>
+              <button onClick={() => update('bpm', Math.min(240, activeSong.bpm + 1))}
+                style={{ ...selStyle(false), padding: '4px 9px', fontSize: 16, lineHeight: 1 }}>+</button>
+            </div>
           </Field>
           <Field label="Time">
             <select value={activeSong.timeSig} onChange={e => update('timeSig', e.target.value)}
@@ -498,6 +531,75 @@ export default function Songwriter() {
             </select>
           </Field>
         </div>
+
+        {/* ── Genre ── */}
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.1em',
+            textTransform: 'uppercase', color: M.muted, marginBottom: 6 }}>Genre</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {GENRES.map(g => (
+              <button key={g} onClick={() => setGenre(g)} style={{
+                padding: '6px 14px', borderRadius: 20, border: 'none',
+                fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                fontFamily: "Georgia, serif",
+                background: g === genre ? M.accent : 'rgba(255,255,255,0.06)',
+                color: g === genre ? '#fff' : M.muted,
+                transition: 'background 0.15s, color 0.15s',
+              }}>{g}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── BPM slider ── */}
+        <div style={{ marginBottom: 14 }}>
+          <input type="range" min="40" max="240" value={activeSong.bpm}
+            onChange={e => update('bpm', Number(e.target.value))}
+            style={{ width: '100%', accentColor: M.accent }} />
+        </div>
+
+        {/* ── Tracks ── */}
+        <div style={{
+          background: M.surface, borderRadius: 12, border: `1px solid ${M.border}`,
+          padding: '10px 12px', marginBottom: 14,
+        }}>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.1em',
+            textTransform: 'uppercase', color: M.muted, marginBottom: 8 }}>Tracks</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <button onClick={() => setDrumsOn(d => !d)} style={{
+              padding: '8px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700,
+              border: `1px solid ${drumsOn ? M.borderHi : M.border}`,
+              background: drumsOn ? 'rgba(232,131,58,0.22)' : 'rgba(196,100,40,0.10)',
+              color: drumsOn ? M.hi : M.text, cursor: 'pointer', fontFamily: "Georgia, serif",
+              transition: 'all 0.12s',
+            }}>🥁 {drumsOn ? 'Drums On' : 'Drums Off'}</button>
+            <button onClick={() => setBassOn(b => !b)} style={{
+              padding: '8px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700,
+              border: `1px solid ${bassOn ? M.borderHi : M.border}`,
+              background: bassOn ? 'rgba(232,131,58,0.22)' : 'rgba(196,100,40,0.10)',
+              color: bassOn ? M.hi : M.text, cursor: 'pointer', fontFamily: "Georgia, serif",
+              transition: 'all 0.12s',
+            }}>🎸 {bassOn ? 'Bass On' : 'Bass Off'}</button>
+            <button onClick={handleMetToggle} style={{
+              padding: '8px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700,
+              border: `1px solid ${metOn ? M.borderHi : M.border}`,
+              background: metOn ? 'rgba(232,131,58,0.22)' : 'rgba(196,100,40,0.10)',
+              color: metOn ? M.hi : M.text, cursor: 'pointer', fontFamily: "Georgia, serif",
+              transition: 'all 0.12s',
+            }}>🎵 {metOn ? 'Click On' : 'Click Off'}</button>
+          </div>
+        </div>
+
+        {/* ── Start / Stop ── */}
+        <button onClick={handlePlay} style={{
+          width: '100%', padding: '14px', borderRadius: 14, marginBottom: 18,
+          border: `1px solid ${playing ? 'rgba(248,113,113,0.5)' : M.borderHi}`,
+          background: playing ? 'rgba(248,113,113,0.12)' : 'rgba(232,131,58,0.18)',
+          color: playing ? '#fca5a5' : M.hi,
+          fontSize: 15, fontWeight: 800, cursor: 'pointer',
+          fontFamily: "Georgia, serif", transition: 'all 0.15s',
+        }}>
+          {playing ? '⏹ Stop' : '▶ Start Playing'}
+        </button>
 
         {/* ── Chord chart ── */}
         <div style={{
@@ -511,14 +613,6 @@ export default function Songwriter() {
               Chord Chart — {activeSong.timeSig}
             </div>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              {/* Play / Stop */}
-              <button onClick={handlePlay} style={{
-                width: 32, height: 32, borderRadius: 10,
-                border: `1px solid ${playing ? M.borderHi : M.border}`,
-                background: playing ? 'rgba(232,131,58,0.22)' : 'rgba(196,100,40,0.10)',
-                color: playing ? M.hi : M.text,
-                cursor: 'pointer', fontSize: 14, lineHeight: 1,
-              }}>{playing ? '⏹' : '▶'}</button>
               {/* Add section */}
               <button onClick={addSection} style={{
                 padding: '5px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700,

@@ -31,406 +31,116 @@ const M = {
 
 const STRING_LABELS = { 1:'e', 2:'B', 3:'G', 4:'D', 5:'A', 6:'E' };
 
-// ─── Scale data ───────────────────────────────────────────────────────────────
-// FREE scales use `levels: [{label, notes}, ...]`
-// PRO scales use `notes: [...]` (locked, diagram only)
-const SCALES = [
-  // ── FREE ────────────────────────────────────────────────────────────────────
-  {
-    id: 'g-major', name: 'G Major', subtitle: 'Open Position',
-    category: 'major', difficulty: 'Beginner', pro: false,
-    levels: [
-      {
-        label: 'Level 1',
-        desc: 'G2 → G3',
-        notes: [
-          { string: 6, fret: 3, noteName: 'G2',  root: true  },
-          { string: 6, fret: 5, noteName: 'A2',  root: false },
-          { string: 5, fret: 2, noteName: 'B2',  root: false },
-          { string: 5, fret: 3, noteName: 'C3',  root: false },
-          { string: 5, fret: 5, noteName: 'D3',  root: false },
-          { string: 4, fret: 2, noteName: 'E3',  root: false },
-          { string: 4, fret: 4, noteName: 'F#3', root: false },
-          { string: 4, fret: 5, noteName: 'G3',  root: true  },
-          { string: 4, fret: 4, noteName: 'F#3', root: false },
-          { string: 4, fret: 2, noteName: 'E3',  root: false },
-          { string: 5, fret: 5, noteName: 'D3',  root: false },
-          { string: 5, fret: 3, noteName: 'C3',  root: false },
-          { string: 5, fret: 2, noteName: 'B2',  root: false },
-          { string: 6, fret: 5, noteName: 'A2',  root: false },
-          { string: 6, fret: 3, noteName: 'G2',  root: true  },
-        ],
-      },
-      {
-        label: 'Level 2',
-        desc: 'G3 → G4',
-        notes: [
-          { string: 4, fret: 5, noteName: 'G3',  root: true  },
-          { string: 3, fret: 2, noteName: 'A3',  root: false },
-          { string: 3, fret: 4, noteName: 'B3',  root: false },
-          { string: 2, fret: 1, noteName: 'C4',  root: false },
-          { string: 2, fret: 3, noteName: 'D4',  root: false },
-          { string: 2, fret: 5, noteName: 'E4',  root: false },
-          { string: 1, fret: 2, noteName: 'F#4', root: false },
-          { string: 1, fret: 3, noteName: 'G4',  root: true  },
-          { string: 1, fret: 2, noteName: 'F#4', root: false },
-          { string: 2, fret: 5, noteName: 'E4',  root: false },
-          { string: 2, fret: 3, noteName: 'D4',  root: false },
-          { string: 2, fret: 1, noteName: 'C4',  root: false },
-          { string: 3, fret: 4, noteName: 'B3',  root: false },
-          { string: 3, fret: 2, noteName: 'A3',  root: false },
-          { string: 4, fret: 5, noteName: 'G3',  root: true  },
-        ],
-      },
-      {
-        label: '2 Octaves',
-        desc: 'G2 → G4',
-        notes: [
-          { string: 6, fret: 3, noteName: 'G2',  root: true  },
-          { string: 6, fret: 5, noteName: 'A2',  root: false },
-          { string: 5, fret: 2, noteName: 'B2',  root: false },
-          { string: 5, fret: 3, noteName: 'C3',  root: false },
-          { string: 5, fret: 5, noteName: 'D3',  root: false },
-          { string: 4, fret: 2, noteName: 'E3',  root: false },
-          { string: 4, fret: 4, noteName: 'F#3', root: false },
-          { string: 4, fret: 5, noteName: 'G3',  root: true  },
-          { string: 3, fret: 2, noteName: 'A3',  root: false },
-          { string: 3, fret: 4, noteName: 'B3',  root: false },
-          { string: 2, fret: 1, noteName: 'C4',  root: false },
-          { string: 2, fret: 3, noteName: 'D4',  root: false },
-          { string: 2, fret: 5, noteName: 'E4',  root: false },
-          { string: 1, fret: 2, noteName: 'F#4', root: false },
-          { string: 1, fret: 3, noteName: 'G4',  root: true  },
-          { string: 1, fret: 2, noteName: 'F#4', root: false },
-          { string: 2, fret: 5, noteName: 'E4',  root: false },
-          { string: 2, fret: 3, noteName: 'D4',  root: false },
-          { string: 2, fret: 1, noteName: 'C4',  root: false },
-          { string: 3, fret: 4, noteName: 'B3',  root: false },
-          { string: 3, fret: 2, noteName: 'A3',  root: false },
-          { string: 4, fret: 5, noteName: 'G3',  root: true  },
-          { string: 4, fret: 4, noteName: 'F#3', root: false },
-          { string: 4, fret: 2, noteName: 'E3',  root: false },
-          { string: 5, fret: 5, noteName: 'D3',  root: false },
-          { string: 5, fret: 3, noteName: 'C3',  root: false },
-          { string: 5, fret: 2, noteName: 'B2',  root: false },
-          { string: 6, fret: 5, noteName: 'A2',  root: false },
-          { string: 6, fret: 3, noteName: 'G2',  root: true  },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'a-minor', name: 'A Minor', subtitle: 'Open Position',
-    category: 'minor', difficulty: 'Beginner', pro: false,
-    levels: [
-      {
-        label: 'Level 1',
-        desc: 'A2 → A3',
-        notes: [
-          { string: 6, fret: 5, noteName: 'A2',  root: true  },
-          { string: 5, fret: 2, noteName: 'B2',  root: false },
-          { string: 5, fret: 3, noteName: 'C3',  root: false },
-          { string: 5, fret: 5, noteName: 'D3',  root: false },
-          { string: 4, fret: 2, noteName: 'E3',  root: false },
-          { string: 4, fret: 3, noteName: 'F3',  root: false },
-          { string: 4, fret: 5, noteName: 'G3',  root: false },
-          { string: 3, fret: 2, noteName: 'A3',  root: true  },
-          { string: 4, fret: 5, noteName: 'G3',  root: false },
-          { string: 4, fret: 3, noteName: 'F3',  root: false },
-          { string: 4, fret: 2, noteName: 'E3',  root: false },
-          { string: 5, fret: 5, noteName: 'D3',  root: false },
-          { string: 5, fret: 3, noteName: 'C3',  root: false },
-          { string: 5, fret: 2, noteName: 'B2',  root: false },
-          { string: 6, fret: 5, noteName: 'A2',  root: true  },
-        ],
-      },
-      {
-        label: 'Level 2',
-        desc: 'A3 → A4',
-        notes: [
-          { string: 3, fret: 2, noteName: 'A3',  root: true  },
-          { string: 3, fret: 4, noteName: 'B3',  root: false },
-          { string: 2, fret: 1, noteName: 'C4',  root: false },
-          { string: 2, fret: 3, noteName: 'D4',  root: false },
-          { string: 2, fret: 5, noteName: 'E4',  root: false },
-          { string: 1, fret: 1, noteName: 'F4',  root: false },
-          { string: 1, fret: 3, noteName: 'G4',  root: false },
-          { string: 1, fret: 5, noteName: 'A4',  root: true  },
-          { string: 1, fret: 3, noteName: 'G4',  root: false },
-          { string: 1, fret: 1, noteName: 'F4',  root: false },
-          { string: 2, fret: 5, noteName: 'E4',  root: false },
-          { string: 2, fret: 3, noteName: 'D4',  root: false },
-          { string: 2, fret: 1, noteName: 'C4',  root: false },
-          { string: 3, fret: 4, noteName: 'B3',  root: false },
-          { string: 3, fret: 2, noteName: 'A3',  root: true  },
-        ],
-      },
-      {
-        label: '2 Octaves',
-        desc: 'A2 → A4',
-        notes: [
-          { string: 6, fret: 5, noteName: 'A2',  root: true  },
-          { string: 5, fret: 2, noteName: 'B2',  root: false },
-          { string: 5, fret: 3, noteName: 'C3',  root: false },
-          { string: 5, fret: 5, noteName: 'D3',  root: false },
-          { string: 4, fret: 2, noteName: 'E3',  root: false },
-          { string: 4, fret: 3, noteName: 'F3',  root: false },
-          { string: 4, fret: 5, noteName: 'G3',  root: false },
-          { string: 3, fret: 2, noteName: 'A3',  root: true  },
-          { string: 3, fret: 4, noteName: 'B3',  root: false },
-          { string: 2, fret: 1, noteName: 'C4',  root: false },
-          { string: 2, fret: 3, noteName: 'D4',  root: false },
-          { string: 2, fret: 5, noteName: 'E4',  root: false },
-          { string: 1, fret: 1, noteName: 'F4',  root: false },
-          { string: 1, fret: 3, noteName: 'G4',  root: false },
-          { string: 1, fret: 5, noteName: 'A4',  root: true  },
-          { string: 1, fret: 3, noteName: 'G4',  root: false },
-          { string: 1, fret: 1, noteName: 'F4',  root: false },
-          { string: 2, fret: 5, noteName: 'E4',  root: false },
-          { string: 2, fret: 3, noteName: 'D4',  root: false },
-          { string: 2, fret: 1, noteName: 'C4',  root: false },
-          { string: 3, fret: 4, noteName: 'B3',  root: false },
-          { string: 3, fret: 2, noteName: 'A3',  root: true  },
-          { string: 4, fret: 5, noteName: 'G3',  root: false },
-          { string: 4, fret: 3, noteName: 'F3',  root: false },
-          { string: 4, fret: 2, noteName: 'E3',  root: false },
-          { string: 5, fret: 5, noteName: 'D3',  root: false },
-          { string: 5, fret: 3, noteName: 'C3',  root: false },
-          { string: 5, fret: 2, noteName: 'B2',  root: false },
-          { string: 6, fret: 5, noteName: 'A2',  root: true  },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'g-pentatonic', name: 'G Major Pentatonic', subtitle: 'Pattern 1',
-    category: 'pentatonic', difficulty: 'Beginner', pro: false,
-    levels: [
-      {
-        label: 'Level 1',
-        desc: 'G2 → G3',
-        notes: [
-          { string: 6, fret: 3, noteName: 'G2',  root: true  },
-          { string: 6, fret: 5, noteName: 'A2',  root: false },
-          { string: 5, fret: 2, noteName: 'B2',  root: false },
-          { string: 5, fret: 5, noteName: 'D3',  root: false },
-          { string: 4, fret: 2, noteName: 'E3',  root: false },
-          { string: 4, fret: 5, noteName: 'G3',  root: true  },
-          { string: 4, fret: 2, noteName: 'E3',  root: false },
-          { string: 5, fret: 5, noteName: 'D3',  root: false },
-          { string: 5, fret: 2, noteName: 'B2',  root: false },
-          { string: 6, fret: 5, noteName: 'A2',  root: false },
-          { string: 6, fret: 3, noteName: 'G2',  root: true  },
-        ],
-      },
-      {
-        label: 'Level 2',
-        desc: 'G3 → G4',
-        notes: [
-          { string: 4, fret: 5, noteName: 'G3',  root: true  },
-          { string: 3, fret: 2, noteName: 'A3',  root: false },
-          { string: 3, fret: 4, noteName: 'B3',  root: false },
-          { string: 2, fret: 3, noteName: 'D4',  root: false },
-          { string: 2, fret: 5, noteName: 'E4',  root: false },
-          { string: 1, fret: 3, noteName: 'G4',  root: true  },
-          { string: 2, fret: 5, noteName: 'E4',  root: false },
-          { string: 2, fret: 3, noteName: 'D4',  root: false },
-          { string: 3, fret: 4, noteName: 'B3',  root: false },
-          { string: 3, fret: 2, noteName: 'A3',  root: false },
-          { string: 4, fret: 5, noteName: 'G3',  root: true  },
-        ],
-      },
-      {
-        label: '2 Octaves',
-        desc: 'G2 → G4',
-        notes: [
-          { string: 6, fret: 3, noteName: 'G2',  root: true  },
-          { string: 6, fret: 5, noteName: 'A2',  root: false },
-          { string: 5, fret: 2, noteName: 'B2',  root: false },
-          { string: 5, fret: 5, noteName: 'D3',  root: false },
-          { string: 4, fret: 2, noteName: 'E3',  root: false },
-          { string: 4, fret: 5, noteName: 'G3',  root: true  },
-          { string: 3, fret: 2, noteName: 'A3',  root: false },
-          { string: 3, fret: 4, noteName: 'B3',  root: false },
-          { string: 2, fret: 3, noteName: 'D4',  root: false },
-          { string: 2, fret: 5, noteName: 'E4',  root: false },
-          { string: 1, fret: 3, noteName: 'G4',  root: true  },
-          { string: 2, fret: 5, noteName: 'E4',  root: false },
-          { string: 2, fret: 3, noteName: 'D4',  root: false },
-          { string: 3, fret: 4, noteName: 'B3',  root: false },
-          { string: 3, fret: 2, noteName: 'A3',  root: false },
-          { string: 4, fret: 5, noteName: 'G3',  root: true  },
-          { string: 4, fret: 2, noteName: 'E3',  root: false },
-          { string: 5, fret: 5, noteName: 'D3',  root: false },
-          { string: 5, fret: 2, noteName: 'B2',  root: false },
-          { string: 6, fret: 5, noteName: 'A2',  root: false },
-          { string: 6, fret: 3, noteName: 'G2',  root: true  },
-        ],
-      },
-    ],
-  },
-  // ── PRO — Major ─────────────────────────────────────────────────────────────
-  {
-    id: 'd-major', name: 'D Major', subtitle: 'Open Position',
-    category: 'major', difficulty: 'Beginner', pro: true,
-    notes: [
-      { string: 5, fret: 5, noteName: 'D3',  root: true  },
-      { string: 4, fret: 2, noteName: 'E3',  root: false },
-      { string: 4, fret: 4, noteName: 'F#3', root: false },
-      { string: 4, fret: 5, noteName: 'G3',  root: false },
-      { string: 3, fret: 2, noteName: 'A3',  root: false },
-      { string: 3, fret: 4, noteName: 'B3',  root: false },
-      { string: 2, fret: 2, noteName: 'C#4', root: false },
-      { string: 2, fret: 3, noteName: 'D4',  root: true  },
-    ],
-  },
-  {
-    id: 'a-major', name: 'A Major', subtitle: 'Open Position',
-    category: 'major', difficulty: 'Beginner', pro: true,
-    notes: [
-      { string: 5, fret: 0, noteName: 'A2',  root: true  },
-      { string: 5, fret: 2, noteName: 'B2',  root: false },
-      { string: 5, fret: 4, noteName: 'C#3', root: false },
-      { string: 4, fret: 0, noteName: 'D3',  root: false },
-      { string: 4, fret: 2, noteName: 'E3',  root: false },
-      { string: 4, fret: 4, noteName: 'F#3', root: false },
-      { string: 3, fret: 1, noteName: 'G#3', root: false },
-      { string: 3, fret: 2, noteName: 'A3',  root: true  },
-    ],
-  },
-  {
-    id: 'e-major', name: 'E Major', subtitle: 'Open Position',
-    category: 'major', difficulty: 'Beginner', pro: true,
-    notes: [
-      { string: 6, fret: 0, noteName: 'E2',  root: true  },
-      { string: 6, fret: 2, noteName: 'F#2', root: false },
-      { string: 6, fret: 4, noteName: 'G#2', root: false },
-      { string: 5, fret: 0, noteName: 'A2',  root: false },
-      { string: 5, fret: 2, noteName: 'B2',  root: false },
-      { string: 5, fret: 4, noteName: 'C#3', root: false },
-      { string: 4, fret: 1, noteName: 'D#3', root: false },
-      { string: 4, fret: 2, noteName: 'E3',  root: true  },
-    ],
-  },
-  {
-    id: 'c-major', name: 'C Major', subtitle: 'Open Position',
-    category: 'major', difficulty: 'Beginner', pro: true,
-    notes: [
-      { string: 5, fret: 3, noteName: 'C3',  root: true  },
-      { string: 5, fret: 5, noteName: 'D3',  root: false },
-      { string: 4, fret: 2, noteName: 'E3',  root: false },
-      { string: 4, fret: 3, noteName: 'F3',  root: false },
-      { string: 4, fret: 5, noteName: 'G3',  root: false },
-      { string: 3, fret: 2, noteName: 'A3',  root: false },
-      { string: 3, fret: 4, noteName: 'B3',  root: false },
-      { string: 2, fret: 1, noteName: 'C4',  root: true  },
-    ],
-  },
-  // ── PRO — Minor ─────────────────────────────────────────────────────────────
-  {
-    id: 'd-minor', name: 'D Minor', subtitle: 'Open Position',
-    category: 'minor', difficulty: 'Intermediate', pro: true,
-    notes: [
-      { string: 5, fret: 5, noteName: 'D3',  root: true  },
-      { string: 4, fret: 2, noteName: 'E3',  root: false },
-      { string: 4, fret: 3, noteName: 'F3',  root: false },
-      { string: 4, fret: 5, noteName: 'G3',  root: false },
-      { string: 3, fret: 2, noteName: 'A3',  root: false },
-      { string: 3, fret: 3, noteName: 'Bb3', root: false },
-      { string: 2, fret: 1, noteName: 'C4',  root: false },
-      { string: 2, fret: 3, noteName: 'D4',  root: true  },
-    ],
-  },
-  {
-    id: 'e-minor', name: 'E Minor', subtitle: 'Open Position',
-    category: 'minor', difficulty: 'Beginner', pro: true,
-    notes: [
-      { string: 6, fret: 0, noteName: 'E2',  root: true  },
-      { string: 6, fret: 2, noteName: 'F#2', root: false },
-      { string: 5, fret: 0, noteName: 'A2',  root: false },
-      { string: 5, fret: 2, noteName: 'B2',  root: false },
-      { string: 5, fret: 3, noteName: 'C3',  root: false },
-      { string: 4, fret: 0, noteName: 'D3',  root: false },
-      { string: 4, fret: 2, noteName: 'E3',  root: true  },
-      { string: 3, fret: 0, noteName: 'G3',  root: false },
-    ],
-  },
-  {
-    id: 'b-minor', name: 'B Minor', subtitle: 'Open Position',
-    category: 'minor', difficulty: 'Intermediate', pro: true,
-    notes: [
-      { string: 5, fret: 2, noteName: 'B2',  root: true  },
-      { string: 5, fret: 4, noteName: 'C#3', root: false },
-      { string: 4, fret: 0, noteName: 'D3',  root: false },
-      { string: 4, fret: 2, noteName: 'E3',  root: false },
-      { string: 4, fret: 4, noteName: 'F#3', root: false },
-      { string: 3, fret: 0, noteName: 'G3',  root: false },
-      { string: 3, fret: 2, noteName: 'A3',  root: false },
-      { string: 2, fret: 0, noteName: 'B3',  root: true  },
-    ],
-  },
-  // ── PRO — Pentatonic ────────────────────────────────────────────────────────
-  {
-    id: 'a-minor-pent', name: 'A Minor Pentatonic', subtitle: 'Pattern 1',
-    category: 'pentatonic', difficulty: 'Intermediate', pro: true,
-    notes: [
-      { string: 6, fret: 5, noteName: 'A2',  root: true  },
-      { string: 6, fret: 8, noteName: 'C3',  root: false },
-      { string: 5, fret: 5, noteName: 'D3',  root: false },
-      { string: 5, fret: 7, noteName: 'E3',  root: false },
-      { string: 4, fret: 5, noteName: 'G3',  root: false },
-      { string: 4, fret: 7, noteName: 'A3',  root: true  },
-    ],
-  },
-  {
-    id: 'd-minor-pent', name: 'D Minor Pentatonic', subtitle: 'Pattern 1',
-    category: 'pentatonic', difficulty: 'Intermediate', pro: true,
-    notes: [
-      { string: 6, fret: 10, noteName: 'D3', root: true  },
-      { string: 6, fret: 13, noteName: 'F3', root: false },
-      { string: 5, fret: 10, noteName: 'G3', root: false },
-      { string: 5, fret: 12, noteName: 'A3', root: false },
-      { string: 4, fret: 10, noteName: 'C4', root: false },
-      { string: 4, fret: 12, noteName: 'D4', root: true  },
-    ],
-  },
-  {
-    id: 'e-minor-pent', name: 'E Minor Pentatonic', subtitle: 'Pattern 1',
-    category: 'pentatonic', difficulty: 'Intermediate', pro: true,
-    notes: [
-      { string: 6, fret: 0, noteName: 'E2',  root: true  },
-      { string: 6, fret: 3, noteName: 'G2',  root: false },
-      { string: 5, fret: 0, noteName: 'A2',  root: false },
-      { string: 5, fret: 2, noteName: 'B2',  root: false },
-      { string: 4, fret: 0, noteName: 'D3',  root: false },
-      { string: 4, fret: 2, noteName: 'E3',  root: true  },
-    ],
-  },
-  {
-    id: 'b-minor-pent', name: 'B Minor Pentatonic', subtitle: 'Pattern 1',
-    category: 'pentatonic', difficulty: 'Advanced', pro: true,
-    notes: [
-      { string: 5, fret: 2, noteName: 'B2',  root: true  },
-      { string: 5, fret: 5, noteName: 'D3',  root: false },
-      { string: 4, fret: 2, noteName: 'E3',  root: false },
-      { string: 4, fret: 4, noteName: 'F#3', root: false },
-      { string: 3, fret: 2, noteName: 'A3',  root: false },
-      { string: 3, fret: 4, noteName: 'B3',  root: true  },
-    ],
-  },
-  {
-    id: 'c-minor-pent', name: 'C Minor Pentatonic', subtitle: 'Pattern 1',
-    category: 'pentatonic', difficulty: 'Advanced', pro: true,
-    notes: [
-      { string: 5, fret: 3, noteName: 'C3',  root: true  },
-      { string: 5, fret: 6, noteName: 'Eb3', root: false },
-      { string: 4, fret: 3, noteName: 'F3',  root: false },
-      { string: 4, fret: 5, noteName: 'G3',  root: false },
-      { string: 3, fret: 3, noteName: 'Bb3', root: false },
-      { string: 3, fret: 5, noteName: 'C4',  root: true  },
-    ],
-  },
-];
+// ─── Programmatic scale generator ─────────────────────────────────────────────
+// String open semitones: index 0 = string 6 (low E), index 5 = string 1 (high e)
+const _S = [28, 33, 38, 43, 47, 52];
+const _SH = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const _FL = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const _FK = new Set(['F','Bb','Eb','Ab','Db','Gb']);
+const _PC = {C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11};
+const _IV = {
+  major:      [0,2,4,5,7,9,11],
+  minor:      [0,2,3,5,7,8,10],
+  pentatonic: [0,2,4,7,9],
+};
+
+function _nn(semi, key) {
+  const pc = ((semi % 12) + 12) % 12;
+  return (_FK.has(key) ? _FL : _SH)[pc] + Math.floor(semi / 12);
+}
+
+function _lowestRoot(pc) {
+  for (let i = 0; i < 6; i++) {
+    const f = ((pc - _S[i] % 12) + 12) % 12;
+    if (f <= 5) return _S[i] + f;
+  }
+  for (let i = 0; i < 6; i++) {
+    const f = ((pc - _S[i] % 12) + 12) % 12;
+    if (f <= 7) return _S[i] + f;
+  }
+  return _S[0] + pc;
+}
+
+function _asc(rootSemi, ivls, key) {
+  const semis = [...ivls.map(iv => rootSemi + iv), rootSemi + 12];
+  let si = -1;
+  for (let i = 0; i < 6; i++) {
+    const f = rootSemi - _S[i];
+    if (f >= 0 && f <= 5) { si = i; break; }
+  }
+  if (si === -1) {
+    for (let i = 0; i < 6; i++) {
+      const f = rootSemi - _S[i];
+      if (f >= 0 && f <= 7) { si = i; break; }
+    }
+  }
+  if (si === -1) si = 0;
+  const notes = [];
+  for (const semi of semis) {
+    const isRoot = semi % 12 === rootSemi % 12;
+    const f0 = semi - _S[si];
+    if (f0 >= 0 && f0 <= 5) {
+      notes.push({ string: 6 - si, fret: f0, noteName: _nn(semi, key), root: isRoot });
+    } else if (si < 5 && semi - _S[si + 1] >= 0 && semi - _S[si + 1] <= 5) {
+      si++;
+      notes.push({ string: 6 - si, fret: semi - _S[si], noteName: _nn(semi, key), root: isRoot });
+    } else {
+      const fx = semi - _S[si];
+      if (fx >= 0 && fx <= 7) {
+        notes.push({ string: 6 - si, fret: fx, noteName: _nn(semi, key), root: isRoot });
+      } else if (si < 5) {
+        si++;
+        const fx2 = semi - _S[si];
+        if (fx2 >= 0 && fx2 <= 12) {
+          notes.push({ string: 6 - si, fret: fx2, noteName: _nn(semi, key), root: isRoot });
+        }
+      }
+    }
+  }
+  return notes;
+}
+
+function _ad(asc) {
+  const desc = [...asc].reverse();
+  desc.shift();
+  return [...asc, ...desc];
+}
+
+function _levels(key, type) {
+  const ivls = _IV[type];
+  const pc   = _PC[key] ?? 0;
+  const r1   = _lowestRoot(pc);
+  const r2   = r1 + 12;
+  const a1   = _asc(r1, ivls, key);
+  const a2   = _asc(r2, ivls, key);
+  return [
+    { label: 'Level 1',   desc: `${_nn(r1,key)} → ${_nn(r2,key)}`,     notes: _ad(a1) },
+    { label: 'Level 2',   desc: `${_nn(r2,key)} → ${_nn(r2+12,key)}`,  notes: _ad(a2) },
+    { label: '2 Octaves', desc: `${_nn(r1,key)} → ${_nn(r2+12,key)}`,  notes: _ad([...a1, ...a2.slice(1)]) },
+  ];
+}
+
+function _id(key, type) {
+  return key.toLowerCase().replace('#','s') + '-' + type;
+}
+
+const _FREE = new Set(['g-major', 'a-minor', 'g-pentatonic']);
+const _KEYS = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+const _TYPE_NAME = { major:'Major', minor:'Minor', pentatonic:'Pentatonic' };
+const _TYPE_SUB  = { major:'Open Position', minor:'Open Position', pentatonic:'Pattern 1' };
+const _TYPE_DIFF = { major:'Beginner', minor:'Intermediate', pentatonic:'Beginner' };
+
+const SCALES = _KEYS.flatMap(key =>
+  ['major','minor','pentatonic'].map(type => ({
+    id:         _id(key, type),
+    name:       `${key} ${_TYPE_NAME[type]}`,
+    subtitle:   _TYPE_SUB[type],
+    category:   type,
+    difficulty: _TYPE_DIFF[type],
+    pro:        !_FREE.has(_id(key, type)),
+    levels:     _levels(key, type),
+  }))
+);
 
 const CATEGORIES = ['major', 'minor', 'pentatonic'];
 const CATEGORY_LABELS = { major: 'Major', minor: 'Minor', pentatonic: 'Pentatonic' };

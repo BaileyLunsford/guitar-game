@@ -462,7 +462,7 @@ export default function FretboardNotes({ isPro, onUpgrade }) {
       features={[
         'Explorer (FREE) — all 78 notes, tap to hear',
         'Game (PRO) — tap every fret matching the named note',
-        'Flashcard (PRO) — multiple-choice note quiz',
+        'Learn the Fretboard Notes (PRO) — multiple-choice note quiz',
       ]}
       onStart={() => setStarted(true)}
       onBack={() => { window.location.hash = ''; }}
@@ -488,7 +488,7 @@ export default function FretboardNotes({ isPro, onUpgrade }) {
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
           }}>Fretboard Notes</h1>
           <div style={{ fontSize: 10, color: M.muted, letterSpacing: '0.06em', marginTop: 2 }}>
-            {mode ? mode.toUpperCase() : 'INTERMEDIATE'}
+            {mode === 'flashcard' ? 'LEARN THE FRETBOARD NOTES' : mode ? mode.toUpperCase() : 'INTERMEDIATE'}
           </div>
         </div>
       </div>
@@ -504,13 +504,13 @@ export default function FretboardNotes({ isPro, onUpgrade }) {
             }}>
               <strong style={{ color: M.hi }}>Explorer</strong> is free — see and hear every note.{' '}
               <strong style={{ color: M.accent }}>Game</strong> and{' '}
-              <strong style={{ color: M.accent }}>Flashcard</strong> require PRO.
+              <strong style={{ color: M.accent }}>Learn the Fretboard Notes</strong> requires PRO.
             </div>
 
             {[
               { id: 'explorer',  label: 'Explorer',   sub: 'Interactive note reference — tap to hear', badge: 'FREE', pro: false, emoji: '🗺' },
               { id: 'game',      label: 'Game',        sub: 'Find every fret that matches the note',    badge: 'PRO',  pro: true,  emoji: '🎯' },
-              { id: 'flashcard', label: 'Flashcard',   sub: 'Multiple-choice note name quiz',           badge: 'PRO',  pro: true,  emoji: '🃏' },
+              { id: 'flashcard', label: 'Learn the Fretboard Notes', sub: 'Multiple-choice note name quiz', badge: 'PRO', pro: true, emoji: '🃏' },
             ].map(m => (
               <button key={m.id}
                 onClick={() => { if (m.pro && !isPro) onUpgrade(); else setMode(m.id); }}

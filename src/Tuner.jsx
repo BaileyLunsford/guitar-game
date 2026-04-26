@@ -423,9 +423,12 @@ export default function Tuner({ strings = [], theme = {}, title = 'Tune Your Ins
           background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.4)',
           color: '#fca5a5', fontSize: 12, fontWeight: 700, textAlign: 'center',
         }}>
-          🎧 Switch to Built-in Microphone for tuning with AirPods.<br />
-          <span style={{ fontWeight: 400, opacity: 0.8 }}>
-            Settings → Bluetooth → Connect a different output, then try again.
+          🎧 For best results with AirPods, use the built-in microphone.<br />
+          <span style={{ fontWeight: 400, opacity: 0.85 }}>
+            Settings → Bluetooth → [your AirPods] → Microphone → Always Left AirPod or Always Right AirPod, then return here.
+          </span><br />
+          <span style={{ fontWeight: 400, opacity: 0.6, fontSize: 11 }}>
+            This is a Bluetooth hardware limitation — AirPods mics are optimized for calls, not tuning.
           </span>
         </div>
       )}
