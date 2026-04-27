@@ -4,14 +4,16 @@
  * FREE feature. Drums, bass, metronome click, full BPM control,
  * and a live chord chart that strums the current measure's chord
  * in sync with the backing track beat scheduler.
+ *
+ * Chord scheduling is driven by the same Web Audio clock / tick() as drums
+ * and bass (inside useBackingTrack) — no separate setInterval for chords.
  */
 
 import React, { useState, useRef, useEffect } from 'react';
 import LandingPage from './LandingPage';
-import useBackingTrack from './useBackingTrack';
+import useBackingTrack, { STRUM_PATTERNS } from './useBackingTrack';
 import useMetronome from './useMetronome';
 import { getAudioContext } from './audioContext';
-import { guitarSampler } from './guitarSampler';
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 const M = {
@@ -124,6 +126,10 @@ function resolveChordNotes(chordName, key) {
   return CHORD_NOTES[resolved] || (root && CHORD_NOTES[root]) || CHORD_NOTES.G;
 }
 
+function buildResolvedMeasures(sections, key) {
+  return sections.flatMap(s => s.measures).map(c => resolveChordNotes(c, key));
+}
+
 function calcTapBpm(taps) {
   if (taps.length < 2) return null;
   const recent = taps.slice(-8);
@@ -177,6 +183,7 @@ export default function SongBackingTracks() {
   const [bassOn,   setBassOn]   = useState(true);
   const [metOn,    setMetOn]    = useState(false);
   const [chordOn,  setChordOn]  = useState(false);
+  const [strumPatternId, setStrumPatternId] = useState('off');
 
   // presets
   const [presets,    setPresets]    = useState(loadPresets);
@@ -186,7 +193,9 @@ export default function SongBackingTracks() {
   // chord chart
   const [chart,       setChart]       = useState(loadChart);
   const [nashville,   setNashville]   = useState(false);
-  const [currentChordKey, setCurrentChordKey] = useState(null);
+
+  // current chord highlight — flat index into allMeasures (null = none)
+  const [currentChordFlatIdx, setCurrentChordFlatIdx] = useState(null);
 
   // chord chart editing
   const [editingMeasure, setEditingMeasure] = useState(null);
@@ -196,92 +205,63 @@ export default function SongBackingTracks() {
   const [labelDropdown,  setLabelDropdown]  = useState(null);
 
   // refs
-  const tapsRef          = useRef([]);
-  const bpmRef           = useRef(bpm);
-  const timeSigRef       = useRef(timeSig);
-  const chordTimerRef    = useRef(null);
-  const chordNextMeasure = useRef(0);
-  const chordMeasureIdx  = useRef(0);
-  const chartRef         = useRef(chart);   // non-stale copy for scheduler
+  const tapsRef    = useRef([]);
+  const bpmRef     = useRef(bpm);
+  const chartRef   = useRef(chart);
 
-  useEffect(() => { bpmRef.current   = bpm;     }, [bpm]);
-  useEffect(() => { timeSigRef.current = timeSig; }, [timeSig]);
-  useEffect(() => { chartRef.current = chart;   }, [chart]);
+  useEffect(() => { bpmRef.current  = bpm;   }, [bpm]);
+  useEffect(() => { chartRef.current = chart; }, [chart]);
 
   const effectiveGenre = playing ? GENRE_MAP[genre] : null;
-  const { trackOn, toggleTrack, stopTrack, syncToTime, setDrumsOnDirect, setBassOnDirect } = useBackingTrack(effectiveGenre, bpm, drumsOn, bassOn);
+  const {
+    trackOn, toggleTrack, stopTrack, syncToTime,
+    setDrumsOnDirect, setBassOnDirect, setChordOptionsDirect,
+  } = useBackingTrack(effectiveGenre, bpm, drumsOn, bassOn);
   const { clickOn, toggleClick, stopClick, syncToTime: metSync } = useMetronome(bpm);
 
-  // ── Chord scheduler (Web Audio lookahead, measure-based) ─────────────────
-  function startChordScheduler(fromTime) {
-    clearInterval(chordTimerRef.current);
-    chordNextMeasure.current = fromTime;
-    chordMeasureIdx.current  = 0;
-    const ctx = getAudioContext();
-
-    function tick() {
-      const now   = ctx.currentTime;
-      const beats = parseInt(timeSigRef.current.split('/')[0] || '4');
-      const mDur  = (beats * 60) / bpmRef.current;
-      const { sections, key } = chartRef.current;
-      const allMeasures = sections.flatMap(s => s.measures);
-      if (allMeasures.length === 0) return;
-
-      while (chordNextMeasure.current < now + 0.12) {
-        const t   = chordNextMeasure.current;
-        const idx = chordMeasureIdx.current % allMeasures.length;
-        const chord = allMeasures[idx];
-        const ms  = (t - ctx.currentTime) * 1000;
-
-        // Determine section/measure indices for highlight
-        let flatCount = 0;
-        let secI = 0, mI = 0;
-        outer: for (let si = 0; si < sections.length; si++) {
-          for (let mi = 0; mi < sections[si].measures.length; mi++) {
-            if (flatCount === idx) { secI = si; mI = mi; break outer; }
-            flatCount++;
-          }
-        }
-        const key2 = `${secI}-${mI}`;
-        setTimeout(() => setCurrentChordKey(key2), Math.max(0, ms));
-
-        if (chord) {
-          const notes = resolveChordNotes(chord, key);
-          notes.forEach((note, i) => {
-            setTimeout(() => {
-              try { guitarSampler.playNote(note); } catch (_) {}
-            }, Math.max(0, ms + i * 14));
-          });
-        }
-
-        chordNextMeasure.current += mDur;
-        chordMeasureIdx.current++;
+  // ── Derive currentChordKey ("si-mi") from currentChordFlatIdx for render ──
+  const allMeasuresForHighlight = chart.sections.flatMap(s => s.measures);
+  let currentChordKey = null;
+  if (currentChordFlatIdx !== null && allMeasuresForHighlight.length > 0) {
+    const idx = currentChordFlatIdx % allMeasuresForHighlight.length;
+    let flatCount = 0;
+    outer: for (let si = 0; si < chart.sections.length; si++) {
+      for (let mi = 0; mi < chart.sections[si].measures.length; mi++) {
+        if (flatCount === idx) { currentChordKey = `${si}-${mi}`; break outer; }
+        flatCount++;
       }
     }
-
-    tick();
-    chordTimerRef.current = setInterval(tick, 30);
   }
 
-  function stopChordScheduler() {
-    clearInterval(chordTimerRef.current);
-    chordTimerRef.current = null;
-    setCurrentChordKey(null);
-  }
+  // ── Keep chord options in sync when chart / timeSig change while playing ──
+  useEffect(() => {
+    if (!playing || !chordOn) return;
+    setChordOptionsDirect({
+      measures: buildResolvedMeasures(chart.sections, chart.key),
+    });
+  }, [chart, playing, chordOn]); // eslint-disable-line
+
+  useEffect(() => {
+    setChordOptionsDirect({ timeSig });
+  }, [timeSig]); // eslint-disable-line
+
+  useEffect(() => {
+    setChordOptionsDirect({ strumPatternId });
+  }, [strumPatternId]); // eslint-disable-line
 
   // ── Effects ───────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!playing) {
       stopTrack();
       stopClick();
-      stopChordScheduler();
+      setChordOptionsDirect({ enabled: false });
+      setCurrentChordFlatIdx(null);
     }
   }, [playing]); // eslint-disable-line
 
   useEffect(() => () => {
     stopTrack();
     stopClick();
-    clearInterval(chordTimerRef.current);
   }, []); // eslint-disable-line
 
   // ── Chart helpers ─────────────────────────────────────────────────────────
@@ -379,9 +359,17 @@ export default function SongBackingTracks() {
     if (ctx.state === 'suspended') ctx.resume();
     const t = ctx.currentTime + 0.05;
 
+    // Write chord options to ref before the scheduler starts (setPlaying triggers genre effect)
+    setChordOptionsDirect({
+      enabled:       chordOn,
+      measures:      buildResolvedMeasures(chart.sections, chart.key),
+      timeSig,
+      strumPatternId,
+      onChordChange: setCurrentChordFlatIdx,
+    });
+
     if (drumsOn || bassOn) syncToTime(t);
-    if (metOn)   metSync(t);
-    if (chordOn) startChordScheduler(t);
+    if (metOn) metSync(t);
 
     setPlaying(true);
   }
@@ -392,9 +380,17 @@ export default function SongBackingTracks() {
   function handleChordToggle() {
     const next = !chordOn;
     setChordOn(next);
-    if (playing) {
-      if (next) startChordScheduler(getAudioContext().currentTime + 0.05);
-      else      stopChordScheduler();
+    if (next) {
+      setChordOptionsDirect({
+        enabled:       true,
+        measures:      buildResolvedMeasures(chart.sections, chart.key),
+        timeSig,
+        strumPatternId,
+        onChordChange: setCurrentChordFlatIdx,
+      });
+    } else {
+      setChordOptionsDirect({ enabled: false });
+      setCurrentChordFlatIdx(null);
     }
   }
 
@@ -445,7 +441,7 @@ export default function SongBackingTracks() {
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-          <a href="#" onClick={() => { stopTrack(); stopClick(); stopChordScheduler(); }}
+          <a href="#" onClick={() => { stopTrack(); stopClick(); setChordOptionsDirect({ enabled: false }); }}
             style={{ color: M.muted, fontSize: 22, textDecoration: 'none', lineHeight: 1 }}>‹</a>
           <div>
             <h1 style={{
@@ -521,7 +517,9 @@ export default function SongBackingTracks() {
         {/* Track toggles */}
         <div style={{
           background: M.surface, borderRadius: 14, border: `1px solid ${M.border}`,
-          padding: '14px 16px', marginBottom: 20,
+          padding: '14px 16px', marginBottom: chordOn ? 0 : 20,
+          borderBottomLeftRadius: chordOn ? 0 : 14,
+          borderBottomRightRadius: chordOn ? 0 : 14,
         }}>
           <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em',
             textTransform: 'uppercase', color: M.muted, marginBottom: 12 }}>Tracks</div>
@@ -540,6 +538,33 @@ export default function SongBackingTracks() {
             </button>
           </div>
         </div>
+
+        {/* Strum Pattern — only shown when chord is on */}
+        {chordOn && (
+          <div style={{
+            background: M.surface, borderRadius: '0 0 14px 14px',
+            border: `1px solid ${M.border}`, borderTop: `1px solid ${M.borderHi}`,
+            padding: '12px 16px', marginBottom: 20,
+          }}>
+            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em',
+              textTransform: 'uppercase', color: M.muted, marginBottom: 10 }}>Strum Pattern</div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {STRUM_PATTERNS.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => setStrumPatternId(p.id)}
+                  style={{
+                    padding: '7px 13px', borderRadius: 20, border: 'none',
+                    fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: "Georgia, serif",
+                    background: p.id === strumPatternId ? M.accent : 'rgba(255,255,255,0.06)',
+                    color: p.id === strumPatternId ? '#fff' : M.muted,
+                    transition: 'background 0.15s',
+                  }}
+                >{p.name}</button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Chord Chart ───────────────────────────────────────────────────── */}
         <div style={{

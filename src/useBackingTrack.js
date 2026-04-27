@@ -15,11 +15,10 @@
  *   Rock    — syncopated E2 riff, heavy on beats 1+3
  *   Country — boom-chuck root: A2 beat 1, D2 beat 3
  *
- * ── Rhythm guitar ────────────────────────────────────────────────────────────
- *   Sawtooth stack (root + 5th + octave, 2 ms stagger per partial → strum).
- *   Blues   — chord stabs beats 2 + 4
- *   Rock    — 8th-note power-chord chugs
- *   Country — chord strums beats 2 + 4 ("chuck")
+ * ── Chord strumming ───────────────────────────────────────────────────────────
+ *   guitarSampler.playNote() via setTimeout offsets.
+ *   Scheduled inside the same tick() as drums/bass — one clock, no drift.
+ *   Caller passes pre-resolved note arrays (string[][]) + strumPatternId.
  *
  * ── Scheduler ────────────────────────────────────────────────────────────────
  *   30 ms poll, 120 ms lookahead (same pattern as useMetronome).
@@ -29,14 +28,19 @@
  *   AudioContext failure → degrades silently, toggle resets to off.
  *
  * API:
- *   const { trackOn, toggleTrack, stopTrack, syncToTime } = useBackingTrack(genre, bpm)
+ *   const { trackOn, toggleTrack, stopTrack, syncToTime,
+ *           setDrumsOnDirect, setBassOnDirect,
+ *           setChordOptionsDirect } = useBackingTrack(genre, bpm, drumsOn, bassOn)
  *
- *   syncToTime(ctxTime) — if running, restart pattern anchored to ctxTime.
- *                          No-op if track is off.
+ *   setChordOptionsDirect(opts) — update chord scheduling live without restart
+ *     opts: { enabled, measures, timeSig, strumPatternId, onChordChange }
+ *       measures: string[][] — pre-resolved note arrays per measure (from caller)
+ *       onChordChange: (flatIdx: number) => void — called when each measure fires
  */
 
 import { useEffect, useRef, useCallback } from 'react';
 import { getAudioContext } from './audioContext';
+import { guitarSampler } from './guitarSampler';
 
 const LOOKAHEAD_S = 0.12;
 const INTERVAL_MS = 30;
@@ -92,6 +96,17 @@ const PAT = {
     rootHz: HZ.A2,
   },
 };
+
+// ── Strum patterns ────────────────────────────────────────────────────────────
+export const STRUM_PATTERNS = [
+  { id: 'off',        name: 'Single Strum', sub: 'measure', steps: ['D'] },
+  { id: 'all-down',   name: 'All Down',     sub: 'quarter', steps: ['D','D','D','D'] },
+  { id: 'down-up',    name: 'Down-Up',      sub: 'eighth',  steps: ['D','U','D','U','D','U','D','U'] },
+  { id: 'folk',       name: 'Folk',         sub: 'eighth',  steps: ['D','-','D','U','-','U','D','U'] },
+  { id: 'country',    name: 'Country',      sub: 'eighth',  steps: ['D','D','U','-','U','D','U','-'] },
+  { id: 'waltz',      name: 'Waltz (3/4)',  sub: 'quarter', steps: ['D','D','U'] },
+  { id: 'slow-rock',  name: 'Slow Rock',    sub: 'eighth',  steps: ['D','-','-','U','-','-','D','-'] },
+];
 
 // ── Module-level synthesis functions (no React deps) ─────────────────────────
 
@@ -178,6 +193,24 @@ function scheduleRhythm(ctx, mg, t, rootHz, stepDur, genreId) {
   });
 }
 
+// guitarSampler.playNote() is async/immediate — use setTimeout offsets for future scheduling
+function scheduleChordStrum(ctx, notes, strumPatternId, bpm, atCtxTime) {
+  const pat    = STRUM_PATTERNS.find(p => p.id === strumPatternId) || STRUM_PATTERNS[0];
+  const beats  = pat.sub === 'eighth' ? 0.5 : pat.sub === 'measure' ? 4 : 1;
+  const stepMs = (60000 / bpm) * beats;
+  const baseMs = (atCtxTime - ctx.currentTime) * 1000;
+  pat.steps.forEach((step, i) => {
+    if (step === '-') return;
+    const offsetMs    = Math.max(0, baseMs + Math.round(i * stepMs));
+    const orderedNotes = step === 'U' ? [...notes].reverse() : notes;
+    orderedNotes.forEach((note, ni) => {
+      setTimeout(() => {
+        try { guitarSampler.playNote(note); } catch (_) {}
+      }, offsetMs + ni * 14);
+    });
+  });
+}
+
 // ── Hook ─────────────────────────────────────────────────────────────────────
 export default function useBackingTrack(genre, bpm, drumsOn = true, bassOn = true) {
   const r = useRef({
@@ -191,6 +224,14 @@ export default function useBackingTrack(genre, bpm, drumsOn = true, bassOn = tru
     bpm:      120,
     drumsOn:  true,
     bassOn:   true,
+    // chord scheduling state (updated via setChordOptionsDirect)
+    chordEnabled:    false,
+    chordMeasures:   null,   // string[][] pre-resolved per-measure note arrays
+    chordTimeSig:    '4/4',
+    chordStrumPatId: 'off',
+    chordOnChange:   null,   // (flatIdx: number) => void
+    chordNextTime:   0,
+    chordMeasureIdx: 0,
   });
 
   // Keep mirrors in sync with props
@@ -227,9 +268,11 @@ export default function useBackingTrack(genre, bpm, drumsOn = true, bassOn = tru
   function startScheduler(fromTime) {
     const ref = r.current;
     clearInterval(ref.timerId);
-    ref.timerId      = null;
-    ref.nextStepTime = fromTime;
-    ref.nextStepIdx  = 0;
+    ref.timerId         = null;
+    ref.nextStepTime    = fromTime;
+    ref.nextStepIdx     = 0;
+    ref.chordNextTime   = fromTime;
+    ref.chordMeasureIdx = 0;
 
     const ctx = getAudioContext();
     if (ctx.state === 'suspended') ctx.resume();
@@ -239,6 +282,8 @@ export default function useBackingTrack(genre, bpm, drumsOn = true, bassOn = tru
       if (!mg || !nb) return;
 
       const now = ctx.currentTime;
+
+      // ── Drums + bass ────────────────────────────────────────────────────────
       while (r.current.nextStepTime < now + LOOKAHEAD_S) {
         const curGenre  = r.current.genre;
         const pat       = PAT[curGenre] || PAT.blues;
@@ -261,6 +306,41 @@ export default function useBackingTrack(genre, bpm, drumsOn = true, bassOn = tru
 
         r.current.nextStepTime += stepDur;
         r.current.nextStepIdx++;
+      }
+
+      // ── Chord strumming — same tick, same clock ──────────────────────────
+      const cEnabled  = r.current.chordEnabled;
+      const cMeasures = r.current.chordMeasures;
+
+      if (!cEnabled || !cMeasures || cMeasures.length === 0) {
+        // Advance chordNextTime silently so enabling mid-play doesn't burst
+        if (r.current.chordNextTime < now) r.current.chordNextTime = now;
+      } else {
+        const beatsPerMeasure = parseInt((r.current.chordTimeSig || '4/4').split('/')[0]) || 4;
+        const mDur = (beatsPerMeasure * 60) / r.current.bpm;
+
+        while (r.current.chordNextTime < now + LOOKAHEAD_S) {
+          const t   = r.current.chordNextTime;
+          const idx = r.current.chordMeasureIdx % cMeasures.length;
+          const notes = cMeasures[idx];
+
+          if (notes && notes.length > 0) {
+            try {
+              scheduleChordStrum(ctx, notes, r.current.chordStrumPatId, r.current.bpm, t);
+            } catch (e) {
+              console.warn('[useBackingTrack] chord strum error:', e.message);
+            }
+          }
+
+          const cb = r.current.chordOnChange;
+          if (cb) {
+            const capturedIdx = idx;
+            setTimeout(() => cb(capturedIdx), Math.max(0, (t - ctx.currentTime) * 1000));
+          }
+
+          r.current.chordNextTime   += mDur;
+          r.current.chordMeasureIdx++;
+        }
       }
     }
 
@@ -302,9 +382,26 @@ export default function useBackingTrack(genre, bpm, drumsOn = true, bassOn = tru
   const setDrumsOnDirect = useCallback((val) => { r.current.drumsOn = val; }, []);
   const setBassOnDirect  = useCallback((val) => { r.current.bassOn  = val; }, []);
 
+  // Update chord options live without restarting the scheduler
+  const setChordOptionsDirect = useCallback((opts) => {
+    if (opts.enabled       !== undefined) r.current.chordEnabled    = opts.enabled;
+    if (opts.measures      !== undefined) r.current.chordMeasures   = opts.measures;
+    if (opts.timeSig       !== undefined) r.current.chordTimeSig    = opts.timeSig;
+    if (opts.strumPatternId !== undefined) r.current.chordStrumPatId = opts.strumPatternId;
+    if (opts.onChordChange !== undefined) r.current.chordOnChange   = opts.onChordChange;
+  }, []);
+
   // stopTrack kept for API compatibility — setting genre=null from the caller stops it
   const stopTrack   = useCallback(() => {}, []);
   const toggleTrack = useCallback(() => {}, []);
 
-  return { trackOn: !!genre, toggleTrack, stopTrack, syncToTime, setDrumsOnDirect, setBassOnDirect };
+  return {
+    trackOn: !!genre,
+    toggleTrack,
+    stopTrack,
+    syncToTime,
+    setDrumsOnDirect,
+    setBassOnDirect,
+    setChordOptionsDirect,
+  };
 }

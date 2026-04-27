@@ -337,7 +337,8 @@ const SONGS = [
     ],
   },
 
-  // Jingle Bells — 4/4, key of G, 15 measures (chorus + verse)
+  // Jingle Bells — 4/4, key of C, 12 measures (chorus + verse)
+  // First 8 melody notes: E4 E4 E4(h) E4 E4 E4(h) E4 G4
   {
     id: 'jingle_bells', title: 'Jingle Bells', genre: 'Children',
     difficulty: 'Beginner', durationEst: '1:10', pro: true, bpm: 120,
@@ -392,7 +393,7 @@ const SONGS = [
         { string:2, fret:1, beat:4, noteName:'C4', duration:'q' },
       ],
       [
-        { string:4, fret:0, beat:1, noteName:'D3', duration:'h' },
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
         { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
         { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
       ],
@@ -750,6 +751,7 @@ const SONGS = [
   },
 
   // Greensleeves — 3/4, key of Am, 20 measures
+  // First 8 melody notes: A4 C4 D4 E4 D4 C4 B3 A4
   {
     id: 'greensleeves', title: 'Greensleeves', genre: 'Folk',
     difficulty: 'Intermediate', durationEst: '1:30', pro: true, bpm: 72,
@@ -787,8 +789,8 @@ const SONGS = [
       // "for I have loved you so long"
       [
         { string:1, fret:0, beat:1, noteName:'E4', duration:'dq' },
-        { string:3, fret:1, beat:2, noteName:'G#3', duration:'e' },
-        { string:3, fret:1, beat:3, noteName:'G#3', duration:'q' },
+        { string:1, fret:4, beat:2, noteName:'G#4', duration:'e' },
+        { string:1, fret:4, beat:3, noteName:'G#4', duration:'q' },
       ],
       [
         { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
@@ -801,13 +803,13 @@ const SONGS = [
         { string:1, fret:1, beat:3, noteName:'F4', duration:'e' },
       ],
       [
-        { string:3, fret:2, beat:1, noteName:'A3', duration:'h' },
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
         { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
       ],
       [
         { string:1, fret:0, beat:1, noteName:'E4', duration:'dq' },
-        { string:3, fret:1, beat:2, noteName:'G#3', duration:'e' },
-        { string:3, fret:1, beat:3, noteName:'G#3', duration:'q' },
+        { string:1, fret:4, beat:2, noteName:'G#4', duration:'e' },
+        { string:1, fret:4, beat:3, noteName:'G#4', duration:'q' },
       ],
       [
         { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
@@ -844,8 +846,8 @@ const SONGS = [
       ],
       [
         { string:1, fret:0, beat:1, noteName:'E4', duration:'dq' },
-        { string:3, fret:1, beat:2, noteName:'G#3', duration:'e' },
-        { string:3, fret:1, beat:3, noteName:'G#3', duration:'q' },
+        { string:1, fret:4, beat:2, noteName:'G#4', duration:'e' },
+        { string:1, fret:4, beat:3, noteName:'G#4', duration:'q' },
       ],
       [
         { string:1, fret:5, beat:1, noteName:'A4', duration:'h.' },
@@ -1162,7 +1164,7 @@ const SONGS = [
       [
         { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
         { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
-        { string:3, fret:2, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
         { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
       ],
       [
@@ -1435,7 +1437,7 @@ const SONGS = [
       ],
       [
         { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
-        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
       ],
       [
         { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
