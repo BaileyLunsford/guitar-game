@@ -209,7 +209,7 @@ export default function SongBackingTracks() {
   useEffect(() => { chartRef.current = chart;   }, [chart]);
 
   const effectiveGenre = playing ? GENRE_MAP[genre] : null;
-  const { trackOn, toggleTrack, stopTrack, syncToTime } = useBackingTrack(effectiveGenre, bpm, drumsOn, bassOn);
+  const { trackOn, toggleTrack, stopTrack, syncToTime, setDrumsOnDirect, setBassOnDirect } = useBackingTrack(effectiveGenre, bpm, drumsOn, bassOn);
   const { clickOn, toggleClick, stopClick, syncToTime: metSync } = useMetronome(bpm);
 
   // ── Chord scheduler (Web Audio lookahead, measure-based) ─────────────────
@@ -379,15 +379,15 @@ export default function SongBackingTracks() {
     if (ctx.state === 'suspended') ctx.resume();
     const t = ctx.currentTime + 0.05;
 
-    if (drumsOn || bassOn) setTimeout(() => syncToTime(t), 50);
+    if (drumsOn || bassOn) syncToTime(t);
     if (metOn)   metSync(t);
     if (chordOn) startChordScheduler(t);
 
     setPlaying(true);
   }
 
-  function handleDrumsToggle()  { setDrumsOn(d => !d); }
-  function handleBassToggle()   { setBassOn(b => !b); }
+  function handleDrumsToggle()  { const next = !drumsOn; setDrumsOnDirect(next); setDrumsOn(next); }
+  function handleBassToggle()   { const next = !bassOn;  setBassOnDirect(next);  setBassOn(next);  }
 
   function handleChordToggle() {
     const next = !chordOn;

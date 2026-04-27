@@ -298,9 +298,13 @@ export default function useBackingTrack(genre, bpm, drumsOn = true, bassOn = tru
     startScheduler(ctxTime);
   }, []); // startScheduler only closes over stable `r` — no stale deps
 
+  // Direct ref setters — bypass the useEffect cycle so toggle takes effect immediately
+  const setDrumsOnDirect = useCallback((val) => { r.current.drumsOn = val; }, []);
+  const setBassOnDirect  = useCallback((val) => { r.current.bassOn  = val; }, []);
+
   // stopTrack kept for API compatibility — setting genre=null from the caller stops it
   const stopTrack   = useCallback(() => {}, []);
   const toggleTrack = useCallback(() => {}, []);
 
-  return { trackOn: !!genre, toggleTrack, stopTrack, syncToTime };
+  return { trackOn: !!genre, toggleTrack, stopTrack, syncToTime, setDrumsOnDirect, setBassOnDirect };
 }
