@@ -232,6 +232,9 @@ export default function useBackingTrack(genre, bpm, drumsOn = true, bassOn = tru
     chordOnChange:   null,   // (flatIdx: number) => void
     chordNextTime:   0,
     chordMeasureIdx: 0,
+    // pending sync time: set by syncToTime when genre is still null (cold start),
+    // consumed by useEffect so drums and chord start at the caller's intended time
+    pendingSyncTime: null,
   });
 
   // Keep mirrors in sync with props
@@ -267,6 +270,7 @@ export default function useBackingTrack(genre, bpm, drumsOn = true, bassOn = tru
   // Defined inside hook but only closes over `r` (stable ref) → no stale data.
   function startScheduler(fromTime) {
     const ref = r.current;
+    ref.pendingSyncTime  = null;  // consumed — clear so stale value never leaks
     clearInterval(ref.timerId);
     ref.timerId         = null;
     ref.nextStepTime    = fromTime;
@@ -360,7 +364,10 @@ export default function useBackingTrack(genre, bpm, drumsOn = true, bassOn = tru
     if (!ctx) return;
     if (ctx.state === 'suspended') ctx.resume();
 
-    startScheduler(ctx.currentTime + 0.05);
+    // Use the time saved by syncToTime (called from handleStart before setPlaying(true))
+    // so drums and chord start at the same clock reference as the metronome.
+    const fromTime = ref.pendingSyncTime ?? (ctx.currentTime + 0.05);
+    startScheduler(fromTime);
 
     return () => {
       clearInterval(ref.timerId);
@@ -371,8 +378,10 @@ export default function useBackingTrack(genre, bpm, drumsOn = true, bassOn = tru
   // Cleanup on unmount
   useEffect(() => () => clearInterval(r.current.timerId), []);
 
-  // syncToTime: externally align the pattern to a shared start time.
+  // syncToTime: align the pattern to a shared AudioContext start time.
+  // When called before genre is set (cold start), saves the time for useEffect to consume.
   const syncToTime = useCallback((ctxTime) => {
+    r.current.pendingSyncTime = ctxTime;
     if (!r.current.genre) return;
     boot();
     startScheduler(ctxTime);

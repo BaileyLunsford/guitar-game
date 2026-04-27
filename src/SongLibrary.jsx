@@ -52,7 +52,7 @@ function beatDur(d) {
 // String: 1=high e, 2=B, 3=G, 4=D, 5=A, 6=low E
 const SONGS = [
   // ─────────────────────────── FREE ───────────────────────────────────────
-  // Ode to Joy — 4/4, key of G, 8 measures
+  // Ode to Joy — 4/4, key of G, 8 measures  ·  Range: C4–G4
   {
     id: 'ode', title: 'Ode to Joy', genre: 'Classical',
     difficulty: 'Beginner', durationEst: '1:00', pro: false, bpm: 88,
@@ -106,7 +106,7 @@ const SONGS = [
     ],
   },
 
-  // Twinkle Twinkle Little Star — 4/4, key of C, 12 measures
+  // Twinkle Twinkle Little Star — 4/4, key of C, 12 measures  ·  Range: C4–A4
   {
     id: 'twinkle', title: 'Twinkle Twinkle Little Star', genre: 'Children',
     difficulty: 'Beginner', durationEst: '1:20', pro: false, bpm: 80,
@@ -180,7 +180,7 @@ const SONGS = [
     ],
   },
 
-  // Amazing Grace — 3/4, key of G, 19 measures (pickup + 18)
+  // Amazing Grace — 3/4, key of G, 19 measures (pickup + 18)  ·  Range: B3–A4
   // D4 = string 2 fret 3; B3 = string 2 fret 0; G4 = string 1 fret 3; A4 = string 1 fret 5
   {
     id: 'amazing', title: 'Amazing Grace', genre: 'Hymn',
@@ -274,7 +274,7 @@ const SONGS = [
   },
 
   // ─────────────────────────── PRO ────────────────────────────────────────
-  // Happy Birthday — 3/4, key of C (starting on G4 = scale deg 5), 9 measures (pickup + 8)
+  // Happy Birthday — 3/4, key of C (starting on G4 = scale deg 5), 9 measures (pickup + 8)  ·  Range: B3–A4
   // Melody: G G | A G C | B(dh) | A G D | C(dh) | G E C | B D A | G G F(e)E(e) | C D C
   {
     id: 'happy_birthday', title: 'Happy Birthday', genre: 'Children',
@@ -337,7 +337,7 @@ const SONGS = [
     ],
   },
 
-  // Jingle Bells — 4/4, key of C, 12 measures (chorus + verse)
+  // Jingle Bells — 4/4, key of C, 12 measures (chorus + verse)  ·  Range: C4–G4
   // First 8 melody notes: E4 E4 E4(h) E4 E4 E4(h) E4 G4
   {
     id: 'jingle_bells', title: 'Jingle Bells', genre: 'Children',
@@ -410,7 +410,7 @@ const SONGS = [
     ],
   },
 
-  // Silent Night — 3/4, key of G, 24 measures
+  // Silent Night — 3/4, key of G, 24 measures  ·  Range: B3–A4
   // D4 = str2 f3; G4 = str1 f3; E4 = str1 f0; B3 = str2 f0; C4 = str2 f1; F4 = str1 f1
   {
     id: 'silent_night', title: 'Silent Night', genre: 'Hymn',
@@ -523,7 +523,7 @@ const SONGS = [
     ],
   },
 
-  // Mary Had a Little Lamb — 4/4, key of C, 8 measures
+  // Mary Had a Little Lamb — 4/4, key of C, 8 measures  ·  Range: C4–G4
   {
     id: 'mary_lamb', title: 'Mary Had a Little Lamb', genre: 'Children',
     difficulty: 'Beginner', durationEst: '0:50', pro: true, bpm: 100,
@@ -573,7 +573,7 @@ const SONGS = [
     ],
   },
 
-  // Scarborough Fair — 3/4, key of Am (natural minor), 16 measures
+  // Scarborough Fair — 3/4, key of Am (natural minor), 16 measures  ·  Range: D4–C5
   {
     id: 'scarborough', title: 'Scarborough Fair', genre: 'Folk',
     difficulty: 'Intermediate', durationEst: '1:30', pro: true, bpm: 72,
@@ -589,7 +589,7 @@ const SONGS = [
         { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
       ],
       [
-        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
+        { string:1, fret:7, beat:1, noteName:'B4', duration:'h' },
         { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
       ],
       [
@@ -654,7 +654,7 @@ const SONGS = [
     ],
   },
 
-  // House of the Rising Sun — 6/8 feel, key of Am, played as 4/4 arpeggios, 8 measures
+  // House of the Rising Sun — 6/8 feel, key of Am, played as 4/4 arpeggios, 8 measures  ·  Range: E2–F#4 (chord arpeggios, intentional multi-octave)
   {
     id: 'rising_sun', title: 'House of the Rising Sun', genre: 'Blues',
     difficulty: 'Intermediate', durationEst: '1:30', pro: true, bpm: 76,
@@ -750,7 +750,7 @@ const SONGS = [
     ],
   },
 
-  // Greensleeves — 3/4, key of Am, 20 measures
+  // Greensleeves — 3/4, key of Am, 20 measures  ·  Range: B3–A4
   // First 8 melody notes: A4 C4 D4 E4 D4 C4 B3 A4
   {
     id: 'greensleeves', title: 'Greensleeves', genre: 'Folk',
@@ -855,7 +855,7 @@ const SONGS = [
     ],
   },
 
-  // When the Saints Go Marching In — 4/4, key of G, 10 measures
+  // When the Saints Go Marching In — 4/4, key of G, 10 measures  ·  Range: C4–G4
   {
     id: 'saints', title: 'When the Saints Go Marching In', genre: 'Hymn',
     difficulty: 'Beginner', durationEst: '1:00', pro: true, bpm: 110,
@@ -910,7 +910,7 @@ const SONGS = [
     ],
   },
 
-  // Danny Boy — 4/4, key of G, 12 measures
+  // Danny Boy — 4/4, key of G, 12 measures  ·  Range: C4–B4
   {
     id: 'danny_boy', title: 'Danny Boy', genre: 'Folk',
     difficulty: 'Intermediate', durationEst: '1:45', pro: true, bpm: 66,
@@ -982,7 +982,7 @@ const SONGS = [
     ],
   },
 
-  // Wildwood Flower — 4/4, key of G (Carter Family style), 8 measures
+  // Wildwood Flower — 4/4, key of G (Carter Family style), 8 measures  ·  Range: B3–A4
   {
     id: 'wildwood', title: 'Wildwood Flower', genre: 'Folk',
     difficulty: 'Intermediate', durationEst: '1:10', pro: true, bpm: 112,
@@ -1037,7 +1037,7 @@ const SONGS = [
     ],
   },
 
-  // Blackbird (simplified) — 4/4, key of G, 11 measures
+  // Blackbird (simplified) — 4/4, key of G, 11 measures  ·  Range: G3–B4 (fingerpicking: G3 bass, melody to B4)
   {
     id: 'blackbird', title: 'Blackbird (simplified)', genre: 'Folk',
     difficulty: 'Intermediate', durationEst: '1:30', pro: true, bpm: 80,
@@ -1110,7 +1110,7 @@ const SONGS = [
     ],
   },
 
-  // Simple Gifts (Shaker Hymn) — 4/4, key of G, 14 measures
+  // Simple Gifts (Shaker Hymn) — 4/4, key of G, 14 measures  ·  Range: C4–A4
   {
     id: 'simple_gifts', title: 'Simple Gifts', genre: 'Hymn',
     difficulty: 'Beginner', durationEst: '1:00', pro: true, bpm: 92,
@@ -1200,7 +1200,7 @@ const SONGS = [
     ],
   },
 
-  // Skip to My Lou — 4/4, key of G, 8 measures
+  // Skip to My Lou — 4/4, key of G, 8 measures  ·  Range: C4–A4
   {
     id: 'skip_lou', title: 'Skip to My Lou', genre: 'Folk',
     difficulty: 'Beginner', durationEst: '0:50', pro: true, bpm: 116,
@@ -1250,7 +1250,7 @@ const SONGS = [
     ],
   },
 
-  // Red River Valley — 4/4, key of G, 15 measures
+  // Red River Valley — 4/4, key of G, 15 measures  ·  Range: C4–A4
   {
     id: 'red_river', title: 'Red River Valley', genre: 'Folk',
     difficulty: 'Beginner', durationEst: '1:15', pro: true, bpm: 82,
@@ -1343,7 +1343,7 @@ const SONGS = [
     ],
   },
 
-  // Cripple Creek — Bluegrass 4/4, key of A, ~8 measures
+  // Cripple Creek — Bluegrass 4/4, key of A, ~8 measures  ·  Range: C4–A4
   {
     id: 'cripple', title: 'Cripple Creek', genre: 'Bluegrass',
     difficulty: 'Intermediate', durationEst: '0:55', pro: true, bpm: 132,
@@ -1415,7 +1415,7 @@ const SONGS = [
     ],
   },
 
-  // Shady Grove — 3/4, key of Am/Dorian, 12 measures
+  // Shady Grove — 3/4, key of Am/Dorian, 12 measures  ·  Range: C4–A4
   {
     id: 'shady', title: 'Shady Grove', genre: 'Bluegrass',
     difficulty: 'Intermediate', durationEst: '1:05', pro: true, bpm: 100,
@@ -1477,7 +1477,7 @@ const SONGS = [
     ],
   },
 
-  // Will the Circle Be Unbroken — 3/4, key of G, 12 measures
+  // Will the Circle Be Unbroken — 3/4, key of G, 12 measures  ·  Range: C4–A4
   {
     id: 'circle', title: 'Will the Circle Be Unbroken', genre: 'Gospel / Bluegrass',
     difficulty: 'Intermediate', durationEst: '1:15', pro: true, bpm: 96,
