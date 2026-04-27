@@ -503,7 +503,7 @@ const HOME_SECTIONS = [
     items: [
       { icon: '🎹', title: 'Scale Play',      desc: 'Interactive scale patterns across the fretboard',     hash: '#scale-play',      pro: false },
       { icon: '🎼', title: 'Tab & Notation', desc: 'Standard notation with guitar tablature overlay',     hash: '#tab-test',        pro: false },
-      { icon: '🎸', title: 'Fretboard Notes',desc: 'All 78 notes — explore, game & flashcard modes',      hash: '#fretboard-notes', pro: false },
+      { icon: '🎸', title: 'Learn the Fretboard Notes', desc: 'All 78 notes — explore, game & flashcard modes', hash: '#fretboard-notes', pro: false },
       { icon: '🤘', title: 'Barre Chords',   desc: 'Moveable E and A shapes in every key',                hash: '#barre-chords',    pro: false },
     ],
   },

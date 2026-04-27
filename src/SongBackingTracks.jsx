@@ -11,6 +11,7 @@ import LandingPage from './LandingPage';
 import useBackingTrack from './useBackingTrack';
 import useMetronome from './useMetronome';
 import { getAudioContext } from './audioContext';
+import { guitarSampler } from './guitarSampler';
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 const M = {
@@ -44,6 +45,8 @@ const GENRES = ['Blues', 'Country', 'Rock', 'Folk'];
 const GENRE_MAP = { Blues:'blues', Country:'country', Rock:'rock', Folk:'blues' };
 const TIME_SIGS = ['2/4', '3/4', '4/4', '6/8'];
 
+const CHORD_G_NOTES = ['G2', 'B2', 'D3', 'G3', 'B3', 'G4'];
+
 // Tap tempo — returns BPM from an array of tap timestamps
 function calcTapBpm(taps) {
   if (taps.length < 2) return null;
@@ -71,30 +74,54 @@ export default function SongBackingTracks() {
   const [drumsOn,  setDrumsOn]  = useState(true);
   const [bassOn,   setBassOn]   = useState(true);
   const [metOn,    setMetOn]    = useState(false);
+  const [chordOn,  setChordOn]  = useState(false);
   const [presets,  setPresets]  = useState(loadPresets);
   const [saving,   setSaving]   = useState(false);
   const [presetName, setPresetName] = useState('');
-  const tapsRef = useRef([]);
+  const tapsRef        = useRef([]);
+  const bpmRef         = useRef(bpm);
+  const chordTimerRef  = useRef(null);
+  const chordNextBeat  = useRef(0);
+  useEffect(() => { bpmRef.current = bpm; }, [bpm]);
 
-  // Backing track: genre controls drums + bass pattern
-  // When drumsOn or bassOn are both off there's no clean per-channel mute in
-  // useBackingTrack, so we pass a sentinel genre 'off' to suppress everything.
-  const effectiveGenre = (!drumsOn && !bassOn) ? null
-    : playing ? GENRE_MAP[genre]
-    : null;
-
-  const { trackOn, toggleTrack, stopTrack, syncToTime } = useBackingTrack(effectiveGenre, bpm);
+  const effectiveGenre = playing ? GENRE_MAP[genre] : null;
+  const { trackOn, toggleTrack, stopTrack, syncToTime } = useBackingTrack(effectiveGenre, bpm, drumsOn, bassOn);
   const { clickOn, toggleClick, stopClick, syncToTime: metSync } = useMetronome(bpm);
+
+  function startChordScheduler(fromTime) {
+    clearInterval(chordTimerRef.current);
+    chordNextBeat.current = fromTime;
+    const ctx = getAudioContext();
+    function tick() {
+      const now = ctx.currentTime;
+      while (chordNextBeat.current < now + 0.12) {
+        const t  = chordNextBeat.current;
+        const ms = (t - now) * 1000;
+        CHORD_G_NOTES.forEach((note, i) => {
+          setTimeout(() => { try { guitarSampler.playNote(note); } catch (_) {} }, Math.max(0, ms + i * 14));
+        });
+        chordNextBeat.current += 60 / bpmRef.current;
+      }
+    }
+    tick();
+    chordTimerRef.current = setInterval(tick, 30);
+  }
 
   // Sync external playing state with hook state
   useEffect(() => {
     if (!playing) {
       stopTrack();
       stopClick();
+      clearInterval(chordTimerRef.current);
+      chordTimerRef.current = null;
     }
   }, [playing]); // eslint-disable-line
 
-  useEffect(() => () => { stopTrack(); stopClick(); }, []); // eslint-disable-line
+  useEffect(() => () => {
+    stopTrack();
+    stopClick();
+    clearInterval(chordTimerRef.current);
+  }, []); // eslint-disable-line
 
   function handleLoadPreset(p) {
     setGenre(p.genre);
@@ -138,6 +165,9 @@ export default function SongBackingTracks() {
     if (metOn) {
       metSync(t);
     }
+    if (chordOn) {
+      startChordScheduler(t);
+    }
 
     setPlaying(true);
   }
@@ -150,6 +180,19 @@ export default function SongBackingTracks() {
 
   function handleBassToggle() {
     setBassOn(b => !b);
+  }
+
+  function handleChordToggle() {
+    const next = !chordOn;
+    setChordOn(next);
+    if (playing) {
+      if (next) {
+        startChordScheduler(getAudioContext().currentTime + 0.05);
+      } else {
+        clearInterval(chordTimerRef.current);
+        chordTimerRef.current = null;
+      }
+    }
   }
 
   function handleMetToggle() {
@@ -299,6 +342,9 @@ export default function SongBackingTracks() {
             <button onClick={handleBassToggle} style={btnStyle(bassOn)}>
               🎸 {bassOn ? 'Bass On' : 'Bass Off'}
             </button>
+            <button onClick={handleChordToggle} style={btnStyle(chordOn)}>
+              🎼 {chordOn ? 'Chord On' : 'Chord Off'}
+            </button>
             <button onClick={handleMetToggle} style={btnStyle(metOn)}>
               🎵 {metOn ? 'Click On' : 'Click Off'}
             </button>
@@ -400,7 +446,7 @@ export default function SongBackingTracks() {
               }} />
               <span style={{ fontSize: 12, color: M.muted }}>
                 {genre} · {bpm} BPM
-                {drumsOn ? ' · Drums' : ''}{bassOn ? ' · Bass' : ''}{metOn ? ' · Click' : ''}
+                {drumsOn ? ' · Drums' : ''}{bassOn ? ' · Bass' : ''}{chordOn ? ' · Chord' : ''}{metOn ? ' · Click' : ''}
               </span>
             </div>
           </div>

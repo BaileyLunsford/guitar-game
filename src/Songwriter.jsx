@@ -15,6 +15,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import useBackingTrack from './useBackingTrack';
 import useMetronome from './useMetronome';
 import { getAudioContext } from './audioContext';
+import { guitarSampler } from './guitarSampler';
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 const M = {
@@ -40,6 +41,29 @@ const SECTION_PRESETS = ['Intro','Verse','Pre-Chorus','Chorus','Bridge','Outro',
 // Nashville number degrees (major scale Roman numerals)
 const DEGREES = ['I','II','III','IV','V','VI','VII'];
 
+// Chord → note arrays for strum playback
+const CHORD_NOTES = {
+  C:  ['C3','E3','G3','C4','E4'],
+  D:  ['D3','F#3','A3','D4'],
+  E:  ['E2','B2','E3','G#3','B3','E4'],
+  F:  ['F2','C3','F3','A3','C4'],
+  G:  ['G2','B2','D3','G3','B3','G4'],
+  A:  ['A2','E3','A3','C#4','E4'],
+  B:  ['B2','F#3','B3','D#4','F#4'],
+  Am: ['A2','E3','A3','C4','E4'],
+  Em: ['E2','B2','E3','G3','B3','E4'],
+  Dm: ['D3','F3','A3','D4'],
+  Bm: ['B2','F#3','B3','D4','F#4'],
+  Cm: ['C3','G3','C4','Eb4','G4'],
+  G7: ['G2','B2','D3','F3','B3','G4'],
+  D7: ['D3','F#3','A3','C4'],
+  A7: ['A2','E3','G3','C#4','E4'],
+  E7: ['E2','B2','E3','G#3','D4','E4'],
+  C7: ['C3','E3','G3','Bb3','E4'],
+};
+
+const ROMAN_TO_IDX = { VII:6, VI:5, V:4, IV:3, III:2, II:1, I:0 };
+
 // Chromatic semitones from C
 const NOTE_SEMI = { C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11 };
 
@@ -50,6 +74,18 @@ function majorScaleDegrees(root) {
     const semi = (base + i) % 12;
     return Object.keys(NOTE_SEMI).find(k => NOTE_SEMI[k] === semi && !k.includes('b') || NOTE_SEMI[k] === semi) ?? '?';
   });
+}
+
+function nashvilleToChord(num, key) {
+  const match = num.match(/^(VII|VI|V|IV|III|II|I)(.*)/);
+  if (!match) return null;
+  const idx = ROMAN_TO_IDX[match[1]];
+  if (idx === undefined) return null;
+  const degrees = majorScaleDegrees(key);
+  const root = degrees[idx];
+  if (!root) return null;
+  const suffix = match[2] || ([1,2,5].includes(idx) ? 'm' : '');
+  return root + suffix;
 }
 
 function chordToNashville(chord, key) {
@@ -170,8 +206,11 @@ export default function Songwriter() {
   const playIdxRef      = useRef(0);
   const playMeasuresRef = useRef([]);
 
-  const effectiveGenre = (!drumsOn && !bassOn) ? null : playing ? GENRE_MAP[genre] : null;
-  const { stopTrack, syncToTime }          = useBackingTrack(effectiveGenre, activeSong.bpm);
+  const songKeyRef = useRef(activeSong.key);
+  useEffect(() => { songKeyRef.current = activeSong.key; }, [activeSong.key]);
+
+  const effectiveGenre = playing ? GENRE_MAP[genre] : null;
+  const { stopTrack, syncToTime }          = useBackingTrack(effectiveGenre, activeSong.bpm, drumsOn, bassOn);
   const { stopClick, syncToTime: metSync } = useMetronome(activeSong.bpm);
 
   useEffect(() => {
@@ -325,6 +364,19 @@ export default function Songwriter() {
     setMetOn(next);
   }
 
+  function strumChord(chordName) {
+    if (!chordName) return;
+    let resolved = chordName;
+    if (/^(VII|VI|V|IV|III|II|I)/.test(resolved)) {
+      resolved = nashvilleToChord(resolved, songKeyRef.current) || resolved;
+    }
+    const root = resolved.match(/^([A-G][#b]?)/)?.[1];
+    const notes = CHORD_NOTES[resolved] || (root && CHORD_NOTES[root]) || CHORD_NOTES.G;
+    notes.forEach((note, i) => {
+      setTimeout(() => { try { guitarSampler.playNote(note); } catch (_) {} }, i * 14);
+    });
+  }
+
   // ── Play / Stop ───────────────────────────────────────────────────────────
   function handlePlay() {
     if (playing) {
@@ -351,11 +403,13 @@ export default function Songwriter() {
     const msPerMeasure    = (60000 / activeSong.bpm) * beatsPerMeasure;
     const firstKey = `${all[0].secIdx}-${all[0].mIdx}`;
     setCurrentMeasureKey(firstKey);
+    strumChord(all[0].chord);
     setPlaying(true);
     playIntervalRef.current = setInterval(() => {
       playIdxRef.current = (playIdxRef.current + 1) % playMeasuresRef.current.length;
       const m = playMeasuresRef.current[playIdxRef.current];
       setCurrentMeasureKey(`${m.secIdx}-${m.mIdx}`);
+      strumChord(m.chord);
     }, msPerMeasure);
   }
 

@@ -456,6 +456,59 @@ function DiffBadge({ level }) {
   );
 }
 
+// ── Fretboard position diagram ────────────────────────────────────────────────
+// string 1=high e (top), 6=low E (bottom); fret 0=open string
+function NotePositionDiagram({ string, fret }) {
+  const W = 220;
+  const H = 80;
+  const NUT_X  = 28;
+  const FRET_W = 34;
+  const FRETS  = 5;
+  const TOP    = 14;
+  const BOT    = H - 16;
+  const STR_H  = (BOT - TOP) / 5;
+  const strY  = (s) => TOP + (s - 1) * STR_H;
+  const fretX = (f) => NUT_X + f * FRET_W;
+  const dotX  = (f) => f === 0 ? NUT_X - 12 : NUT_X + (f - 0.5) * FRET_W;
+  const STRING_LABELS = ['e','B','G','D','A','E'];
+
+  return (
+    <svg width={W} height={H} style={{ display: 'block', margin: '0 auto' }}>
+      {/* String lines */}
+      {[1,2,3,4,5,6].map(s => (
+        <line key={s} x1={NUT_X} y1={strY(s)} x2={fretX(FRETS)} y2={strY(s)}
+          stroke={s === string ? M.hi : 'rgba(255,255,255,0.18)'}
+          strokeWidth={s === string ? 1.5 : 0.8} />
+      ))}
+      {/* Nut */}
+      <line x1={NUT_X} y1={TOP - 2} x2={NUT_X} y2={BOT + 2}
+        stroke={M.accent} strokeWidth={4} strokeLinecap="round" />
+      {/* Fret lines */}
+      {[1,2,3,4,5].map(f => (
+        <line key={f} x1={fretX(f)} y1={TOP - 2} x2={fretX(f)} y2={BOT + 2}
+          stroke="rgba(255,255,255,0.18)" strokeWidth={1} />
+      ))}
+      {/* Fret numbers */}
+      {[1,2,3,4,5].map(f => (
+        <text key={f} x={dotX(f)} y={H - 3} textAnchor="middle" fontSize={7}
+          fill="rgba(160,120,90,0.55)" fontFamily="Georgia, serif">{f}</text>
+      ))}
+      {/* String labels */}
+      {STRING_LABELS.map((label, i) => (
+        <text key={i} x={fretX(FRETS) + 5} y={strY(i + 1) + 3}
+          fontSize={7} fill="rgba(160,120,90,0.55)" fontFamily="Georgia, serif">{label}</text>
+      ))}
+      {/* Note marker */}
+      {fret === 0 ? (
+        <circle cx={NUT_X - 12} cy={strY(string)} r={5}
+          fill="none" stroke={M.accent} strokeWidth={2} />
+      ) : fret <= FRETS ? (
+        <circle cx={dotX(fret)} cy={strY(string)} r={7} fill={M.accent} opacity={0.9} />
+      ) : null}
+    </svg>
+  );
+}
+
 // ── Listen mode — plays through full song with note highlighting ───────────────
 function ListenMode({ song, onBack }) {
   const [playing,  setPlaying]  = useState(false);
@@ -551,6 +604,16 @@ function ListenMode({ song, onBack }) {
           }}>{n.noteName}</span>
         ))}
       </div>
+
+      {/* Fretboard position diagram */}
+      {noteIdx >= 0 && allNotes[noteIdx] && !REST_CODES.has(allNotes[noteIdx].duration) && (
+        <div style={{
+          background: M.surface, borderRadius: 12, border: `1px solid ${M.border}`,
+          padding: '10px 8px 6px', marginBottom: 16,
+        }}>
+          <NotePositionDiagram string={allNotes[noteIdx].string} fret={allNotes[noteIdx].fret} />
+        </div>
+      )}
 
       {/* Controls */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>

@@ -179,7 +179,7 @@ function scheduleRhythm(ctx, mg, t, rootHz, stepDur, genreId) {
 }
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
-export default function useBackingTrack(genre, bpm) {
+export default function useBackingTrack(genre, bpm, drumsOn = true, bassOn = true) {
   const r = useRef({
     masterGain:   null,
     noiseBuffer:  null,
@@ -187,13 +187,17 @@ export default function useBackingTrack(genre, bpm) {
     nextStepTime: 0,
     nextStepIdx:  0,
     // mirrors — kept current for use inside callbacks
-    genre: null,
-    bpm:   120,
+    genre:    null,
+    bpm:      120,
+    drumsOn:  true,
+    bassOn:   true,
   });
 
   // Keep mirrors in sync with props
-  useEffect(() => { r.current.genre = genre; }, [genre]);
-  useEffect(() => { r.current.bpm   = bpm;   }, [bpm]);
+  useEffect(() => { r.current.genre   = genre;   }, [genre]);
+  useEffect(() => { r.current.bpm     = bpm;     }, [bpm]);
+  useEffect(() => { r.current.drumsOn = drumsOn; }, [drumsOn]);
+  useEffect(() => { r.current.bassOn  = bassOn;  }, [bassOn]);
 
   // ── One-time audio node setup (lazy) ──────────────────────────────────────
   function boot() {
@@ -243,12 +247,14 @@ export default function useBackingTrack(genre, bpm) {
         const t         = r.current.nextStepTime;
 
         try {
-          if (pat.kick[step])   scheduleKick(ctx, mg, t);
-          if (pat.snare[step])  scheduleSnare(ctx, mg, nb, t);
-          if (pat.hihat[step])  scheduleHihat(ctx, mg, nb, t);
+          const drums = r.current.drumsOn;
+          const bass  = r.current.bassOn;
+          if (drums && pat.kick[step])   scheduleKick(ctx, mg, t);
+          if (drums && pat.snare[step])  scheduleSnare(ctx, mg, nb, t);
+          if (drums && pat.hihat[step])  scheduleHihat(ctx, mg, nb, t);
           const bassHz = pat.bass[step];
-          if (bassHz)           scheduleBass(ctx, mg, t, bassHz, stepDur);
-          if (pat.rhythm[step]) scheduleRhythm(ctx, mg, t, pat.rootHz, stepDur, curGenre);
+          if (bass && bassHz)            scheduleBass(ctx, mg, t, bassHz, stepDur);
+          if (drums && pat.rhythm[step]) scheduleRhythm(ctx, mg, t, pat.rootHz, stepDur, curGenre);
         } catch (e) {
           console.warn('[useBackingTrack] synthesis error:', e.message);
         }
