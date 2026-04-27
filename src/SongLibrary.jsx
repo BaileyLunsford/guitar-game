@@ -1,13 +1,8 @@
 /**
  * SongLibrary.jsx — song list → detail → Listen / Learn / Play
  *
- * FREE: Ode to Joy
- * PRO:  Twinkle Twinkle Little Star, Amazing Grace, Cripple Creek, Shady Grove,
- *       Will the Circle Be Unbroken
- *
- * Props:
- *   isPro       boolean
- *   onUpgrade   () => void
+ * Free:  Ode to Joy, Twinkle Twinkle, Amazing Grace
+ * Pro:   all others
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -30,24 +25,20 @@ const M = {
   borderHi:'rgba(232,131,58,0.55)',
 };
 
-// ── Song data ─────────────────────────────────────────────────────────────────
-// Each note: { string, fret, beat, noteName, duration? }
-// String numbering: 1=high e, 2=B, 3=G, 4=D, 5=A, 6=low E
-// Duration codes: 'q'=quarter(1), 'h'=half(2), 'w'=whole(4),
-//                 'dq'=dotted-quarter(1.5), 'e'=eighth(0.5),
-//                 'qr'=quarter-rest(1), 'hr'=half-rest(2)
+// Duration codes: q=quarter(1), h=half(2), w=whole(4), dq=dotted-quarter(1.5),
+//                 e=eighth(0.5), de=dotted-eighth(0.75), qr=quarter-rest, hr=half-rest, er=eighth-rest
+const BEAT_MAP  = { q:1, h:2, w:4, dq:1.5, e:0.5, de:0.75, qr:1, hr:2, er:0.5 };
+const REST_CODES = new Set(['qr','hr','er']);
 
-const BEAT_MAP = { q: 1, h: 2, w: 4, dq: 1.5, e: 0.5, qr: 1, hr: 2 };
-const REST_CODES = new Set(['qr', 'hr']);
-
-// Map song genre labels → backing track genre keys (blues / rock / country)
 const GENRE_TO_TRACK = {
-  'Children':           'blues',
-  'Classical':          'blues',
-  'Hymn':               'blues',
-  'Folk':               'blues',
-  'Bluegrass':          'country',
-  'Gospel / Bluegrass': 'country',
+  Classical:           'blues',
+  Children:            'blues',
+  Hymn:                'blues',
+  Folk:                'blues',
+  Bluegrass:           'country',
+  'Gospel / Bluegrass':'country',
+  Blues:               'blues',
+  Rock:                'rock',
 };
 
 function beatDur(d) {
@@ -56,395 +47,1480 @@ function beatDur(d) {
   return BEAT_MAP[d] || 1;
 }
 
+// ── Song data ─────────────────────────────────────────────────────────────────
+// String: 1=high e, 2=B, 3=G, 4=D, 5=A, 6=low E
 const SONGS = [
+  // ─────────────────────────── FREE ───────────────────────────────────────
   {
-    id: 'ode',
-    title: 'Ode to Joy',
-    genre: 'Classical',
-    difficulty: 'Beginner',
-    durationEst: '1:00',
-    pro: false,
-    bpm: 88,
+    id: 'ode', title: 'Ode to Joy', genre: 'Classical',
+    difficulty: 'Beginner', durationEst: '1:00', pro: false, bpm: 88,
     measures: [
-      // M1
       [
         { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
         { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
         { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
         { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
       ],
-      // M2
       [
         { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
         { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
         { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
         { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
       ],
-      // M3
       [
         { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
         { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
         { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
         { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
       ],
-      // M4
       [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
-        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'dq' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'e' },
         { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
       ],
-      // M5 (repeat)
       [
         { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
         { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
         { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
         { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
       ],
-      // M6
       [
         { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
         { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
         { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
         { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
       ],
-      // M7
       [
         { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
         { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
         { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
         { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
       ],
-      // M8 (cadence)
       [
-        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
-        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
-        { string:2, fret:1, beat:3, noteName:'C4', duration:'h' },
-      ],
-    ],
-  },
-  {
-    id: 'twinkle',
-    title: 'Twinkle Twinkle Little Star',
-    genre: 'Children',
-    difficulty: 'Beginner',
-    durationEst: '1:20',
-    pro: true,
-    bpm: 80,
-    measures: [
-      // M1 "Twinkle twinkle"
-      [
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
-        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
-        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
-      ],
-      // M2 "little star"
-      [
-        { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
-        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'h' },
-      ],
-      // M3 "How I wonder"
-      [
-        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
-        { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
-        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
-        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
-      ],
-      // M4 "what you are"
-      [
-        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
-        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
-        { string:2, fret:1, beat:3, noteName:'C4', duration:'h' },
-      ],
-      // M5 "Up above the"
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
-        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
-        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
-        { string:1, fret:1, beat:4, noteName:'F4', duration:'q' },
-      ],
-      // M6 "world so high"
-      [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
-        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
-      ],
-      // M7 "Like a diamond"
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
-        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
-        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
-        { string:1, fret:1, beat:4, noteName:'F4', duration:'q' },
-      ],
-      // M8 "in the sky"
-      [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
-        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
-      ],
-      // M9 "Twinkle twinkle" (reprise bridge)
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
-        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
-        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
-        { string:1, fret:1, beat:4, noteName:'F4', duration:'q' },
-      ],
-      // M10
-      [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
-        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
-      ],
-      // M11 "Twinkle twinkle" (final verse)
-      [
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
-        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
-        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
-      ],
-      // M12
-      [
-        { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
-        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'h' },
-      ],
-      // M13
-      [
-        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
-        { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
-        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
-        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
-      ],
-      // M14
-      [
-        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
-        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
-        { string:2, fret:1, beat:3, noteName:'C4', duration:'h' },
-      ],
-    ],
-  },
-  {
-    id: 'amazing',
-    title: 'Amazing Grace',
-    genre: 'Hymn',
-    difficulty: 'Beginner',
-    durationEst: '1:10',
-    pro: true,
-    bpm: 72,
-    measures: [
-      // M1 "A-maz-ing" (3/4: dq+e=2b, q=1b)
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'dq' },
-        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
-        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
-      ],
-      // M2 "grace, how"
-      [
-        { string:3, fret:2, beat:1, noteName:'D5', duration:'h' },
-        { string:3, fret:2, beat:3, noteName:'D5', duration:'q' },
-      ],
-      // M3 "sweet the"
-      [
-        { string:2, fret:0, beat:1, noteName:'B3', duration:'dq' },
-        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
-      ],
-      // M4 "sound that"
-      [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
-      ],
-      // M5 "saved a"
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'dq' },
-        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
-        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
-      ],
-      // M6 "wretch like"
-      [
-        { string:3, fret:2, beat:1, noteName:'D5', duration:'h' },
-        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
-      ],
-      // M7 "me, I"
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'dq' },
-        { string:1, fret:0, beat:2, noteName:'E4', duration:'e' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
-      ],
-      // M8 "once was"
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
-      ],
-    ],
-  },
-  {
-    id: 'cripple',
-    title: 'Cripple Creek',
-    genre: 'Bluegrass',
-    difficulty: 'Intermediate',
-    durationEst: '0:55',
-    pro: true,
-    bpm: 140,
-    measures: [
-      // M1 A-part
-      [
-        { string:1, fret:5, beat:1, noteName:'A4', duration:'e' },
-        { string:1, fret:5, beat:2, noteName:'A4', duration:'e' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
-        { string:1, fret:0, beat:4, noteName:'E4', duration:'e' },
-        { string:2, fret:3, beat:5, noteName:'D4', duration:'e' },
-        { string:1, fret:0, beat:6, noteName:'E4', duration:'e' },
-        { string:1, fret:3, beat:7, noteName:'G4', duration:'e' },
-        { string:1, fret:5, beat:8, noteName:'A4', duration:'e' },
-      ],
-      // M2
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'e' },
-        { string:1, fret:0, beat:2, noteName:'E4', duration:'e' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
-        { string:2, fret:3, beat:5, noteName:'D4', duration:'q' },
-        { string:2, fret:3, beat:7, noteName:'D4', duration:'qr' },
-      ],
-      // M3 B-part
-      [
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'dq' },
         { string:2, fret:1, beat:2, noteName:'C4', duration:'e' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
-        { string:1, fret:3, beat:4, noteName:'G4', duration:'e' },
-        { string:1, fret:5, beat:5, noteName:'A4', duration:'e' },
-        { string:1, fret:5, beat:6, noteName:'A4', duration:'e' },
-        { string:1, fret:3, beat:7, noteName:'G4', duration:'q' },
-      ],
-      // M4
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'e' },
-        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
-        { string:1, fret:1, beat:3, noteName:'F4', duration:'e' },
-        { string:1, fret:0, beat:4, noteName:'E4', duration:'e' },
-        { string:2, fret:3, beat:5, noteName:'D4', duration:'q' },
-        { string:2, fret:1, beat:7, noteName:'C4', duration:'h' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'h' },
       ],
     ],
   },
+
   {
-    id: 'shady',
-    title: 'Shady Grove',
-    genre: 'Folk',
-    difficulty: 'Intermediate',
-    durationEst: '1:05',
-    pro: true,
-    bpm: 100,
+    id: 'twinkle', title: 'Twinkle Twinkle Little Star', genre: 'Children',
+    difficulty: 'Beginner', durationEst: '1:20', pro: false, bpm: 80,
     measures: [
-      // M1 Verse (3/4)
       [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
-        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
-        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
-      ],
-      // M2
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
-        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
-      ],
-      // M3
-      [
-        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
-        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
         { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
       ],
-      // M4
-      [
-        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
-        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
-      ],
-      // M5 Chorus
       [
         { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
-        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'h' },
+      ],
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
+        { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
         { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
       ],
-      // M6
       [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'h' },
       ],
-      // M7
-      [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
-        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
-        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
-      ],
-      // M8
-      [
-        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
-        { string:1, fret:5, beat:3, noteName:'A4', duration:'hr' },
-      ],
-    ],
-  },
-  {
-    id: 'circle',
-    title: 'Will the Circle Be Unbroken',
-    genre: 'Gospel / Bluegrass',
-    difficulty: 'Intermediate',
-    durationEst: '1:15',
-    pro: true,
-    bpm: 104,
-    measures: [
-      // M1 "Will the circle"
       [
         { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
         { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
+        { string:1, fret:1, beat:4, noteName:'F4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
+        { string:1, fret:1, beat:4, noteName:'F4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
         { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'h' },
+      ],
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
+        { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
         { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
       ],
-      // M2 "be unbroken"
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'h' },
+      ],
+    ],
+  },
+
+  // Amazing Grace — 3/4, key of G
+  {
+    id: 'amazing', title: 'Amazing Grace', genre: 'Hymn',
+    difficulty: 'Beginner', durationEst: '1:20', pro: false, bpm: 66,
+    measures: [
+      // pickup: G4
+      [{ string:1, fret:3, beat:3, noteName:'G4', duration:'q' }],
+      // "Amazing grace, how sweet the sound"
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      [
+        { string:3, fret:2, beat:1, noteName:'D4', duration:'dq' },
+        { string:3, fret:2, beat:2, noteName:'D4', duration:'e' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      [
+        { string:3, fret:2, beat:1, noteName:'D4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      [
+        { string:3, fret:2, beat:1, noteName:'D4', duration:'dq' },
+        { string:3, fret:2, beat:2, noteName:'D4', duration:'e' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      // "That saved a wretch like me"
+      [
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'dq' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'e' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      // "I once was lost but now am found"
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      [
+        { string:3, fret:2, beat:1, noteName:'D4', duration:'dq' },
+        { string:3, fret:2, beat:2, noteName:'D4', duration:'e' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      [
+        { string:3, fret:2, beat:1, noteName:'D4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      [
+        { string:3, fret:2, beat:1, noteName:'D4', duration:'dq' },
+        { string:3, fret:2, beat:2, noteName:'D4', duration:'e' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      // "Was blind but now I see"
+      [
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'dq' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'e' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'qr', duration:'q' },
+      ],
+    ],
+  },
+
+  // ─────────────────────────── PRO ────────────────────────────────────────
+  // Happy Birthday — 3/4, key of G
+  {
+    id: 'happy_birthday', title: 'Happy Birthday', genre: 'Children',
+    difficulty: 'Beginner', durationEst: '0:45', pro: true, bpm: 88,
+    measures: [
+      // pickup: G G
+      [
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
+      ],
+      // "Happy birthday to you"
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
+      ],
+      [
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
+      ],
+      // "Happy birthday to you"
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
+      ],
+      // "Happy birthday dear [name]"
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
+      ],
+      [
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+      ],
+      // "Happy birthday to you"
+      [
+        { string:1, fret:3, beat:1, noteName:'F4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'F4', duration:'q' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'e' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'e' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
+      ],
+    ],
+  },
+
+  // Jingle Bells — 4/4, key of G
+  {
+    id: 'jingle_bells', title: 'Jingle Bells', genre: 'Children',
+    difficulty: 'Beginner', durationEst: '1:10', pro: true, bpm: 120,
+    measures: [
+      // Chorus
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'h' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'h' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'w' },
+      ],
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
+        { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
+        { string:1, fret:1, beat:4, noteName:'F4', duration:'q' },
+      ],
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
+      ],
       [
         { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
         { string:1, fret:3, beat:3, noteName:'G4', duration:'h' },
       ],
-      // M3 "by and by Lord"
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
-        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
-        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
-        { string:1, fret:5, beat:4, noteName:'A4', duration:'q' },
-      ],
-      // M4 "by and by"
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
-        { string:1, fret:0, beat:3, noteName:'E4', duration:'h' },
-      ],
-      // M5 "In the sky Lord"
-      [
-        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
-        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
-        { string:1, fret:5, beat:4, noteName:'A4', duration:'q' },
-      ],
-      // M6 "in the sky"
+      // Verse
       [
         { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
         { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:4, noteName:'C4', duration:'q' },
       ],
-      // M7 "There's a better"
+      [
+        { string:4, fret:0, beat:1, noteName:'D3', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'h' },
+      ],
+    ],
+  },
+
+  // Silent Night — 3/4, key of G
+  {
+    id: 'silent_night', title: 'Silent Night', genre: 'Hymn',
+    difficulty: 'Beginner', durationEst: '1:30', pro: true, bpm: 60,
+    measures: [
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'dq' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'e' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'dq' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'e' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
+      ],
+      [
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'h.' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'dq' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'e' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'dq' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'e' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
+      ],
+      [
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'h.' },
+      ],
+      [
+        { string:3, fret:2, beat:1, noteName:'D4', duration:'dq' },
+        { string:3, fret:2, beat:2, noteName:'D4', duration:'e' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'D4', duration:'h.' },
+      ],
+      [
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'dq' },
+        { string:2, fret:0, beat:2, noteName:'B3', duration:'e' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'h.' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'dq' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      [
+        { string:3, fret:2, beat:1, noteName:'D4', duration:'h.' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'dq' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      [
+        { string:3, fret:2, beat:1, noteName:'D4', duration:'h.' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'h.' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'h.' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
+      ],
+      [
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'h.' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:3, fret:2, beat:1, noteName:'D4', duration:'h.' },
+      ],
+    ],
+  },
+
+  // Mary Had a Little Lamb — 4/4, key of E
+  {
+    id: 'mary_lamb', title: 'Mary Had a Little Lamb', genre: 'Children',
+    difficulty: 'Beginner', durationEst: '0:50', pro: true, bpm: 100,
+    measures: [
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'h' },
+      ],
       [
         { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
         { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'h' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'w' },
+      ],
+    ],
+  },
+
+  // Scarborough Fair — 3/4, key of Am (natural minor)
+  {
+    id: 'scarborough', title: 'Scarborough Fair', genre: 'Folk',
+    difficulty: 'Intermediate', durationEst: '1:30', pro: true, bpm: 72,
+    measures: [
+      // "Are you going to Scarborough Fair"
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+      ],
+      [
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+      ],
+      // "Parsley sage rosemary and thyme"
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h.' },
+      ],
+      // "Remember me to one who lives there"
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+      ],
+      [
+        { string:1, fret:8, beat:1, noteName:'C5', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+      ],
+      [
+        { string:1, fret:8, beat:1, noteName:'C5', duration:'q' },
+        { string:1, fret:7, beat:2, noteName:'B4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+      ],
+      // "She once was a true love of mine"
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h.' },
+      ],
+    ],
+  },
+
+  // House of the Rising Sun — 6/8 feel, key of Am, played as 4/4 arpeggios
+  {
+    id: 'rising_sun', title: 'House of the Rising Sun', genre: 'Blues',
+    difficulty: 'Intermediate', durationEst: '1:30', pro: true, bpm: 76,
+    measures: [
+      // Am chord arpeggio
+      [
+        { string:5, fret:0, beat:1, noteName:'A2', duration:'e' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'e' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'e' },
+        { string:5, fret:0, beat:3, noteName:'A2', duration:'e' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'e' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'e' },
+        { string:2, fret:1, beat:4, noteName:'C4', duration:'e' },
+      ],
+      // C chord
+      [
+        { string:5, fret:3, beat:1, noteName:'C3', duration:'e' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'e' },
+        { string:3, fret:0, beat:2, noteName:'G3', duration:'e' },
+        { string:5, fret:3, beat:3, noteName:'C3', duration:'e' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'e' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'e' },
+        { string:3, fret:0, beat:4, noteName:'G3', duration:'e' },
+      ],
+      // D chord
+      [
+        { string:4, fret:0, beat:1, noteName:'D3', duration:'e' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'e' },
+        { string:1, fret:2, beat:2, noteName:'F#4', duration:'e' },
+        { string:3, fret:2, beat:2, noteName:'A3', duration:'e' },
+        { string:4, fret:0, beat:3, noteName:'D3', duration:'e' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'e' },
+        { string:1, fret:2, beat:4, noteName:'F#4', duration:'e' },
+        { string:3, fret:2, beat:4, noteName:'A3', duration:'e' },
+      ],
+      // F chord
+      [
+        { string:4, fret:3, beat:1, noteName:'F3', duration:'e' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
+        { string:1, fret:1, beat:2, noteName:'F4', duration:'e' },
+        { string:3, fret:2, beat:2, noteName:'A3', duration:'e' },
+        { string:4, fret:3, beat:3, noteName:'F3', duration:'e' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'e' },
+        { string:1, fret:1, beat:4, noteName:'F4', duration:'e' },
+        { string:3, fret:2, beat:4, noteName:'A3', duration:'e' },
+      ],
+      // Am
+      [
+        { string:5, fret:0, beat:1, noteName:'A2', duration:'e' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'e' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'e' },
+        { string:5, fret:0, beat:3, noteName:'A2', duration:'e' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'e' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'e' },
+        { string:2, fret:1, beat:4, noteName:'C4', duration:'e' },
+      ],
+      // E
+      [
+        { string:6, fret:0, beat:1, noteName:'E2', duration:'e' },
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'e' },
+        { string:2, fret:0, beat:2, noteName:'B3', duration:'e' },
+        { string:3, fret:1, beat:2, noteName:'G#3', duration:'e' },
+        { string:6, fret:0, beat:3, noteName:'E2', duration:'e' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'e' },
+        { string:2, fret:0, beat:4, noteName:'B3', duration:'e' },
+        { string:3, fret:1, beat:4, noteName:'G#3', duration:'e' },
+      ],
+      // Am
+      [
+        { string:5, fret:0, beat:1, noteName:'A2', duration:'e' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'e' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'e' },
+        { string:5, fret:0, beat:3, noteName:'A2', duration:'e' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'e' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'e' },
+        { string:2, fret:1, beat:4, noteName:'C4', duration:'e' },
+      ],
+      // E
+      [
+        { string:6, fret:0, beat:1, noteName:'E2', duration:'e' },
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'e' },
+        { string:2, fret:0, beat:2, noteName:'B3', duration:'e' },
+        { string:3, fret:1, beat:2, noteName:'G#3', duration:'e' },
+        { string:6, fret:0, beat:3, noteName:'E2', duration:'e' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'e' },
+        { string:2, fret:0, beat:4, noteName:'B3', duration:'e' },
+        { string:3, fret:1, beat:4, noteName:'G#3', duration:'e' },
+      ],
+    ],
+  },
+
+  // Greensleeves — 3/4, key of Am
+  {
+    id: 'greensleeves', title: 'Greensleeves', genre: 'Folk',
+    difficulty: 'Intermediate', durationEst: '1:30', pro: true, bpm: 72,
+    measures: [
+      // "Alas my love"
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'dq' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'e' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+      ],
+      // "you do me wrong"
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'dq' },
+        { string:2, fret:0, beat:2, noteName:'B3', duration:'e' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+      ],
+      // "to cast me off discourteously"
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'dq' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'e' },
+      ],
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'h' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+      ],
+      // "for I have loved you so long"
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'dq' },
+        { string:3, fret:1, beat:2, noteName:'G#3', duration:'e' },
+        { string:3, fret:1, beat:3, noteName:'G#3', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      // "delighting in your company" — chorus approach
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'dq' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'e' },
+      ],
+      [
+        { string:3, fret:2, beat:1, noteName:'A3', duration:'h' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'dq' },
+        { string:3, fret:1, beat:2, noteName:'G#3', duration:'e' },
+        { string:3, fret:1, beat:3, noteName:'G#3', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+      ],
+      // Chorus: "Greensleeves was all my joy"
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'dq' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'e' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'dq' },
+        { string:2, fret:0, beat:2, noteName:'B3', duration:'e' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+      ],
+      // "Greensleeves was my delight"
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'dq' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'e' },
+      ],
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'h' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'dq' },
+        { string:3, fret:1, beat:2, noteName:'G#3', duration:'e' },
+        { string:3, fret:1, beat:3, noteName:'G#3', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h.' },
+      ],
+    ],
+  },
+
+  // When the Saints Go Marching In — 4/4, key of G
+  {
+    id: 'saints', title: 'When the Saints Go Marching In', genre: 'Hymn',
+    difficulty: 'Beginner', durationEst: '1:00', pro: true, bpm: 110,
+    measures: [
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'qr' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:1, fret:1, beat:4, noteName:'F4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'w' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'qr' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:1, fret:1, beat:4, noteName:'F4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'w' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:2, fret:1, beat:4, noteName:'C4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'h' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
+        { string:1, fret:1, beat:4, noteName:'F4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:4, noteName:'C4', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'w' },
+      ],
+    ],
+  },
+
+  // Danny Boy — 4/4, key of G
+  {
+    id: 'danny_boy', title: 'Danny Boy', genre: 'Folk',
+    difficulty: 'Intermediate', durationEst: '1:45', pro: true, bpm: 66,
+    measures: [
+      // "Oh Danny boy the pipes are calling"
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:4, noteName:'A4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:4, noteName:'A4', duration:'q' },
+      ],
+      [
+        { string:1, fret:7, beat:1, noteName:'B4', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:4, noteName:'A4', duration:'q' },
+      ],
+      // "from glen to glen and down the mountainside"
+      [
+        { string:3, fret:2, beat:1, noteName:'D4', duration:'q' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:1, fret:7, beat:4, noteName:'B4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:4, noteName:'A4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:4, noteName:'A4', duration:'q' },
+      ],
+      // "the summer's gone and all the flowers are dying"
+      [
+        { string:1, fret:7, beat:1, noteName:'B4', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
         { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
         { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
       ],
-      // M8 "home a-waiting"
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
       [
         { string:1, fret:3, beat:1, noteName:'G4', duration:'w' },
       ],
     ],
   },
+
+  // Wildwood Flower — 4/4, key of G (Carter Family style)
+  {
+    id: 'wildwood', title: 'Wildwood Flower', genre: 'Folk',
+    difficulty: 'Intermediate', durationEst: '1:10', pro: true, bpm: 112,
+    measures: [
+      [
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'e' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'e' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'e' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'e' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'e' },
+        { string:2, fret:1, beat:4, noteName:'C4', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'h' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'w' },
+      ],
+    ],
+  },
+
+  // Blackbird (simplified) — 3/4 feel, key of G
+  {
+    id: 'blackbird', title: 'Blackbird (simplified)', genre: 'Folk',
+    difficulty: 'Intermediate', durationEst: '1:30', pro: true, bpm: 80,
+    measures: [
+      // G fingerpicking intro melody
+      [
+        { string:3, fret:0, beat:1, noteName:'G3', duration:'e' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'e' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'e' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'e' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:4, noteName:'A4', duration:'q' },
+      ],
+      // "Blackbird singing in the dead of night"
+      [
+        { string:1, fret:7, beat:1, noteName:'B4', duration:'q' },
+        { string:1, fret:7, beat:2, noteName:'B4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:4, noteName:'A4', duration:'q' },
+      ],
+      [
+        { string:1, fret:7, beat:1, noteName:'B4', duration:'h' },
+        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
+        { string:1, fret:7, beat:4, noteName:'B4', duration:'q' },
+      ],
+      // "Take these broken wings and learn to fly"
+      [
+        { string:1, fret:7, beat:1, noteName:'B4', duration:'q' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:4, noteName:'A4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:4, noteName:'C4', duration:'q' },
+      ],
+      [
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'w' },
+      ],
+    ],
+  },
+
+  // Simple Gifts (Shaker Hymn) — 4/4, key of G
+  {
+    id: 'simple_gifts', title: 'Simple Gifts', genre: 'Hymn',
+    difficulty: 'Beginner', durationEst: '1:00', pro: true, bpm: 92,
+    measures: [
+      // "'Tis the gift to be simple"
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:4, noteName:'C4', duration:'q' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
+      ],
+      // "'Tis the gift to be free"
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
+        { string:3, fret:2, beat:3, noteName:'D4', duration:'q' },
+        { string:3, fret:2, beat:4, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'w' },
+      ],
+      // "'Tis the gift to come down where we ought to be"
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
+        { string:3, fret:2, beat:3, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
+        { string:1, fret:1, beat:2, noteName:'F4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'w' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:4, noteName:'C4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'w' },
+      ],
+    ],
+  },
+
+  // Skip to My Lou — 4/4, key of G
+  {
+    id: 'skip_lou', title: 'Skip to My Lou', genre: 'Folk',
+    difficulty: 'Beginner', durationEst: '0:50', pro: true, bpm: 116,
+    measures: [
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:1, fret:5, beat:4, noteName:'A4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'h' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:1, fret:5, beat:4, noteName:'A4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:4, noteName:'C4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'w' },
+      ],
+    ],
+  },
+
+  // Red River Valley — 4/4, key of G
+  {
+    id: 'red_river', title: 'Red River Valley', genre: 'Folk',
+    difficulty: 'Beginner', durationEst: '1:15', pro: true, bpm: 82,
+    measures: [
+      // "From this valley they say you are going"
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:4, noteName:'C4', duration:'q' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
+      ],
+      // "We will miss your bright eyes and sweet smile"
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'w' },
+      ],
+      // Chorus: "Come and sit by my side if you love me"
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:4, noteName:'C4', duration:'q' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'h' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'w' },
+      ],
+    ],
+  },
+
+  // Cripple Creek — Bluegrass 4/4, key of A
+  {
+    id: 'cripple', title: 'Cripple Creek', genre: 'Bluegrass',
+    difficulty: 'Intermediate', durationEst: '0:55', pro: true, bpm: 132,
+    measures: [
+      // A-part
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'e' },
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'e' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'e' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'e' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'e' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'e' },
+        { string:1, fret:5, beat:4, noteName:'A4', duration:'e' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'e' },
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'e' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'e' },
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'e' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'e' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'e' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'e' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'e' },
+        { string:1, fret:5, beat:4, noteName:'A4', duration:'e' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:1, fret:5, beat:4, noteName:'A4', duration:'q' },
+      ],
+      // B-part
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'e' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'e' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'e' },
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'e' },
+        { string:1, fret:1, beat:2, noteName:'F4', duration:'e' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'e' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:4, noteName:'C4', duration:'h' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'e' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'e' },
+        { string:1, fret:3, beat:4, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'h' },
+      ],
+    ],
+  },
+
+  // Shady Grove — 3/4, key of Am/Dorian
+  {
+    id: 'shady', title: 'Shady Grove', genre: 'Bluegrass',
+    difficulty: 'Intermediate', durationEst: '1:05', pro: true, bpm: 100,
+    measures: [
+      // Verse
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+      ],
+      [
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h.' },
+      ],
+      // Chorus
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h.' },
+      ],
+    ],
+  },
+
+  // Will the Circle Be Unbroken — 3/4, key of G
+  {
+    id: 'circle', title: 'Will the Circle Be Unbroken', genre: 'Gospel / Bluegrass',
+    difficulty: 'Intermediate', durationEst: '1:15', pro: true, bpm: 96,
+    measures: [
+      // Verse: "Will the circle be unbroken"
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+      ],
+      // "by and by Lord by and by"
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+      ],
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+      ],
+      // "In the sky Lord in the sky"
+      [
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
+      ],
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'h.' },
+      ],
+    ],
+  },
 ];
 
-// ── Difficulty badge ──────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function DiffBadge({ level }) {
   const color = level === 'Beginner' ? '#7B9E6B' : '#E8A050';
   return (
@@ -457,64 +1533,48 @@ function DiffBadge({ level }) {
 }
 
 // ── Fretboard position diagram ────────────────────────────────────────────────
-// string 1=high e (top), 6=low E (bottom); fret 0=open string
 function NotePositionDiagram({ string, fret }) {
-  const W = 220;
-  const H = 80;
-  const NUT_X  = 28;
-  const FRET_W = 34;
-  const FRETS  = 5;
-  const TOP    = 14;
-  const BOT    = H - 16;
-  const STR_H  = (BOT - TOP) / 5;
-  const strY  = (s) => TOP + (s - 1) * STR_H;
+  const W = 220, H = 80, NUT_X = 28, FRET_W = 34, FRETS = 5;
+  const TOP = 14, BOT = H - 16, STR_H = (BOT - TOP) / 5;
+  const strY = (s) => TOP + (s - 1) * STR_H;
   const fretX = (f) => NUT_X + f * FRET_W;
   const dotX  = (f) => f === 0 ? NUT_X - 12 : NUT_X + (f - 0.5) * FRET_W;
-  const STRING_LABELS = ['e','B','G','D','A','E'];
-
+  const LABELS = ['e','B','G','D','A','E'];
   return (
     <svg width={W} height={H} style={{ display: 'block', margin: '0 auto' }}>
-      {/* String lines */}
       {[1,2,3,4,5,6].map(s => (
         <line key={s} x1={NUT_X} y1={strY(s)} x2={fretX(FRETS)} y2={strY(s)}
           stroke={s === string ? M.hi : 'rgba(255,255,255,0.18)'}
           strokeWidth={s === string ? 1.5 : 0.8} />
       ))}
-      {/* Nut */}
-      <line x1={NUT_X} y1={TOP - 2} x2={NUT_X} y2={BOT + 2}
-        stroke={M.accent} strokeWidth={4} strokeLinecap="round" />
-      {/* Fret lines */}
+      <line x1={NUT_X} y1={TOP-2} x2={NUT_X} y2={BOT+2} stroke={M.accent} strokeWidth={4} strokeLinecap="round" />
       {[1,2,3,4,5].map(f => (
-        <line key={f} x1={fretX(f)} y1={TOP - 2} x2={fretX(f)} y2={BOT + 2}
+        <line key={f} x1={fretX(f)} y1={TOP-2} x2={fretX(f)} y2={BOT+2}
           stroke="rgba(255,255,255,0.18)" strokeWidth={1} />
       ))}
-      {/* Fret numbers */}
       {[1,2,3,4,5].map(f => (
-        <text key={f} x={dotX(f)} y={H - 3} textAnchor="middle" fontSize={7}
-          fill="rgba(160,120,90,0.55)" fontFamily="Georgia, serif">{f}</text>
+        <text key={f} x={dotX(f)} y={H-3} textAnchor="middle" fontSize={7}
+          fill="rgba(160,120,90,0.55)" fontFamily="Georgia,serif">{f}</text>
       ))}
-      {/* String labels */}
-      {STRING_LABELS.map((label, i) => (
-        <text key={i} x={fretX(FRETS) + 5} y={strY(i + 1) + 3}
-          fontSize={7} fill="rgba(160,120,90,0.55)" fontFamily="Georgia, serif">{label}</text>
+      {LABELS.map((l, i) => (
+        <text key={i} x={fretX(FRETS)+5} y={strY(i+1)+3} fontSize={7}
+          fill="rgba(160,120,90,0.55)" fontFamily="Georgia,serif">{l}</text>
       ))}
-      {/* Note marker */}
-      {fret === 0 ? (
-        <circle cx={NUT_X - 12} cy={strY(string)} r={5}
-          fill="none" stroke={M.accent} strokeWidth={2} />
-      ) : fret <= FRETS ? (
-        <circle cx={dotX(fret)} cy={strY(string)} r={7} fill={M.accent} opacity={0.9} />
-      ) : null}
+      {fret === 0
+        ? <circle cx={NUT_X-12} cy={strY(string)} r={5} fill="none" stroke={M.accent} strokeWidth={2} />
+        : fret <= FRETS
+          ? <circle cx={dotX(fret)} cy={strY(string)} r={7} fill={M.accent} opacity={0.9} />
+          : null}
     </svg>
   );
 }
 
-// ── Listen mode — plays through full song with note highlighting ───────────────
+// ── Listen mode ───────────────────────────────────────────────────────────────
 function ListenMode({ song, onBack }) {
   const [playing,  setPlaying]  = useState(false);
   const [noteIdx,  setNoteIdx]  = useState(-1);
 
-  const allNotes    = song.measures.flat();
+  const allNotes     = song.measures.flat();
   const displayNotes = allNotes
     .map((n, i) => ({ ...n, allIdx: i }))
     .filter(n => !REST_CODES.has(n.duration));
@@ -522,12 +1582,10 @@ function ListenMode({ song, onBack }) {
   const timerRef = useRef(null);
   const beatMs   = 60000 / song.bpm;
 
-  // Backing track + metronome — genre-mapped, synced to song BPM
   const trackGenre = GENRE_TO_TRACK[song.genre] || 'blues';
   const { trackOn, toggleTrack, stopTrack, syncToTime } = useBackingTrack(trackGenre, song.bpm);
   const { clickOn, toggleClick, stopClick }              = useMetronome(song.bpm);
 
-  // Cleanup: stop timer + backing track + metronome on unmount / back
   useEffect(() => () => {
     clearTimeout(timerRef.current);
     stopTrack();
@@ -537,11 +1595,10 @@ function ListenMode({ song, onBack }) {
   function play() {
     if (playing) return;
     guitarSampler.resume?.();
-    // Anchor backing track to beat 1 now — same pattern as LickPlay
     const ctx = getAudioContext();
     const startTime = ctx.currentTime + 0.05;
-    if (!trackOn) toggleTrack(); // turn on first if needed
-    syncToTime(startTime);       // re-anchor pattern to beat 1
+    if (!trackOn) toggleTrack();
+    syncToTime(startTime);
     setPlaying(true);
     playNote(0);
   }
@@ -550,7 +1607,7 @@ function ListenMode({ song, onBack }) {
     if (idx >= allNotes.length) {
       setPlaying(false);
       setNoteIdx(-1);
-      stopTrack(); // auto-stop when song finishes
+      stopTrack();
       return;
     }
     setNoteIdx(idx);
@@ -558,8 +1615,7 @@ function ListenMode({ song, onBack }) {
     if (!REST_CODES.has(note.duration)) {
       guitarSampler.playNote(note.noteName);
     }
-    const dur = beatDur(note.duration) * beatMs;
-    timerRef.current = setTimeout(() => playNote(idx + 1), dur);
+    timerRef.current = setTimeout(() => playNote(idx + 1), beatDur(note.duration) * beatMs);
   }
 
   function stop() {
@@ -570,29 +1626,26 @@ function ListenMode({ song, onBack }) {
     stopClick();
   }
 
-  function handleBack() {
-    stop();
-    onBack();
-  }
+  const currentNote = noteIdx >= 0 ? allNotes[noteIdx] : null;
 
   return (
     <div style={{ padding: '0 20px', maxWidth: 480, margin: '0 auto' }}>
       <div style={{ marginBottom: 20 }}>
-        <button onClick={handleBack} style={backBtn}>‹ Back</button>
+        <button onClick={() => { stop(); onBack(); }} style={backBtn}>‹ Back</button>
         <div style={{ fontSize: 13, color: M.muted, marginBottom: 4 }}>{song.genre}</div>
         <h2 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 4px',
           background: `linear-gradient(135deg,${M.accent},${M.hi})`,
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           {song.title}
         </h2>
-        <div style={{ fontSize: 12, color: M.muted }}>Listen Mode · {song.durationEst} · {song.bpm} BPM</div>
+        <div style={{ fontSize: 12, color: M.muted }}>Listen · {song.durationEst} · {song.bpm} BPM</div>
       </div>
 
-      {/* Note display */}
+      {/* Note pills */}
       <div style={{
         background: M.surface, borderRadius: 16, border: `1px solid ${M.border}`,
-        padding: '20px 16px', marginBottom: 20, minHeight: 80,
-        display: 'flex', flexWrap: 'wrap', gap: 6, alignContent: 'flex-start',
+        padding: '16px 12px', marginBottom: 14, minHeight: 60,
+        display: 'flex', flexWrap: 'wrap', gap: 5, alignContent: 'flex-start',
       }}>
         {displayNotes.map((n, i) => (
           <span key={i} style={{
@@ -605,49 +1658,36 @@ function ListenMode({ song, onBack }) {
         ))}
       </div>
 
-      {/* Fretboard position diagram */}
-      {noteIdx >= 0 && allNotes[noteIdx] && !REST_CODES.has(allNotes[noteIdx].duration) && (
+      {/* Fretboard diagram */}
+      {currentNote && !REST_CODES.has(currentNote.duration) && (
         <div style={{
           background: M.surface, borderRadius: 12, border: `1px solid ${M.border}`,
           padding: '10px 8px 6px', marginBottom: 16,
         }}>
-          <NotePositionDiagram string={allNotes[noteIdx].string} fret={allNotes[noteIdx].fret} />
+          <NotePositionDiagram string={currentNote.string} fret={currentNote.fret} />
         </div>
       )}
 
       {/* Controls */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
-        {!playing ? (
-          <button onClick={play} style={primaryBtn}>▶ Play</button>
-        ) : (
-          <button onClick={stop} style={primaryBtn}>⏹ Stop</button>
-        )}
-        <button
-          onClick={toggleTrack}
-          style={{
-            padding: '14px 20px', borderRadius: 14, cursor: 'pointer',
-            border: `1px solid ${trackOn ? M.borderHi : M.border}`,
-            background: trackOn ? 'rgba(232,131,58,0.18)' : 'rgba(196,100,40,0.08)',
-            color: trackOn ? M.hi : M.muted,
-            fontFamily: "Georgia, serif", fontSize: 14, fontWeight: 700,
-            transition: 'all 0.15s',
-          }}
-        >
-          🥁 {trackOn ? 'Track On' : 'Track Off'}
-        </button>
-        <button
-          onClick={toggleClick}
-          style={{
-            padding: '14px 20px', borderRadius: 14, cursor: 'pointer',
-            border: `1px solid ${clickOn ? M.borderHi : M.border}`,
-            background: clickOn ? 'rgba(232,131,58,0.18)' : 'rgba(196,100,40,0.08)',
-            color: clickOn ? M.hi : M.muted,
-            fontFamily: "Georgia, serif", fontSize: 14, fontWeight: 700,
-            transition: 'all 0.15s',
-          }}
-        >
-          🎵 {clickOn ? 'Met On' : 'Met Off'}
-        </button>
+        {!playing
+          ? <button onClick={play} style={primaryBtn}>▶ Play</button>
+          : <button onClick={stop} style={primaryBtn}>⏹ Stop</button>
+        }
+        <button onClick={toggleTrack} style={{
+          padding: '14px 20px', borderRadius: 14, cursor: 'pointer',
+          border: `1px solid ${trackOn ? M.borderHi : M.border}`,
+          background: trackOn ? 'rgba(232,131,58,0.18)' : 'rgba(196,100,40,0.08)',
+          color: trackOn ? M.hi : M.muted,
+          fontFamily: "Georgia, serif", fontSize: 14, fontWeight: 700, transition: 'all 0.15s',
+        }}>🥁 {trackOn ? 'Track On' : 'Track Off'}</button>
+        <button onClick={toggleClick} style={{
+          padding: '14px 20px', borderRadius: 14, cursor: 'pointer',
+          border: `1px solid ${clickOn ? M.borderHi : M.border}`,
+          background: clickOn ? 'rgba(232,131,58,0.18)' : 'rgba(196,100,40,0.08)',
+          color: clickOn ? M.hi : M.muted,
+          fontFamily: "Georgia, serif", fontSize: 14, fontWeight: 700, transition: 'all 0.15s',
+        }}>🎵 {clickOn ? 'Met On' : 'Met Off'}</button>
       </div>
     </div>
   );
@@ -655,17 +1695,13 @@ function ListenMode({ song, onBack }) {
 
 // ── Detail screen ─────────────────────────────────────────────────────────────
 function SongDetail({ song, isPro, onUpgrade, onBack }) {
-  const [mode, setMode] = useState(null); // null | 'listen' | 'learn' | 'play'
-
+  const [mode, setMode] = useState(null);
   if (mode === 'listen') return <ListenMode song={song} onBack={() => setMode(null)} />;
   if (mode === 'learn')  return <SongLearnEngine song={song} />;
-
   const locked = song.pro && !isPro;
-
   return (
     <div style={{ padding: '0 20px', maxWidth: 480, margin: '0 auto' }}>
       <button onClick={onBack} style={backBtn}>‹ All Songs</button>
-
       <div style={{ textAlign: 'center', padding: '20px 0 28px' }}>
         <div style={{ fontSize: 56, marginBottom: 12,
           filter: 'drop-shadow(0 4px 16px rgba(196,100,40,0.45))' }}>🎵</div>
@@ -689,11 +1725,10 @@ function SongDetail({ song, isPro, onUpgrade, onBack }) {
           {song.genre} · {song.durationEst} · {song.bpm} BPM
         </div>
       </div>
-
       {locked ? (
         <div style={{ textAlign: 'center', padding: '24px 0' }}>
           <div style={{ fontSize: 13, color: M.muted, marginBottom: 20 }}>
-            Unlock all 5 PRO songs with a PRO subscription.
+            Unlock all PRO songs with a PRO subscription.
           </div>
           <button onClick={onUpgrade} style={primaryBtn}>Unlock PRO →</button>
         </div>
@@ -722,6 +1757,8 @@ function SongDetail({ song, isPro, onUpgrade, onBack }) {
 // ── Library list ──────────────────────────────────────────────────────────────
 export default function SongLibrary({ isPro, onUpgrade }) {
   const [selected, setSelected] = useState(null);
+  const freeSongs = SONGS.filter(s => !s.pro);
+  const proSongs  = SONGS.filter(s => s.pro);
 
   if (selected) {
     return (
@@ -730,12 +1767,8 @@ export default function SongLibrary({ isPro, onUpgrade }) {
         fontFamily: "Georgia, 'Times New Roman', serif",
         padding: 'env(safe-area-inset-top,16px) 0 40px',
       }}>
-        <SongDetail
-          song={selected}
-          isPro={isPro}
-          onUpgrade={onUpgrade}
-          onBack={() => setSelected(null)}
-        />
+        <SongDetail song={selected} isPro={isPro} onUpgrade={onUpgrade}
+          onBack={() => setSelected(null)} />
       </div>
     );
   }
@@ -746,7 +1779,6 @@ export default function SongLibrary({ isPro, onUpgrade }) {
       fontFamily: "Georgia, 'Times New Roman', serif",
       padding: 'env(safe-area-inset-top,16px) 0 40px',
     }}>
-      {/* Header */}
       <div style={{ padding: '16px 20px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
         <a href="#" style={{ color: M.muted, fontSize: 22, textDecoration: 'none', lineHeight: 1 }}>‹</a>
         <h1 style={{
@@ -754,24 +1786,19 @@ export default function SongLibrary({ isPro, onUpgrade }) {
           background: `linear-gradient(135deg,${M.accent},${M.hi})`,
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
         }}>Song Library</h1>
+        <span style={{ fontSize: 11, color: M.muted, marginLeft: 'auto' }}>{SONGS.length} songs</span>
       </div>
 
       <div style={{ padding: '0 16px', maxWidth: 480, margin: '0 auto' }}>
-        {/* Free section */}
         <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em',
-          textTransform: 'uppercase', color: M.muted, marginBottom: 8 }}>
-          Free
-        </div>
-        {SONGS.filter(s => !s.pro).map(song => (
+          textTransform: 'uppercase', color: M.muted, marginBottom: 8 }}>Free</div>
+        {freeSongs.map(song => (
           <SongRow key={song.id} song={song} locked={false} onSelect={() => setSelected(song)} />
         ))}
 
-        {/* PRO section */}
         <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em',
-          textTransform: 'uppercase', color: M.muted, margin: '20px 0 8px' }}>
-          PRO
-        </div>
-        {SONGS.filter(s => s.pro).map(song => (
+          textTransform: 'uppercase', color: M.muted, margin: '20px 0 8px' }}>PRO</div>
+        {proSongs.map(song => (
           <SongRow key={song.id} song={song} locked={!isPro}
             onSelect={() => !isPro ? onUpgrade() : setSelected(song)} />
         ))}
@@ -782,17 +1809,14 @@ export default function SongLibrary({ isPro, onUpgrade }) {
 
 function SongRow({ song, locked, onSelect }) {
   return (
-    <button
-      onClick={onSelect}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 14, width: '100%',
-        padding: '14px 16px', borderRadius: 14, marginBottom: 10,
-        background: M.surface, border: `1px solid ${M.border}`,
-        color: M.text, fontFamily: "Georgia, serif", textAlign: 'left',
-        cursor: 'pointer', opacity: locked ? 0.65 : 1,
-        WebkitTapHighlightColor: 'transparent',
-      }}
-    >
+    <button onClick={onSelect} style={{
+      display: 'flex', alignItems: 'center', gap: 14, width: '100%',
+      padding: '14px 16px', borderRadius: 14, marginBottom: 10,
+      background: M.surface, border: `1px solid ${M.border}`,
+      color: M.text, fontFamily: "Georgia, serif", textAlign: 'left',
+      cursor: 'pointer', opacity: locked ? 0.65 : 1,
+      WebkitTapHighlightColor: 'transparent',
+    }}>
       <span style={{ fontSize: 28 }}>🎵</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4,

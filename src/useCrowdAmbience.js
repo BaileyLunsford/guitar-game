@@ -1,22 +1,27 @@
 /**
- * useCrowdAmbience.js — Web Audio bar/restaurant crowd atmosphere
+ * useCrowdAmbience.js — bar/restaurant crowd atmosphere via sine oscillator banks
  *
- * Pure synthesis:
- *   - Three narrow bandpass voices (300, 450, 600 Hz), Q=8, very slow LFO
- *   - Periodic glass clink at 900 Hz, 0.3s decay, every 8–20 s
- *   - Crowd swell: gentle master-gain rise every 15–28 s
- *   - Room rumble removed (was causing highway/ocean sound)
- *   - Master gain 0.08
+ * No noise source. 16 sine oscillators in the vocal formant range (180–650 Hz),
+ * each with a slow frequency drift LFO (0.01–0.04 Hz) and a "talker" amplitude
+ * envelope cycling at 2–5 Hz to simulate syllable bursts. Result: a soft, warm
+ * crowd murmur without the highway/ocean quality of filtered noise.
  *
  * API: { ambOn, ambToggle, ambStart, ambStop }
  */
 
 import { useState, useCallback, useRef } from 'react';
 
-console.log('AMBIENCE V2 LOADED');
+const MASTER_GAIN   = 0.06;
+const NUM_VOICES    = 16;
 
-const MASTER_GAIN = 0.08;
-const VOICE_FREQS = [300, 450, 600];
+// Vocal frequency clusters: low chest (180–260), mid vowel (280–420), upper formant (450–650)
+const FREQ_RANGES = [
+  [180, 260],
+  [280, 420],
+  [450, 650],
+];
+
+function rand(lo, hi) { return lo + Math.random() * (hi - lo); }
 
 function getCtx() {
   if (!getCtx._ctx) {
@@ -26,77 +31,67 @@ function getCtx() {
   return getCtx._ctx;
 }
 
-function makePinkNoiseBuffer(ctx) {
-  const sr  = ctx.sampleRate;
-  const len = Math.ceil(sr * 4.0);
-  const buf = ctx.createBuffer(1, len, sr);
-  const d   = buf.getChannelData(0);
-  let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
-  for (let i = 0; i < len; i++) {
-    const w = Math.random() * 2 - 1;
-    b0 = 0.99886*b0 + w*0.0555179;
-    b1 = 0.99332*b1 + w*0.0750759;
-    b2 = 0.96900*b2 + w*0.1538520;
-    b3 = 0.86650*b3 + w*0.3104856;
-    b4 = 0.55000*b4 + w*0.5329522;
-    b5 = -0.7616*b5 - w*0.0168980;
-    d[i] = (b0+b1+b2+b3+b4+b5+b6 + w*0.5362) / 7;
-    b6 = w * 0.115926;
-  }
-  return buf;
-}
+// One "talker" voice: sine osc at a vocal frequency with a slow syllable-rate AM envelope
+function makeVoice(ctx, mg, voiceIdx) {
+  const rangeIdx = voiceIdx % FREQ_RANGES.length;
+  const [lo, hi] = FREQ_RANGES[rangeIdx];
+  const freq     = rand(lo, hi);
+  const baseGain = rand(0.015, 0.045);
 
-// Narrow bandpass voice: noise → sharp BP → gain with very slow drift LFO
-function makeVoice(ctx, mg, pinkBuf, freq, baseGain) {
-  const src = ctx.createBufferSource();
-  src.buffer    = pinkBuf;
-  src.loop      = true;
-  src.loopStart = 0;
-  src.loopEnd   = pinkBuf.duration;
-  src.start(0, Math.random() * pinkBuf.duration);
+  // Main oscillator
+  const osc  = ctx.createOscillator();
+  osc.type            = 'sine';
+  osc.frequency.value = freq;
+  osc.start(0);
 
-  const bp = ctx.createBiquadFilter();
-  bp.type            = 'bandpass';
-  bp.frequency.value = freq;
-  bp.Q.value         = 8.0;  // sharper/narrower than before
+  // Slow frequency drift (0.01–0.04 Hz) — keeps voices from phasing together
+  const freqLfo   = ctx.createOscillator();
+  const freqLfoG  = ctx.createGain();
+  freqLfo.type            = 'sine';
+  freqLfo.frequency.value = rand(0.01, 0.04);
+  freqLfoG.gain.value     = freq * 0.012;   // ±1.2% drift
+  freqLfo.connect(freqLfoG);
+  freqLfoG.connect(osc.frequency);
+  freqLfo.start(0);
 
+  // Amplitude gain node
   const gain = ctx.createGain();
   gain.gain.value = baseGain;
 
-  // Very slow LFO — 0.03–0.07 Hz — gentle drift, not pulsing
-  const lfo  = ctx.createOscillator();
-  const lfoG = ctx.createGain();
-  lfo.type            = 'sine';
-  lfo.frequency.value = 0.03 + Math.random() * 0.04;
-  lfoG.gain.value     = baseGain * 0.30;
-  lfo.connect(lfoG);
-  lfoG.connect(gain.gain);
-  lfo.start(0);
+  // "Syllable" AM LFO (2–5 Hz) — asymmetric so voices don't pulse in unison
+  const amLfo  = ctx.createOscillator();
+  const amLfoG = ctx.createGain();
+  amLfo.type            = 'sine';
+  amLfo.frequency.value = rand(2.0, 5.0);
+  amLfoG.gain.value     = baseGain * rand(0.3, 0.55); // partial modulation depth
+  amLfo.connect(amLfoG);
+  amLfoG.connect(gain.gain);
+  amLfo.start(rand(0, 3)); // stagger phase
 
-  src.connect(bp);
-  bp.connect(gain);
+  osc.connect(gain);
   gain.connect(mg);
-  return { src, lfo };
+
+  return { osc, freqLfo, amLfo, gain };
 }
 
-// Glass clink: 900 Hz sine burst, exponential decay to 0.3 s, every 8–20 s
+// Glass clink: two short sines (700 + 1400 Hz) — brief attack, 0.4s exponential decay
 function scheduleGlassClinks(ctx, mg, clinkRef) {
   function next() {
-    const delay = 8000 + Math.random() * 12000;
+    const delay = rand(9000, 22000);
     clinkRef.current = setTimeout(() => {
       try {
-        const now  = ctx.currentTime;
-        const osc  = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type            = 'sine';
-        osc.frequency.value = 900;
-        gain.gain.setValueAtTime(0.06, now);
-        gain.gain.linearRampToValueAtTime(0.06, now + 0.005);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.30);
-        osc.connect(gain);
-        gain.connect(mg);
-        osc.start(now);
-        osc.stop(now + 0.35);
+        const now = ctx.currentTime;
+        [700, 1400].forEach((hz, i) => {
+          const osc  = ctx.createOscillator();
+          const g    = ctx.createGain();
+          osc.type            = 'sine';
+          osc.frequency.value = hz;
+          g.gain.setValueAtTime(0, now);
+          g.gain.linearRampToValueAtTime(0.04 - i * 0.01, now + 0.004);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+          osc.connect(g); g.connect(mg);
+          osc.start(now); osc.stop(now + 0.45);
+        });
       } catch (_) {}
       next();
     }, delay);
@@ -104,78 +99,78 @@ function scheduleGlassClinks(ctx, mg, clinkRef) {
   next();
 }
 
-// Crowd swell: every 15–28 s raise master gain ~18%, then return
+// Crowd swell: master gain rises ~15–20% then returns, every 18–35 s
 function scheduleSwell(ctx, mg, swellRef) {
-  const delay = 15000 + Math.random() * 13000;
+  const delay = rand(18000, 35000);
   swellRef.current = setTimeout(() => {
     try {
       const t0       = ctx.currentTime;
-      const riseTime = 2.0 + Math.random() * 1.2;
-      const holdTime = 1.2 + Math.random() * 1.8;
-      const fallTime = 2.8 + Math.random() * 1.5;
-      const peak     = MASTER_GAIN * (1.18 + Math.random() * 0.14);
-      mg.gain.setValueAtTime(MASTER_GAIN, t0);
-      mg.gain.linearRampToValueAtTime(peak, t0 + riseTime);
-      mg.gain.setValueAtTime(peak, t0 + riseTime + holdTime);
-      mg.gain.linearRampToValueAtTime(MASTER_GAIN, t0 + riseTime + holdTime + fallTime);
+      const rise     = rand(2.5, 4.0);
+      const hold     = rand(1.0, 2.5);
+      const fall     = rand(3.0, 5.0);
+      const peak     = MASTER_GAIN * rand(1.14, 1.22);
+      mg.gain.setValueAtTime(mg.gain.value, t0);
+      mg.gain.linearRampToValueAtTime(peak, t0 + rise);
+      mg.gain.setValueAtTime(peak, t0 + rise + hold);
+      mg.gain.linearRampToValueAtTime(MASTER_GAIN, t0 + rise + hold + fall);
     } catch (_) {}
     scheduleSwell(ctx, mg, swellRef);
   }, delay);
 }
 
 export default function useCrowdAmbience() {
-  const [on, setOn] = useState(false);
-  const nodes    = useRef({ mg: null, voices: [], pinkBuf: null });
-  const swellRef = useRef(null);
-  const clinkRef = useRef(null);
+  const [on,      setOn]      = useState(false);
+  const nodesRef  = useRef({ mg: null, voices: [] });
+  const swellRef  = useRef(null);
+  const clinkRef  = useRef(null);
 
   const stop = useCallback(() => {
     clearTimeout(swellRef.current);
     clearTimeout(clinkRef.current);
     swellRef.current = null;
     clinkRef.current = null;
-    const n = nodes.current;
+
+    const { mg, voices } = nodesRef.current;
     try {
-      if (n.mg) {
+      if (mg) {
         const ctx = getCtx();
-        n.mg.gain.cancelScheduledValues(ctx.currentTime);
-        n.mg.gain.setValueAtTime(n.mg.gain.value, ctx.currentTime);
-        n.mg.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
+        mg.gain.cancelScheduledValues(ctx.currentTime);
+        mg.gain.setValueAtTime(mg.gain.value, ctx.currentTime);
+        mg.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
       }
     } catch (_) {}
-    n.voices.forEach(({ src, lfo }) => {
-      try { src.stop(); src.disconnect(); } catch (_) {}
-      try { lfo.stop(); lfo.disconnect(); } catch (_) {}
+
+    voices.forEach(({ osc, freqLfo, amLfo }) => {
+      try { osc.stop();    osc.disconnect();    } catch (_) {}
+      try { freqLfo.stop(); freqLfo.disconnect(); } catch (_) {}
+      try { amLfo.stop();  amLfo.disconnect();  } catch (_) {}
     });
-    n.voices = [];
-    if (n.mg) { try { n.mg.disconnect(); } catch (_) {} n.mg = null; }
+
+    if (mg) { try { setTimeout(() => mg.disconnect(), 600); } catch (_) {} }
+    nodesRef.current = { mg: null, voices: [] };
   }, []);
 
   const start = useCallback(() => {
-    const n = nodes.current;
-    if (n.mg) return;
+    if (nodesRef.current.mg) return;
     try {
       const ctx = getCtx();
 
       const mg = ctx.createGain();
       mg.gain.setValueAtTime(0, ctx.currentTime);
-      mg.gain.linearRampToValueAtTime(MASTER_GAIN, ctx.currentTime + 3.5);
+      mg.gain.linearRampToValueAtTime(MASTER_GAIN, ctx.currentTime + 4.0);
       mg.connect(ctx.destination);
-      n.mg = mg;
+      nodesRef.current.mg = mg;
 
-      if (!n.pinkBuf) n.pinkBuf = makePinkNoiseBuffer(ctx);
-      const pb = n.pinkBuf;
+      const voices = [];
+      for (let i = 0; i < NUM_VOICES; i++) {
+        voices.push(makeVoice(ctx, mg, i));
+      }
+      nodesRef.current.voices = voices;
 
-      // Three narrow bandpass voices (300 / 450 / 600 Hz) with very slow drift
-      n.voices = VOICE_FREQS.map((freq, i) =>
-        makeVoice(ctx, mg, pb, freq, 0.24 - i * 0.04)
-      );
-
-      // Start clinks and swells after initial fade-in
       setTimeout(() => {
         scheduleGlassClinks(ctx, mg, clinkRef);
         scheduleSwell(ctx, mg, swellRef);
-      }, 4000);
+      }, 4500);
     } catch (e) {
       console.warn('[useCrowdAmbience] start error:', e.message);
     }
