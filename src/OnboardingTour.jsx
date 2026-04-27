@@ -25,7 +25,7 @@ const SLIDES = [
   {
     id: 'welcome',
     icon: '🎸',
-    title: 'Guitar Audition Game',
+    title: 'TuneWise: Guitar Lessons',
     subtitle: 'LEARN · TUNE · PLAY',
     subtitleColor: M.muted,
     body: 'Everything you need to go from beginner to confident guitarist — in one app.',
@@ -38,7 +38,7 @@ const SLIDES = [
     subtitle: 'BEGINNER',
     subtitleColor: '#7B9E6B',
     features: [
-      'Audition Game — sight-read notes in real time',
+      'Music Reading Game — sight-read notes in real time',
       'Song Learn — learn songs measure by measure',
       "Tab & Notation — read music the guitarist's way",
       'Tuner & Metronome — always free',

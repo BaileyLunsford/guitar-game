@@ -104,7 +104,7 @@ const STR_FULL   = { 1:'High e', 2:'B', 3:'G', 4:'D', 5:'A', 6:'Low E' };
 // ── Levels ────────────────────────────────────────────────────────────────────
 const LEVELS = [
   {
-    id:1, title:'School Band', subtitle:'Beginner',
+    id:1, title:'Get Started', subtitle:'Beginner',
     venue:'Lincoln Middle School', judge:'Mr. Thompson',
     badge:'🏫', color:'#4ade80',
     notes:['E2','F2','G2','A2','B2','C3','D3','E3','F3','G3','A3','B3','C4','D4','E4'],
@@ -112,7 +112,7 @@ const LEVELS = [
     description:'Natural notes in open position',
   },
   {
-    id:2, title:'Youth Ensemble', subtitle:'Intermediate',
+    id:2, title:'Next Level', subtitle:'Intermediate',
     venue:'City Arts Center', judge:'Ms. Chen',
     badge:'🎭', color:'#60a5fa',
     notes:['E2','F2','F#2','G2','G#2','A2','A#2','B2','C3','C#3','D3','D#3','E3',
@@ -121,7 +121,7 @@ const LEVELS = [
     description:'Naturals + sharps & flats',
   },
   {
-    id:3, title:'Conservatory', subtitle:'Advanced',
+    id:3, title:'Solo Act', subtitle:'Advanced',
     venue:'Royal Academy Hall', judge:'Maestro Volkov',
     badge:'🎓', color:'#f59e0b',
     notes:['E2','F2','F#2','G2','G#2','A2','A#2','B2','C3','C#3','D3','D#3','E3',
@@ -131,7 +131,7 @@ const LEVELS = [
     description:'Full guitar range',
   },
   {
-    id:4, title:'Carnegie Hall', subtitle:'Elite',
+    id:4, title:'On Tour', subtitle:'Elite',
     venue:'Carnegie Hall, New York', judge:'Maestro Bernstein',
     badge:'🏆', color:'#a78bfa',
     notes:['E2','F2','F#2','G2','G#2','A2','A#2','B2','C3','C#3','D3','D#3','E3',

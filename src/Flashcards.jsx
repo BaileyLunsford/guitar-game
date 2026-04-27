@@ -239,6 +239,22 @@ const THEORY_CARDS = [
   { symbol:'3-4',          name:'3/4 Time Signature', answer:'3 beats per measure — quarter note gets 1 beat. Common in waltzes.' },
 ];
 
+// Advanced theory: key signatures and modes (text-only cards)
+const THEORY_ADV_CARDS = [
+  { symbol:'4-4', name:'Key of G Major', answer:'1 sharp (F#). Relative minor: E minor. I–IV–V = G–C–D.' },
+  { symbol:'4-4', name:'Key of D Major', answer:'2 sharps (F# C#). Relative minor: B minor. I–IV–V = D–G–A.' },
+  { symbol:'4-4', name:'Key of A Major', answer:'3 sharps (F# C# G#). Relative minor: F# minor. I–IV–V = A–D–E.' },
+  { symbol:'4-4', name:'Key of E Major', answer:'4 sharps (F# C# G# D#). Relative minor: C# minor. I–IV–V = E–A–B.' },
+  { symbol:'4-4', name:'Key of C Major', answer:'No sharps or flats. Relative minor: A minor. I–IV–V = C–F–G.' },
+  { symbol:'4-4', name:'Key of F Major', answer:'1 flat (Bb). Relative minor: D minor. I–IV–V = F–Bb–C.' },
+  { symbol:'4-4', name:'Ionian (Major) Mode', answer:'W-W-H-W-W-W-H. The standard major scale. Bright, happy sound.' },
+  { symbol:'4-4', name:'Dorian Mode', answer:'W-H-W-W-W-H-W. Minor mode with a raised 6th. Jazzy, cool sound. Used in "Scarborough Fair".' },
+  { symbol:'4-4', name:'Mixolydian Mode', answer:'W-W-H-W-W-H-W. Major scale with a flat 7th. Bluesy, rock sound.' },
+  { symbol:'4-4', name:'Aeolian (Natural Minor) Mode', answer:'W-H-W-W-H-W-W. The natural minor scale. Dark, expressive sound.' },
+  { symbol:'4-4', name:'Pentatonic Scale', answer:'5 notes: Root–2nd–3rd–5th–6th (major), or Root–b3–4–5–b7 (minor). The backbone of blues and rock soloing.' },
+  { symbol:'4-4', name:'Blues Scale', answer:'Pentatonic minor + b5 (blue note): Root–b3–4–b5–5–b7. Core of blues and rock improvisation.' },
+];
+
 const DECK_SECTIONS = [
   {
     level: 'Beginner',
@@ -246,7 +262,7 @@ const DECK_SECTIONS = [
     decks: [
       { id:'notes-basic',  label:'Open Notes',   sub:'Strings 1–2' },
       { id:'chords-open',  label:'Open Chords',  sub:'G C D Em Am' },
-      { id:'theory',       label:'Theory',       sub:'Note values & time' },
+      { id:'theory',       label:'Theory',       sub:'Note values & time sigs' },
     ],
   },
   {
@@ -261,8 +277,9 @@ const DECK_SECTIONS = [
     level: 'Advanced',
     color: { bg:'rgba(196,60,40,0.12)', border:'rgba(196,60,40,0.4)', text:'#E06040' },
     decks: [
-      { id:'chords-barre', label:'Barre Chords', sub:'F B Bm F#m', pro:true },
-      { id:'tab-pro',      label:'Tab (PRO)',     sub:'Strings 4–6', pro:true },
+      { id:'chords-barre', label:'Barre Chords',   sub:'F B Bm F#m', pro:true },
+      { id:'tab-pro',      label:'Tab (PRO)',       sub:'Strings 4–6', pro:true },
+      { id:'theory-adv',   label:'Keys & Modes',   sub:'Key sigs, modes, scales', pro:true },
     ],
   },
 ];
@@ -290,6 +307,7 @@ function getDeckCards(deckId) {
     case 'tab':          return TAB_FREE;
     case 'tab-pro':      return TAB_PRO;
     case 'theory':       return THEORY_CARDS;
+    case 'theory-adv':   return THEORY_ADV_CARDS;
     default:             return [];
   }
 }
@@ -462,7 +480,7 @@ export default function Flashcards({ isPro = false, onPurchase, onRestore }) {
                   const isNotes  = deck === 'notes-basic' || deck === 'notes-pro';
                   const isChords = deck === 'chords-open' || deck === 'chords-barre';
                   const isTab    = deck === 'tab' || deck === 'tab-pro';
-                  const isTheory = deck === 'theory';
+                  const isTheory = deck === 'theory' || deck === 'theory-adv';
                   return (
                     <>
                       <div className="fc-face"
@@ -472,6 +490,7 @@ export default function Flashcards({ isPro = false, onPurchase, onRestore }) {
                           {isNotes  ? 'What note is this?' :
                            isChords ? 'Show the chord shape' :
                            isTab    ? 'What note?' :
+                           deck === 'theory-adv' ? 'What do you know about this?' :
                                       'Name this symbol'}
                         </div>
                         {isNotes  && <MiniStaff step={card.step} />}
@@ -480,7 +499,13 @@ export default function Flashcards({ isPro = false, onPurchase, onRestore }) {
                             lineHeight:1, marginBottom:8 }}>{card.name}</div>
                         )}
                         {isTab    && <TabDiagram string={card.string} fret={card.fret} />}
-                        {isTheory && <TheorySymbol type={card.symbol} />}
+                        {isTheory && deck === 'theory' && <TheorySymbol type={card.symbol} />}
+                        {isTheory && deck === 'theory-adv' && (
+                          <div style={{ fontSize: 22, fontWeight: 800, color: M.accent,
+                            lineHeight: 1.3, textAlign: 'center', padding: '0 8px' }}>
+                            {card.name}
+                          </div>
+                        )}
                         <div style={{ fontSize:11, color:'rgba(160,120,90,0.6)',
                           marginTop:16, letterSpacing:'0.05em' }}>Tap to flip</div>
                       </div>

@@ -294,8 +294,15 @@ function jitterMs() {
   return Math.random() < 0.5 ? mag : -mag;
 }
 
+// ── Export for external use (e.g. Lick of the Day) ───────────────────────────
+export const ALL_LICKS = Object.values(LICK_DATA).flat();
+export function getLickOfDay() {
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+  return ALL_LICKS[dayOfYear % ALL_LICKS.length];
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
+export default function LickPlay({ isPro = false, onPurchase, onRestore, initialLickId = null }) {
   // ── Phase ─────────────────────────────────────────────────────────────────
   const [phase,       setPhase]       = useState('landing');
   // 'landing' | 'categorySelect' | 'lickSelect' | 'drill'
@@ -317,12 +324,35 @@ export default function LickPlay({ isPro = false, onPurchase, onRestore }) {
   // ── Metronome + backing track ─────────────────────────────────────────────
   // Backing src is derived from activeCat — changing genre auto-stops the track
   const { clickOn,  toggleClick, stopClick,  syncToTime: metSyncToTime   } = useMetronome(bpm);
-  const { trackOn,  toggleTrack, stopTrack,  syncToTime: trackSyncToTime } = useBackingTrack(activeCat, bpm);
+  const [trackEnabled, setTrackEnabled] = useState(false);
+  const { stopTrack, syncToTime: trackSyncToTime } = useBackingTrack(trackEnabled ? activeCat : null, bpm);
+  const trackOn = trackEnabled;
+  function toggleTrack() {
+    setTrackEnabled(e => {
+      if (e) stopTrack();
+      return !e;
+    });
+  }
 
   const loopTimerRef    = useRef(null);
   const noteTimersRef   = useRef([]);
-  const loopAnchorRef   = useRef(0);    // absolute AudioContext time for next loop iteration
-  const prevLoopTickRef = useRef(-1);   // last loopTick value; -1 = not running
+  const loopAnchorRef   = useRef(0);
+  const prevLoopTickRef = useRef(-1);
+
+  // Auto-select lick when initialLickId is provided (e.g. from Lick of the Day)
+  useEffect(() => {
+    if (!initialLickId) return;
+    const lick = ALL_LICKS.find(l => l.id === initialLickId);
+    if (!lick) return;
+    const cat = Object.keys(LICK_DATA).find(k => LICK_DATA[k].some(l => l.id === initialLickId));
+    if (cat) {
+      setActiveCat(cat);
+      setActiveLick(lick);
+      setBpm(lick.bpm ?? 80);
+      setMeasureIdx(0);
+      setPhase('drill');
+    }
+  }, [initialLickId]); // eslint-disable-line
 
   // ── Audio helpers ─────────────────────────────────────────────────────────
   function clearNoteTimers() {

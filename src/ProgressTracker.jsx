@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { getLickOfDay } from './LickPlay';
 
 const M = {
   bg:      '#120A04',
@@ -77,17 +78,16 @@ function getMonthData(year, month, goal) {
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
-export function useProgressTracker() {
-  const startRef  = useRef(null);   // when current visible session started
-  const savedRef  = useRef(0);      // minutes already saved today before this session
-  const rafRef    = useRef(null);
+export function useProgressTracker(active = true) {
+  const startRef   = useRef(null);
+  const savedRef   = useRef(0);
+  const activeRef  = useRef(active);
+  useEffect(() => { activeRef.current = active; }, [active]);
 
-  // Load minutes already saved today
   useEffect(() => {
     savedRef.current = getMinutesForKey(todayKey());
   }, []);
 
-  // Page Visibility API — pause/resume timer
   useEffect(() => {
     function onVisible() {
       if (document.visibilityState === 'visible') {
@@ -107,8 +107,8 @@ export function useProgressTracker() {
   }, []); // eslint-disable-line
 
   function flush() {
-    if (!startRef.current) return;
-    const elapsed = (Date.now() - startRef.current) / 60000; // minutes
+    if (!startRef.current || !activeRef.current) return;
+    const elapsed = (Date.now() - startRef.current) / 60000;
     startRef.current = Date.now();
     const key = todayKey();
     const prev = getMinutesForKey(key);
@@ -117,7 +117,8 @@ export function useProgressTracker() {
   }
 
   function getTodayMinutes() {
-    const inSession = startRef.current ? (Date.now() - startRef.current) / 60000 : 0;
+    const inSession = (startRef.current && activeRef.current)
+      ? (Date.now() - startRef.current) / 60000 : 0;
     return getMinutesForKey(todayKey()) + inSession;
   }
 
@@ -213,7 +214,48 @@ export function StreakBanner({ getTodayMinutes, onClick }) {
 
 // ── Full dashboard ────────────────────────────────────────────────────────────
 
-export default function ProgressTracker({ isPro, getTodayMinutes }) {
+export function ProgressModal({ isOpen, onClose, isPro, getTodayMinutes, onLickOfDay }) {
+  if (!isOpen) return null;
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9000,
+      background: 'rgba(0,0,0,0.72)', display: 'flex',
+      alignItems: 'flex-start', justifyContent: 'center',
+      overflowY: 'auto',
+      paddingTop: 'env(safe-area-inset-top, 20px)',
+    }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{
+        background: M.bg, borderRadius: 20, width: '100%', maxWidth: 480,
+        margin: '12px 12px 40px',
+        border: `1px solid ${M.border}`,
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 20px', borderBottom: `1px solid ${M.border}`,
+        }}>
+          <h2 style={{
+            fontSize: 18, fontWeight: 800, margin: 0,
+            background: `linear-gradient(135deg,${M.accent},${M.hi})`,
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          }}>Progress Tracker</h2>
+          <button onClick={onClose} style={{
+            background: 'none', border: 'none', color: M.muted,
+            fontSize: 22, cursor: 'pointer', lineHeight: 1, padding: 4,
+          }}>×</button>
+        </div>
+        <ProgressDashboard
+          isPro={isPro}
+          getTodayMinutes={getTodayMinutes}
+          onLickOfDay={onLickOfDay}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ProgressDashboard({ isPro, getTodayMinutes, onLickOfDay }) {
+  const todaysLick = getLickOfDay();
   const goal = getGoal();
   const [todayMins,  setTodayMins]  = useState(0);
   const [dailyGoal,  setDailyGoalS] = useState(goal);
@@ -268,20 +310,9 @@ export default function ProgressTracker({ isPro, getTodayMinutes }) {
 
   return (
     <div style={{
-      minHeight: '100vh', background: M.bg, color: M.text,
+      background: M.bg, color: M.text,
       fontFamily: "Georgia, 'Times New Roman', serif",
-      padding: 'env(safe-area-inset-top,16px) 0 40px',
     }}>
-      {/* Header */}
-      <div style={{ padding: '16px 20px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <a href="#" style={{ color: M.muted, fontSize: 22, textDecoration: 'none', lineHeight: 1 }}>‹</a>
-        <h1 style={{
-          fontSize: 20, fontWeight: 800, margin: 0,
-          background: `linear-gradient(135deg,${M.accent},${M.hi})`,
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-        }}>Progress Tracker</h1>
-      </div>
-
       <div style={{ padding: '20px 20px 0', maxWidth: 480, margin: '0 auto' }}>
 
         {/* Today ring + goal */}
@@ -321,6 +352,40 @@ export default function ProgressTracker({ isPro, getTodayMinutes }) {
             Play every day<br />to keep it going
           </div>
         </div>
+
+        {/* Lick of the Day */}
+        {todaysLick && (
+          <div style={{
+            background: M.surface, borderRadius: 18, border: `1px solid ${M.border}`,
+            padding: '14px 18px', marginBottom: 16,
+            display: 'flex', alignItems: 'center', gap: 14,
+          }}>
+            <span style={{ fontSize: 28, flexShrink: 0 }}>🎸</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em',
+                textTransform: 'uppercase', color: M.muted, marginBottom: 3 }}>
+                Lick of the Day
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: M.hi,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {todaysLick.title}
+              </div>
+              <div style={{ fontSize: 11, color: M.muted }}>{todaysLick.bpm} BPM</div>
+            </div>
+            {onLickOfDay && (
+              <button
+                onClick={() => onLickOfDay(todaysLick.id)}
+                style={{
+                  padding: '8px 14px', borderRadius: 10, border: `1px solid ${M.borderHi}`,
+                  background: 'rgba(232,131,58,0.18)', color: M.hi,
+                  fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                  fontFamily: "Georgia, serif", flexShrink: 0,
+                }}>
+                Play →
+              </button>
+            )}
+          </div>
+        )}
 
         {/* PRO: Weekly bar chart */}
         {isPro && (
@@ -422,6 +487,26 @@ export default function ProgressTracker({ isPro, getTodayMinutes }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+export default function ProgressTracker({ isPro, getTodayMinutes, onLickOfDay }) {
+  return (
+    <div style={{
+      minHeight: '100vh', background: M.bg, color: M.text,
+      fontFamily: "Georgia, 'Times New Roman', serif",
+      padding: 'env(safe-area-inset-top,16px) 0 40px',
+    }}>
+      <div style={{ padding: '16px 20px 8px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <a href="#" style={{ color: M.muted, fontSize: 22, textDecoration: 'none', lineHeight: 1 }}>‹</a>
+        <h1 style={{
+          fontSize: 20, fontWeight: 800, margin: 0,
+          background: `linear-gradient(135deg,${M.accent},${M.hi})`,
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+        }}>Progress Tracker</h1>
+      </div>
+      <ProgressDashboard isPro={isPro} getTodayMinutes={getTodayMinutes} onLickOfDay={onLickOfDay} />
     </div>
   );
 }

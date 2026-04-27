@@ -63,7 +63,15 @@ export default function SongLearnEngine({ song }) {
   const loopTimerRef  = useRef(null);
   const noteTimersRef = useRef([]);
 
-  const { trackOn, toggleTrack, stopTrack, syncToTime } = useBackingTrack('blues', bpm);
+  const [trackEnabled, setTrackEnabled] = useState(false);
+  const { stopTrack, syncToTime } = useBackingTrack(trackEnabled ? 'blues' : null, bpm);
+  const trackOn = trackEnabled;
+  function toggleTrack() {
+    setTrackEnabled(e => {
+      if (e) stopTrack();
+      return !e;
+    });
+  }
   const { clickOn, toggleClick, stopClick }              = useMetronome(bpm);
 
   const measures       = song?.measures ?? [];

@@ -937,7 +937,7 @@ const SONGS = [
       ],
       // "from glen to glen and down the mountainside"
       [
-        { string:3, fret:2, beat:1, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
         { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
         { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
         { string:1, fret:7, beat:4, noteName:'B4', duration:'q' },
@@ -1146,8 +1146,8 @@ const SONGS = [
       [
         { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
         { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
-        { string:3, fret:2, beat:3, noteName:'D4', duration:'q' },
-        { string:3, fret:2, beat:4, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
       ],
       [
         { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
@@ -1591,8 +1591,13 @@ function NotePositionDiagram({ string, fret }) {
 
 // ── Listen mode ───────────────────────────────────────────────────────────────
 function ListenMode({ song, onBack }) {
-  const [playing,  setPlaying]  = useState(false);
-  const [noteIdx,  setNoteIdx]  = useState(-1);
+  const [playing,      setPlaying]      = useState(false);
+  const [noteIdx,      setNoteIdx]      = useState(-1);
+  const [trackEnabled, setTrackEnabled] = useState(true);
+  const [loopSong,     setLoopSong]     = useState(false);
+  const [repeatOnce,   setRepeatOnce]   = useState(false);
+  const loopRef    = useRef(false);
+  const repeatRef  = useRef(false);
 
   const allNotes     = song.measures.flat();
   const displayNotes = allNotes
@@ -1603,8 +1608,16 @@ function ListenMode({ song, onBack }) {
   const beatMs   = 60000 / song.bpm;
 
   const trackGenre = GENRE_TO_TRACK[song.genre] || 'blues';
-  const { trackOn, toggleTrack, stopTrack, syncToTime } = useBackingTrack(trackGenre, song.bpm);
-  const { clickOn, toggleClick, stopClick }              = useMetronome(song.bpm);
+  // Track starts exactly when playing begins — pass null when not playing or disabled
+  const { stopTrack, syncToTime } = useBackingTrack(
+    (playing && trackEnabled) ? trackGenre : null,
+    song.bpm
+  );
+  const { clickOn, toggleClick, stopClick } = useMetronome(song.bpm);
+
+  // Keep refs in sync so playNote closure sees current values
+  useEffect(() => { loopRef.current   = loopSong;   }, [loopSong]);
+  useEffect(() => { repeatRef.current = repeatOnce; }, [repeatOnce]);
 
   useEffect(() => () => {
     clearTimeout(timerRef.current);
@@ -1612,22 +1625,39 @@ function ListenMode({ song, onBack }) {
     stopClick();
   }, []); // eslint-disable-line
 
-  function play() {
-    if (playing) return;
+  function startPlayback() {
     guitarSampler.resume?.();
     const ctx = getAudioContext();
-    const startTime = ctx.currentTime + 0.05;
-    if (!trackOn) toggleTrack();
-    syncToTime(startTime);
+    if (ctx.state === 'suspended') ctx.resume();
+    syncToTime(ctx.currentTime + 0.05);
     setPlaying(true);
     playNote(0);
   }
 
+  function play() {
+    if (playing) return;
+    startPlayback();
+  }
+
   function playNote(idx) {
     if (idx >= allNotes.length) {
+      // Song finished — check loop/repeat
+      if (loopRef.current) {
+        const ctx = getAudioContext();
+        syncToTime(ctx.currentTime + 0.05);
+        playNote(0);
+        return;
+      }
+      if (repeatRef.current) {
+        setRepeatOnce(false);
+        repeatRef.current = false;
+        const ctx = getAudioContext();
+        syncToTime(ctx.currentTime + 0.05);
+        playNote(0);
+        return;
+      }
       setPlaying(false);
       setNoteIdx(-1);
-      stopTrack();
       return;
     }
     setNoteIdx(idx);
@@ -1646,7 +1676,21 @@ function ListenMode({ song, onBack }) {
     stopClick();
   }
 
+  function toggleTrack() {
+    setTrackEnabled(e => {
+      if (e) stopTrack();
+      return !e;
+    });
+  }
+
   const currentNote = noteIdx >= 0 ? allNotes[noteIdx] : null;
+  const ctrlBtn = (active) => ({
+    padding: '14px 20px', borderRadius: 14, cursor: 'pointer',
+    border: `1px solid ${active ? M.borderHi : M.border}`,
+    background: active ? 'rgba(232,131,58,0.18)' : 'rgba(196,100,40,0.08)',
+    color: active ? M.hi : M.muted,
+    fontFamily: "Georgia, serif", fontSize: 14, fontWeight: 700, transition: 'all 0.15s',
+  });
 
   return (
     <div style={{ padding: '0 20px', maxWidth: 480, margin: '0 auto' }}>
@@ -1688,26 +1732,34 @@ function ListenMode({ song, onBack }) {
         </div>
       )}
 
-      {/* Controls */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
+      {/* Play/Stop row */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
         {!playing
           ? <button onClick={play} style={primaryBtn}>▶ Play</button>
           : <button onClick={stop} style={primaryBtn}>⏹ Stop</button>
         }
-        <button onClick={toggleTrack} style={{
-          padding: '14px 20px', borderRadius: 14, cursor: 'pointer',
-          border: `1px solid ${trackOn ? M.borderHi : M.border}`,
-          background: trackOn ? 'rgba(232,131,58,0.18)' : 'rgba(196,100,40,0.08)',
-          color: trackOn ? M.hi : M.muted,
-          fontFamily: "Georgia, serif", fontSize: 14, fontWeight: 700, transition: 'all 0.15s',
-        }}>🥁 {trackOn ? 'Track On' : 'Track Off'}</button>
-        <button onClick={toggleClick} style={{
-          padding: '14px 20px', borderRadius: 14, cursor: 'pointer',
-          border: `1px solid ${clickOn ? M.borderHi : M.border}`,
-          background: clickOn ? 'rgba(232,131,58,0.18)' : 'rgba(196,100,40,0.08)',
-          color: clickOn ? M.hi : M.muted,
-          fontFamily: "Georgia, serif", fontSize: 14, fontWeight: 700, transition: 'all 0.15s',
-        }}>🎵 {clickOn ? 'Met On' : 'Met Off'}</button>
+      </div>
+
+      {/* Control toggles */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <button onClick={toggleTrack} style={ctrlBtn(trackEnabled)}>
+          🥁 {trackEnabled ? 'Track On' : 'Track Off'}
+        </button>
+        <button onClick={toggleClick} style={ctrlBtn(clickOn)}>
+          🎵 {clickOn ? 'Met On' : 'Met Off'}
+        </button>
+        <button
+          onClick={() => setLoopSong(l => !l)}
+          style={ctrlBtn(loopSong)}
+        >
+          🔁 {loopSong ? 'Loop On' : 'Loop'}
+        </button>
+        <button
+          onClick={() => setRepeatOnce(r => !r)}
+          style={ctrlBtn(repeatOnce)}
+        >
+          ↩ {repeatOnce ? 'Repeat On' : 'Repeat'}
+        </button>
       </div>
     </div>
   );

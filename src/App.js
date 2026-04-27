@@ -21,7 +21,7 @@ import OnboardingTour from './OnboardingTour';
 import Flashcards from './Flashcards';
 import UpgradeModal from './UpgradeModal';
 import SettingsModal from './SettingsModal';
-import ProgressTracker, { useProgressTracker, StreakBanner } from './ProgressTracker';
+import ProgressTracker, { useProgressTracker, StreakBanner, ProgressModal } from './ProgressTracker';
 import SongLibrary from './SongLibrary';
 import TriadsArpeggios from './TriadsArpeggios';
 import SongBackingTracks from './SongBackingTracks';
@@ -489,7 +489,7 @@ const HOME_SECTIONS = [
   {
     label: 'Beginner', sectionBadge: 'FREE', sectionBadgeClass: 'badge-free',
     items: [
-      { icon: '🎯', title: 'Audition Game',  desc: 'Sight-read notes with real-time mic pitch detection', hash: '#audition',        pro: false },
+      { icon: '🎯', title: 'Music Reading Game',  desc: 'Sight-read notes with real-time mic pitch detection', hash: '#audition',        pro: false },
       { icon: '📚', title: 'Song Library',   desc: 'Ode to Joy free · 5 more songs with PRO',            hash: '#song-library',    pro: false },
       { icon: '🎵', title: 'Song Learn',     desc: 'Measure-by-measure playback with notation & tab',    hash: '#song-learn',      pro: false },
       { icon: '🎶', title: 'Strum Patterns', desc: 'Folk, country, reggae, funk — 6 free + 6 PRO',       hash: '#strum-patterns',  pro: false },
@@ -683,7 +683,7 @@ function Home({ ambOn, ambToggle, onShowTour, onShowSettings, isPro, onUpgrade, 
             background: 'linear-gradient(135deg,#E8833A,#F5A65B,#C46428,#F5A65B)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
-          }}>Guitar Audition Game</h1>
+          }}>TuneWise: Guitar Lessons</h1>
         <p style={{ fontSize: 13, color: '#A0785A', letterSpacing: '0.08em',
           textTransform: 'uppercase', fontWeight: 500 }}>
           Learn · Tune · Play
@@ -766,9 +766,12 @@ export default function App() {
   const [tourSlide,    setTourSlide]    = React.useState(0);
   const [showUpgrade,  setShowUpgrade]  = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
+  const [showProgress, setShowProgress] = React.useState(false);
+  const [lickOfDayId,  setLickOfDayId]  = React.useState(null);
   const { isPro, purchase, restore, restorePurchases, devToggle } = useIAP();
   const { ambOn, ambToggle, ambStop } = useAmbience();
-  const { getTodayMinutes } = useProgressTracker();
+  const isOnHome = !hash;
+  const { getTodayMinutes } = useProgressTracker(!isOnHome);
 
   // Guard: auto-show tour only on first launch. Never re-trigger after guitar_tour_seen is set.
   // The "?" button bypasses this guard intentionally — it calls setShowTour(true) directly.
@@ -831,10 +834,10 @@ export default function App() {
   if (hash === '#song-learn')   return <SongLearnEngine song={ODE_TO_JOY} />;
   if (hash === '#song-play')    return <SongPlayScreen  song={ODE_TO_JOY} />;
   if (hash === '#song-library') return <SongLibrary isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
-  if (hash === '#progress')     return <ProgressTracker isPro={isPro} getTodayMinutes={getTodayMinutes} />;
+  if (hash === '#progress')     return <ProgressTracker isPro={isPro} getTodayMinutes={getTodayMinutes} onLickOfDay={(id) => { setLickOfDayId(id); window.location.hash = '#lick-play'; setHash('#lick-play'); }} />;
   if (hash === '#tuner')        return <Tuner strings={GUITAR_STRINGS} theme={GUITAR_THEME} title="Tune Your Guitar" />;
   if (hash === '#scale-play')   return <ScalePlay    isPro={isPro} onPurchase={purchase} onRestore={restore} />;
-  if (hash === '#lick-play')    return <LickPlay     isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hash === '#lick-play')    return <LickPlay     isPro={isPro} onPurchase={purchase} onRestore={restore} initialLickId={lickOfDayId} />;
   if (hash === '#chord-play')   return <ChordPlay    isPro={isPro} onPurchase={purchase} onRestore={restore} />;
   if (hash === '#barre-chords') return <BarreChords  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
   if (hash === '#caged')        return <CAGEDSystem  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
@@ -857,7 +860,19 @@ export default function App() {
         onShowSettings={() => setShowSettings(true)}
         isPro={isPro} onUpgrade={handleUpgrade}
         getTodayMinutes={getTodayMinutes}
-        onOpenProgress={() => { window.location.hash = '#progress'; setHash('#progress'); }}
+        onOpenProgress={() => setShowProgress(true)}
+      />
+      <ProgressModal
+        isOpen={showProgress}
+        onClose={() => setShowProgress(false)}
+        isPro={isPro}
+        getTodayMinutes={getTodayMinutes}
+        onLickOfDay={(id) => {
+          setLickOfDayId(id);
+          setShowProgress(false);
+          window.location.hash = '#lick-play';
+          setHash('#lick-play');
+        }}
       />
       <UpgradeModal
         isOpen={showUpgrade}

@@ -38,6 +38,17 @@ const GENRE_MAP = { Blues:'blues', Country:'country', Rock:'rock', Folk:'blues' 
 const STORAGE_KEY = 'songwriterSongs';
 const SECTION_PRESETS = ['Intro','Verse','Pre-Chorus','Chorus','Bridge','Outro','Solo','Turnaround'];
 
+// Strum patterns — subset mirroring StrumPatterns.jsx PATTERNS
+const STRUM_PATTERNS = [
+  { id: 'off',        name: 'Single Strum', sub: 'measure', steps: ['D'] },
+  { id: 'all-down',   name: 'All Down',     sub: 'quarter', steps: ['D','D','D','D'] },
+  { id: 'down-up',    name: 'Down-Up',      sub: 'eighth',  steps: ['D','U','D','U','D','U','D','U'] },
+  { id: 'folk',       name: 'Folk',         sub: 'eighth',  steps: ['D','-','D','U','-','U','D','U'] },
+  { id: 'country',    name: 'Country',      sub: 'eighth',  steps: ['D','D','U','-','U','D','U','-'] },
+  { id: 'waltz',      name: 'Waltz (3/4)',  sub: 'quarter', steps: ['D','D','U'] },
+  { id: 'slow-rock',  name: 'Slow Rock',    sub: 'eighth',  steps: ['D','-','-','U','-','-','D','-'] },
+];
+
 // Nashville number degrees (major scale Roman numerals)
 const DEGREES = ['I','II','III','IV','V','VI','VII'];
 
@@ -175,9 +186,10 @@ export default function Songwriter() {
   });
   const [nashville,  setNashville]  = useState(false);
   const [genre,      setGenre]      = useState('Blues');
-  const [drumsOn,    setDrumsOn]    = useState(true);
-  const [bassOn,     setBassOn]     = useState(true);
-  const [metOn,      setMetOn]      = useState(false);
+  const [drumsOn,       setDrumsOn]       = useState(true);
+  const [bassOn,        setBassOn]        = useState(true);
+  const [metOn,         setMetOn]         = useState(false);
+  const [strumPatternId, setStrumPatternId] = useState('off');
 
   // Measure editing
   const [editingMeasure, setEditingMeasure] = useState(null); // {secIdx, mIdx}
@@ -206,8 +218,12 @@ export default function Songwriter() {
   const playIdxRef      = useRef(0);
   const playMeasuresRef = useRef([]);
 
-  const songKeyRef = useRef(activeSong.key);
-  useEffect(() => { songKeyRef.current = activeSong.key; }, [activeSong.key]);
+  const songKeyRef        = useRef(activeSong.key);
+  const strumPatternIdRef = useRef(strumPatternId);
+  const bpmRef            = useRef(activeSong.bpm);
+  useEffect(() => { songKeyRef.current        = activeSong.key;  }, [activeSong.key]);
+  useEffect(() => { strumPatternIdRef.current = strumPatternId;  }, [strumPatternId]);
+  useEffect(() => { bpmRef.current            = activeSong.bpm;  }, [activeSong.bpm]);
 
   const effectiveGenre = playing ? GENRE_MAP[genre] : null;
   const { stopTrack, syncToTime }          = useBackingTrack(effectiveGenre, activeSong.bpm, drumsOn, bassOn);
@@ -364,16 +380,36 @@ export default function Songwriter() {
     setMetOn(next);
   }
 
-  function strumChord(chordName) {
-    if (!chordName) return;
+  function resolveNotes(chordName) {
+    if (!chordName) return [];
     let resolved = chordName;
     if (/^(VII|VI|V|IV|III|II|I)/.test(resolved)) {
       resolved = nashvilleToChord(resolved, songKeyRef.current) || resolved;
     }
     const root = resolved.match(/^([A-G][#b]?)/)?.[1];
-    const notes = CHORD_NOTES[resolved] || (root && CHORD_NOTES[root]) || CHORD_NOTES.G;
-    notes.forEach((note, i) => {
+    return CHORD_NOTES[resolved] || (root && CHORD_NOTES[root]) || CHORD_NOTES.G;
+  }
+
+  function playStrumNotes(notes, direction) {
+    const src = direction === 'U' ? [...notes].reverse() : notes;
+    src.forEach((note, i) => {
       setTimeout(() => { try { guitarSampler.playNote(note); } catch (_) {} }, i * 14);
+    });
+  }
+
+  function strumChord(chordName) {
+    if (!chordName) return;
+    const notes   = resolveNotes(chordName);
+    const pat     = STRUM_PATTERNS.find(p => p.id === strumPatternIdRef.current) || STRUM_PATTERNS[0];
+    const bpm     = bpmRef.current;
+    const beats   = pat.sub === 'eighth' ? 0.5 : pat.sub === 'measure' ? 4 : 1;
+    const stepMs  = (60000 / bpm) * beats;
+
+    pat.steps.forEach((step, i) => {
+      if (step === '-') return;
+      setTimeout(() => {
+        try { playStrumNotes(notes, step); } catch (_) {}
+      }, Math.round(i * stepMs));
     });
   }
 
@@ -394,7 +430,7 @@ export default function Songwriter() {
     const ctx = getAudioContext();
     if (ctx.state === 'suspended') ctx.resume();
     const t = ctx.currentTime + 0.05;
-    if (drumsOn || bassOn) setTimeout(() => syncToTime(t), 50);
+    if (drumsOn || bassOn) syncToTime(t);
     if (metOn) metSync(t);
 
     playMeasuresRef.current = all;
@@ -640,6 +676,26 @@ export default function Songwriter() {
               color: metOn ? M.hi : M.text, cursor: 'pointer', fontFamily: "Georgia, serif",
               transition: 'all 0.12s',
             }}>🎵 {metOn ? 'Click On' : 'Click Off'}</button>
+          </div>
+        </div>
+
+        {/* ── Strum Pattern ── */}
+        <div style={{
+          background: M.surface, borderRadius: 12, border: `1px solid ${M.border}`,
+          padding: '10px 12px', marginBottom: 14,
+        }}>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.1em',
+            textTransform: 'uppercase', color: M.muted, marginBottom: 8 }}>Strum Pattern</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {STRUM_PATTERNS.map(p => (
+              <button key={p.id} onClick={() => setStrumPatternId(p.id)} style={{
+                padding: '6px 12px', borderRadius: 10, fontSize: 11, fontWeight: 700,
+                border: `1px solid ${strumPatternId === p.id ? M.borderHi : M.border}`,
+                background: strumPatternId === p.id ? 'rgba(232,131,58,0.22)' : 'rgba(196,100,40,0.10)',
+                color: strumPatternId === p.id ? M.hi : M.text,
+                cursor: 'pointer', fontFamily: "Georgia, serif", transition: 'all 0.12s',
+              }}>{p.name}</button>
+            ))}
           </div>
         </div>
 
