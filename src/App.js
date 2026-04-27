@@ -12,7 +12,7 @@ import BarreChords from './BarreChords';
 import CAGEDSystem from './CAGEDSystem';
 import ScalePlay from './ScalePlay';
 import useIAP from './useIAP';
-import useCrowdAmbience from './useCrowdAmbience';
+import useAmbience from './useAmbience';
 import LandingPage from './LandingPage';
 import AuditionGame from './AuditionGame';
 import LickPlay from './LickPlay';
@@ -767,7 +767,7 @@ export default function App() {
   const [showUpgrade,  setShowUpgrade]  = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
   const { isPro, purchase, restore, restorePurchases, devToggle } = useIAP();
-  const { ambOn, ambToggle, ambStop } = useCrowdAmbience();
+  const { ambOn, ambToggle, ambStop } = useAmbience();
   const { getTodayMinutes } = useProgressTracker();
 
   // Guard: auto-show tour only on first launch. Never re-trigger after guitar_tour_seen is set.
