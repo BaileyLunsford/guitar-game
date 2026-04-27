@@ -26,8 +26,9 @@ const M = {
 };
 
 // Duration codes: q=quarter(1), h=half(2), w=whole(4), dq=dotted-quarter(1.5),
-//                 e=eighth(0.5), de=dotted-eighth(0.75), qr=quarter-rest, hr=half-rest, er=eighth-rest
-const BEAT_MAP  = { q:1, h:2, w:4, dq:1.5, e:0.5, de:0.75, qr:1, hr:2, er:0.5 };
+//                 dh=dotted-half(3), e=eighth(0.5), de=dotted-eighth(0.75),
+//                 qr=quarter-rest, hr=half-rest, er=eighth-rest
+const BEAT_MAP  = { q:1, h:2, w:4, dq:1.5, dh:3, 'h.':3, e:0.5, de:0.75, qr:1, hr:2, er:0.5 };
 const REST_CODES = new Set(['qr','hr','er']);
 
 const GENRE_TO_TRACK = {
@@ -51,6 +52,7 @@ function beatDur(d) {
 // String: 1=high e, 2=B, 3=G, 4=D, 5=A, 6=low E
 const SONGS = [
   // ─────────────────────────── FREE ───────────────────────────────────────
+  // Ode to Joy — 4/4, key of G, 8 measures
   {
     id: 'ode', title: 'Ode to Joy', genre: 'Classical',
     difficulty: 'Beginner', durationEst: '1:00', pro: false, bpm: 88,
@@ -104,6 +106,7 @@ const SONGS = [
     ],
   },
 
+  // Twinkle Twinkle Little Star — 4/4, key of C, 12 measures
   {
     id: 'twinkle', title: 'Twinkle Twinkle Little Star', genre: 'Children',
     difficulty: 'Beginner', durationEst: '1:20', pro: false, bpm: 80,
@@ -177,12 +180,13 @@ const SONGS = [
     ],
   },
 
-  // Amazing Grace — 3/4, key of G
+  // Amazing Grace — 3/4, key of G, 19 measures (pickup + 18)
+  // D4 = string 2 fret 3; B3 = string 2 fret 0; G4 = string 1 fret 3; A4 = string 1 fret 5
   {
     id: 'amazing', title: 'Amazing Grace', genre: 'Hymn',
     difficulty: 'Beginner', durationEst: '1:20', pro: false, bpm: 66,
     measures: [
-      // pickup: G4
+      // pickup (1 beat): "A-"
       [{ string:1, fret:3, beat:3, noteName:'G4', duration:'q' }],
       // "Amazing grace, how sweet the sound"
       [
@@ -190,12 +194,12 @@ const SONGS = [
         { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
       [
-        { string:3, fret:2, beat:1, noteName:'D4', duration:'dq' },
-        { string:3, fret:2, beat:2, noteName:'D4', duration:'e' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'dq' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'e' },
         { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
       [
-        { string:3, fret:2, beat:1, noteName:'D4', duration:'h' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
         { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
       ],
       [
@@ -207,8 +211,8 @@ const SONGS = [
         { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
       [
-        { string:3, fret:2, beat:1, noteName:'D4', duration:'dq' },
-        { string:3, fret:2, beat:2, noteName:'D4', duration:'e' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'dq' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'e' },
         { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
       // "That saved a wretch like me"
@@ -231,12 +235,12 @@ const SONGS = [
         { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
       [
-        { string:3, fret:2, beat:1, noteName:'D4', duration:'dq' },
-        { string:3, fret:2, beat:2, noteName:'D4', duration:'e' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'dq' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'e' },
         { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
       [
-        { string:3, fret:2, beat:1, noteName:'D4', duration:'h' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
         { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
       ],
       [
@@ -248,8 +252,8 @@ const SONGS = [
         { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
       [
-        { string:3, fret:2, beat:1, noteName:'D4', duration:'dq' },
-        { string:3, fret:2, beat:2, noteName:'D4', duration:'e' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'dq' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'e' },
         { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
       // "Was blind but now I see"
@@ -264,62 +268,67 @@ const SONGS = [
       ],
       [
         { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
-        { string:1, fret:3, beat:3, noteName:'qr', duration:'q' },
+        { beat:3, noteName:'rest', duration:'qr' },
       ],
     ],
   },
 
   // ─────────────────────────── PRO ────────────────────────────────────────
-  // Happy Birthday — 3/4, key of G
+  // Happy Birthday — 3/4, key of C (starting on G4 = scale deg 5), 9 measures (pickup + 8)
+  // Melody: G G | A G C | B(dh) | A G D | C(dh) | G E C | B D A | G G F(e)E(e) | C D C
   {
     id: 'happy_birthday', title: 'Happy Birthday', genre: 'Children',
     difficulty: 'Beginner', durationEst: '0:45', pro: true, bpm: 88,
     measures: [
-      // pickup: G G
+      // pickup (1 beat): "Hap-py"
       [
         { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
         { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
       ],
-      // "Happy birthday to you"
+      // "birth-day to" (3 beats)
       [
         { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
         { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
         { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
       ],
+      // "you" + pickup "Hap-py" (3 beats: B held 2 + e e)
       [
         { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
         { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
         { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
       ],
-      // "Happy birthday to you"
+      // "birth-day to"
       [
         { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
         { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
         { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
+      // "you" + pickup "Hap-py"
       [
         { string:2, fret:1, beat:1, noteName:'C4', duration:'h' },
         { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
         { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
       ],
-      // "Happy birthday dear [name]"
+      // "birth-day dear" — fret 5 str 1 = A4, not E4
       [
         { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
-        { string:1, fret:5, beat:2, noteName:'E4', duration:'q' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
         { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
       ],
+      // "[name]" + pickup "Hap-py"
       [
         { string:2, fret:0, beat:1, noteName:'B3', duration:'q' },
         { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
         { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
       ],
-      // "Happy birthday to you"
+      // "birth-day to" — fret 3 str 1 = G4, not F4
       [
-        { string:1, fret:3, beat:1, noteName:'F4', duration:'q' },
-        { string:1, fret:3, beat:2, noteName:'F4', duration:'q' },
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
         { string:1, fret:1, beat:3, noteName:'F4', duration:'e' },
         { string:1, fret:0, beat:3, noteName:'E4', duration:'e' },
       ],
+      // "you" (final resolution C D C)
       [
         { string:2, fret:1, beat:1, noteName:'C4', duration:'q' },
         { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
@@ -328,7 +337,7 @@ const SONGS = [
     ],
   },
 
-  // Jingle Bells — 4/4, key of G
+  // Jingle Bells — 4/4, key of G, 15 measures (chorus + verse)
   {
     id: 'jingle_bells', title: 'Jingle Bells', genre: 'Children',
     difficulty: 'Beginner', durationEst: '1:10', pro: true, bpm: 120,
@@ -400,11 +409,13 @@ const SONGS = [
     ],
   },
 
-  // Silent Night — 3/4, key of G
+  // Silent Night — 3/4, key of G, 24 measures
+  // D4 = str2 f3; G4 = str1 f3; E4 = str1 f0; B3 = str2 f0; C4 = str2 f1; F4 = str1 f1
   {
     id: 'silent_night', title: 'Silent Night', genre: 'Hymn',
     difficulty: 'Beginner', durationEst: '1:30', pro: true, bpm: 60,
     measures: [
+      // "Si-lent night"
       [
         { string:1, fret:3, beat:1, noteName:'G4', duration:'dq' },
         { string:1, fret:5, beat:2, noteName:'A4', duration:'e' },
@@ -414,14 +425,16 @@ const SONGS = [
         { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
         { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
       ],
+      // "ho-ly night"
       [
         { string:2, fret:3, beat:1, noteName:'D4', duration:'dq' },
         { string:2, fret:3, beat:2, noteName:'D4', duration:'e' },
         { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
       ],
       [
-        { string:2, fret:0, beat:1, noteName:'B3', duration:'h.' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'dh' },
       ],
+      // "all is calm"
       [
         { string:1, fret:3, beat:1, noteName:'G4', duration:'dq' },
         { string:1, fret:5, beat:2, noteName:'A4', duration:'e' },
@@ -431,78 +444,85 @@ const SONGS = [
         { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
         { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
       ],
+      // "all is bright"
       [
         { string:2, fret:3, beat:1, noteName:'D4', duration:'dq' },
         { string:2, fret:3, beat:2, noteName:'D4', duration:'e' },
         { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
       ],
       [
-        { string:2, fret:0, beat:1, noteName:'B3', duration:'h.' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'dh' },
       ],
+      // "Glo-ries stream" — D4 = str2 f3 (NOT str3 f2)
       [
-        { string:3, fret:2, beat:1, noteName:'D4', duration:'dq' },
-        { string:3, fret:2, beat:2, noteName:'D4', duration:'e' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'dq' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'e' },
         { string:1, fret:1, beat:3, noteName:'F4', duration:'q' },
       ],
       [
-        { string:1, fret:3, beat:1, noteName:'D4', duration:'h.' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'dh' },
       ],
+      // "from heav-en a-far"
       [
         { string:2, fret:0, beat:1, noteName:'B3', duration:'dq' },
         { string:2, fret:0, beat:2, noteName:'B3', duration:'e' },
         { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
       [
-        { string:2, fret:0, beat:1, noteName:'B3', duration:'h.' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'dh' },
       ],
+      // "heav-en-ly hosts"
       [
         { string:1, fret:3, beat:1, noteName:'G4', duration:'dq' },
         { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
         { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
       [
-        { string:3, fret:2, beat:1, noteName:'D4', duration:'h.' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'dh' },
       ],
+      // "sing Al-le-lu-ia"
       [
         { string:1, fret:3, beat:1, noteName:'G4', duration:'dq' },
         { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
         { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
       [
-        { string:3, fret:2, beat:1, noteName:'D4', duration:'h.' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'dh' },
       ],
+      // "Christ the Sav-iour is born"
       [
         { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
         { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
       ],
       [
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'h.' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'dh' },
       ],
       [
         { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
         { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
       ],
       [
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'h.' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'dh' },
       ],
       [
         { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
         { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
       ],
       [
-        { string:2, fret:0, beat:1, noteName:'B3', duration:'h.' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'dh' },
       ],
+      // "Christ the Lord"
       [
         { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
         { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
       ],
       [
-        { string:3, fret:2, beat:1, noteName:'D4', duration:'h.' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'dh' },
       ],
     ],
   },
 
-  // Mary Had a Little Lamb — 4/4, key of E
+  // Mary Had a Little Lamb — 4/4, key of C, 8 measures
   {
     id: 'mary_lamb', title: 'Mary Had a Little Lamb', genre: 'Children',
     difficulty: 'Beginner', durationEst: '0:50', pro: true, bpm: 100,
@@ -534,11 +554,11 @@ const SONGS = [
         { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
         { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
       ],
+      // M6: E E E(half) — matches M2 rhythm
       [
         { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
         { string:1, fret:0, beat:2, noteName:'E4', duration:'q' },
-        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
-        { string:1, fret:0, beat:4, noteName:'E4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'h' },
       ],
       [
         { string:2, fret:3, beat:1, noteName:'D4', duration:'q' },
@@ -552,7 +572,7 @@ const SONGS = [
     ],
   },
 
-  // Scarborough Fair — 3/4, key of Am (natural minor)
+  // Scarborough Fair — 3/4, key of Am (natural minor), 16 measures
   {
     id: 'scarborough', title: 'Scarborough Fair', genre: 'Folk',
     difficulty: 'Intermediate', durationEst: '1:30', pro: true, bpm: 72,
@@ -633,7 +653,7 @@ const SONGS = [
     ],
   },
 
-  // House of the Rising Sun — 6/8 feel, key of Am, played as 4/4 arpeggios
+  // House of the Rising Sun — 6/8 feel, key of Am, played as 4/4 arpeggios, 8 measures
   {
     id: 'rising_sun', title: 'House of the Rising Sun', genre: 'Blues',
     difficulty: 'Intermediate', durationEst: '1:30', pro: true, bpm: 76,
@@ -729,7 +749,7 @@ const SONGS = [
     ],
   },
 
-  // Greensleeves — 3/4, key of Am
+  // Greensleeves — 3/4, key of Am, 20 measures
   {
     id: 'greensleeves', title: 'Greensleeves', genre: 'Folk',
     difficulty: 'Intermediate', durationEst: '1:30', pro: true, bpm: 72,
@@ -833,7 +853,7 @@ const SONGS = [
     ],
   },
 
-  // When the Saints Go Marching In — 4/4, key of G
+  // When the Saints Go Marching In — 4/4, key of G, 10 measures
   {
     id: 'saints', title: 'When the Saints Go Marching In', genre: 'Hymn',
     difficulty: 'Beginner', durationEst: '1:00', pro: true, bpm: 110,
@@ -888,7 +908,7 @@ const SONGS = [
     ],
   },
 
-  // Danny Boy — 4/4, key of G
+  // Danny Boy — 4/4, key of G, 12 measures
   {
     id: 'danny_boy', title: 'Danny Boy', genre: 'Folk',
     difficulty: 'Intermediate', durationEst: '1:45', pro: true, bpm: 66,
@@ -960,7 +980,7 @@ const SONGS = [
     ],
   },
 
-  // Wildwood Flower — 4/4, key of G (Carter Family style)
+  // Wildwood Flower — 4/4, key of G (Carter Family style), 8 measures
   {
     id: 'wildwood', title: 'Wildwood Flower', genre: 'Folk',
     difficulty: 'Intermediate', durationEst: '1:10', pro: true, bpm: 112,
@@ -1015,7 +1035,7 @@ const SONGS = [
     ],
   },
 
-  // Blackbird (simplified) — 3/4 feel, key of G
+  // Blackbird (simplified) — 4/4, key of G, 11 measures
   {
     id: 'blackbird', title: 'Blackbird (simplified)', genre: 'Folk',
     difficulty: 'Intermediate', durationEst: '1:30', pro: true, bpm: 80,
@@ -1088,7 +1108,7 @@ const SONGS = [
     ],
   },
 
-  // Simple Gifts (Shaker Hymn) — 4/4, key of G
+  // Simple Gifts (Shaker Hymn) — 4/4, key of G, 14 measures
   {
     id: 'simple_gifts', title: 'Simple Gifts', genre: 'Hymn',
     difficulty: 'Beginner', durationEst: '1:00', pro: true, bpm: 92,
@@ -1178,7 +1198,7 @@ const SONGS = [
     ],
   },
 
-  // Skip to My Lou — 4/4, key of G
+  // Skip to My Lou — 4/4, key of G, 8 measures
   {
     id: 'skip_lou', title: 'Skip to My Lou', genre: 'Folk',
     difficulty: 'Beginner', durationEst: '0:50', pro: true, bpm: 116,
@@ -1228,7 +1248,7 @@ const SONGS = [
     ],
   },
 
-  // Red River Valley — 4/4, key of G
+  // Red River Valley — 4/4, key of G, 15 measures
   {
     id: 'red_river', title: 'Red River Valley', genre: 'Folk',
     difficulty: 'Beginner', durationEst: '1:15', pro: true, bpm: 82,
@@ -1321,7 +1341,7 @@ const SONGS = [
     ],
   },
 
-  // Cripple Creek — Bluegrass 4/4, key of A
+  // Cripple Creek — Bluegrass 4/4, key of A, ~8 measures
   {
     id: 'cripple', title: 'Cripple Creek', genre: 'Bluegrass',
     difficulty: 'Intermediate', durationEst: '0:55', pro: true, bpm: 132,
@@ -1375,7 +1395,7 @@ const SONGS = [
         { string:1, fret:1, beat:2, noteName:'F4', duration:'e' },
         { string:1, fret:0, beat:2, noteName:'E4', duration:'e' },
         { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
-        { string:2, fret:1, beat:4, noteName:'C4', duration:'h' },
+        { string:2, fret:1, beat:4, noteName:'C4', duration:'q' },
       ],
       [
         { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
@@ -1393,7 +1413,7 @@ const SONGS = [
     ],
   },
 
-  // Shady Grove — 3/4, key of Am/Dorian
+  // Shady Grove — 3/4, key of Am/Dorian, 12 measures
   {
     id: 'shady', title: 'Shady Grove', genre: 'Bluegrass',
     difficulty: 'Intermediate', durationEst: '1:05', pro: true, bpm: 100,
@@ -1455,7 +1475,7 @@ const SONGS = [
     ],
   },
 
-  // Will the Circle Be Unbroken — 3/4, key of G
+  // Will the Circle Be Unbroken — 3/4, key of G, 12 measures
   {
     id: 'circle', title: 'Will the Circle Be Unbroken', genre: 'Gospel / Bluegrass',
     difficulty: 'Intermediate', durationEst: '1:15', pro: true, bpm: 96,
