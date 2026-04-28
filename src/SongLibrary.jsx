@@ -1062,7 +1062,9 @@ const SONGS = [
     ],
   },
 
-  // Blackbird (simplified) — 4/4, key of G, 11 measures  ·  Range: G3–B4 (fingerpicking: G3 bass, melody C4–B4; B in m10 = B3 descent)
+  // Blackbird (simplified) — 4/4, key of G, 11 measures  ·  Range: G3–B4
+  //   Fingerpicking: G3 in m1 is the intentional bass note (single instance,
+  //   structural). All melody B's = B4. No cross-octave bug.
   // First 8 notes: G3 D4 G4 D4 G4 D4 G4 | G4 A4 G4 A4...
   {
     id: 'blackbird', title: 'Blackbird (simplified)', genre: 'Folk',
@@ -1126,8 +1128,8 @@ const SONGS = [
         { string:2, fret:1, beat:4, noteName:'C4', duration:'q' },
       ],
       [
-        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
-        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+        { string:1, fret:7, beat:1, noteName:'B4', duration:'h' },
+        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
         { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
       ],
       [
