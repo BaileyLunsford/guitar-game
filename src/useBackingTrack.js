@@ -313,21 +313,21 @@ export default function useBackingTrack(genre, bpm, drumsOn = true, bassOn = tru
       }
 
       // ── Chord strumming — same tick, same clock ──────────────────────────
+      // Chord advances in measure-sized increments (mDur = beats * 60 / bpm),
+      // anchored to the same fromTime as the drums. Even when disabled, the
+      // clock keeps ticking in mDur steps so re-enabling mid-play picks up
+      // cleanly on beat 1 of the next measure regardless of time signature.
       const cEnabled  = r.current.chordEnabled;
       const cMeasures = r.current.chordMeasures;
+      const beatsPerMeasure = parseInt((r.current.chordTimeSig || '4/4').split('/')[0]) || 4;
+      const mDur = (beatsPerMeasure * 60) / r.current.bpm;
 
-      if (!cEnabled || !cMeasures || cMeasures.length === 0) {
-        // Advance chordNextTime silently so enabling mid-play doesn't burst
-        if (r.current.chordNextTime < now) r.current.chordNextTime = now;
-      } else {
-        const beatsPerMeasure = parseInt((r.current.chordTimeSig || '4/4').split('/')[0]) || 4;
-        const mDur = (beatsPerMeasure * 60) / r.current.bpm;
+      while (r.current.chordNextTime < now + LOOKAHEAD_S) {
+        const t   = r.current.chordNextTime;
 
-        while (r.current.chordNextTime < now + LOOKAHEAD_S) {
-          const t   = r.current.chordNextTime;
-          const idx = r.current.chordMeasureIdx % cMeasures.length;
+        if (cEnabled && cMeasures && cMeasures.length > 0) {
+          const idx   = r.current.chordMeasureIdx % cMeasures.length;
           const notes = cMeasures[idx];
-
           if (notes && notes.length > 0) {
             try {
               scheduleChordStrum(ctx, notes, r.current.chordStrumPatId, r.current.bpm, t);
@@ -335,16 +335,15 @@ export default function useBackingTrack(genre, bpm, drumsOn = true, bassOn = tru
               console.warn('[useBackingTrack] chord strum error:', e.message);
             }
           }
-
           const cb = r.current.chordOnChange;
           if (cb) {
             const capturedIdx = idx;
             setTimeout(() => cb(capturedIdx), Math.max(0, (t - ctx.currentTime) * 1000));
           }
-
-          r.current.chordNextTime   += mDur;
-          r.current.chordMeasureIdx++;
         }
+
+        r.current.chordNextTime   += mDur;
+        r.current.chordMeasureIdx++;
       }
     }
 
