@@ -182,64 +182,100 @@ const SONGS = [
     ],
   },
 
-  // Amazing Grace — 3/4, key of G, 10 measures (pickup + 9)  ·  Range: G3–E4 (low)
-  // Vocal melody only — h+q rhythm pattern, no chord arpeggios.
-  // First 8 notes: G3 (pickup) | G3 B3 | D4 B3 | G3 (rest) | B3 D4 | E4 ...
-  // Pickup G3(q) | M1 G3(h) B3(q) | M2 D4(h) B3(q) | M3 G3(h) rest(q) |
-  // M4 B3(h) D4(q) | M5 E4(h) D4(q) | M6 B3(h) G3(q) |
-  // M7 G3(h) B3(q) | M8 D4(h) B3(q) | M9 G3(h) rest(q)
-  // G3 = str3 f0; B3 = str2 f0; D4 = str2 f3; E4 = str1 f0
+  // Amazing Grace (Alan Jackson arrangement) — 3/4, key of D, 16 measures (pickup + 15)
+  //   Range: A3–A4 · BPM 60 · Single-line vocal melody (no chord tones, no arpeggios)
+  // First 8 notes: A3 B3 | D4 F#4 | F#4 E4 | D4 B3 ...
+  // Verse: "(Ah-Ah) Ma-zing grace, how sweet the sound, that saved a wretch
+  //         like me, I once was lost but now I'm found, was blind but now I see"
+  // Pickup A3(q) B3(q) | M1 D4(h) F#4(q) | M2 F#4(h) E4(q) | M3 D4(h) B3(q) | M4 A3(dh) |
+  // M5 A3(q) D4(h) | M6 F#4(h) F#4(q) | M7 E4(q) A3(h) |
+  // M8 F#4(q) A4(h) | M9 A4(q) F#4(h) | M10 D4(q) F#4(h) | M11 E4(q) D4(h) |
+  // M12 B3(q) A3(h) | M13 A3(q) D4(h) | M14 F#4(h) F#4(q) | M15 E4(h) D4(q)
+  // (M14-M15 = "I (melisma) see" — F#-F#-E-D descending cadence on "see")
+  // A3 = str3 f2; B3 = str2 f0; D4 = str2 f3; E4 = str1 f0; F#4 = str1 f2; A4 = str1 f5
   {
     id: 'amazing', title: 'Amazing Grace', genre: 'Hymn',
-    difficulty: 'Beginner', durationEst: '0:35', pro: false, bpm: 66,
+    difficulty: 'Beginner', durationEst: '0:50', pro: false, bpm: 60,
     measures: [
-      // pickup (1 beat): "A-"
-      [{ string:3, fret:0, beat:3, noteName:'G3', duration:'q' }],
-
-      // m1 "Ma-zing... grace"
+      // pickup (2 beats): "Ah Ah"
       [
-        { string:3, fret:0, beat:1, noteName:'G3', duration:'h' },
+        { string:3, fret:2, beat:2, noteName:'A3', duration:'q' },
         { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
-      // m2 "how... sweet"
+
+      // m1 "Ma- zing"
+      [
+        { string:2, fret:3, beat:1, noteName:'D4',  duration:'h' },
+        { string:1, fret:2, beat:3, noteName:'F#4', duration:'q' },
+      ],
+      // m2 "grace how"
+      [
+        { string:1, fret:2, beat:1, noteName:'F#4', duration:'h' },
+        { string:1, fret:0, beat:3, noteName:'E4',  duration:'q' },
+      ],
+      // m3 "sweet the"
       [
         { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
         { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
-      // m3 "sound"
+      // m4 "sound" (held)
       [
-        { string:3, fret:0, beat:1, noteName:'G3', duration:'h' },
-        { beat:3, noteName:'rest', duration:'qr' },
+        { string:3, fret:2, beat:1, noteName:'A3', duration:'dh' },
       ],
-      // m4 "that... saved"
+      // m5 "that saved"
       [
-        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:3, fret:2, beat:1, noteName:'A3', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'h' },
       ],
-      // m5 "wretch... like"
+      // m6 "a wretch"
+      [
+        { string:1, fret:2, beat:1, noteName:'F#4', duration:'h' },
+        { string:1, fret:2, beat:3, noteName:'F#4', duration:'q' },
+      ],
+      // m7 "like me"
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:3, fret:2, beat:2, noteName:'A3', duration:'h' },
+      ],
+      // m8 "I once"
+      [
+        { string:1, fret:2, beat:1, noteName:'F#4', duration:'q' },
+        { string:1, fret:5, beat:2, noteName:'A4',  duration:'h' },
+      ],
+      // m9 "was lost"
+      [
+        { string:1, fret:5, beat:1, noteName:'A4',  duration:'q' },
+        { string:1, fret:2, beat:2, noteName:'F#4', duration:'h' },
+      ],
+      // m10 "but now"
+      [
+        { string:2, fret:3, beat:1, noteName:'D4',  duration:'q' },
+        { string:1, fret:2, beat:2, noteName:'F#4', duration:'h' },
+      ],
+      // m11 "I'm found"
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'h' },
+      ],
+      // m12 "was blind"
+      [
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'q' },
+        { string:3, fret:2, beat:2, noteName:'A3', duration:'h' },
+      ],
+      // m13 "but now"
+      [
+        { string:3, fret:2, beat:1, noteName:'A3', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'h' },
+      ],
+      // m14 "I" (melisma F#-F#)
+      [
+        { string:1, fret:2, beat:1, noteName:'F#4', duration:'h' },
+        { string:1, fret:2, beat:3, noteName:'F#4', duration:'q' },
+      ],
+      // m15 "see" (descending cadence E-D)
       [
         { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
         { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
-      ],
-      // m6 "me"
-      [
-        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
-        { string:3, fret:0, beat:3, noteName:'G3', duration:'q' },
-      ],
-      // m7 "I... once" (= m1)
-      [
-        { string:3, fret:0, beat:1, noteName:'G3', duration:'h' },
-        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
-      ],
-      // m8 "was... lost" (= m2)
-      [
-        { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
-        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
-      ],
-      // m9 "found" (= m3)
-      [
-        { string:3, fret:0, beat:1, noteName:'G3', duration:'h' },
-        { beat:3, noteName:'rest', duration:'qr' },
       ],
     ],
   },
