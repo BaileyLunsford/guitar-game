@@ -182,118 +182,118 @@ const SONGS = [
     ],
   },
 
-  // Amazing Grace — 3/4, key of G, 17 measures (pickup + 16)  ·  Range: C4–D5 (mid)
-  // First 8 notes: G4(pickup) | G4 B4 D5 | D5 B4 G4 | G4 ...   (matches user spec)
-  // Verse pattern repeats verbatim: pickup G4 | G4 B4 D5 | D5 B4 G4 | G4 A4 G4 |
-  //   E4 C4 E4 | G4 G4 B4 | D5 B4 G4 | B4 A4 | G4(dh)
-  // G4 = str1 f3; A4 = str1 f5; B4 = str1 f7; C4 = str2 f1; D5 = str1 f10; E4 = str1 f0
+  // Amazing Grace — 3/4, key of G, 18 measures (pickup + 17)  ·  Range: G3–E4 (low)
+  // First 8 notes: G3 G3 B3 D4 D4 B3 G3 G3
+  // Pickup G3 | M1 G3 B3 D4 | M2 D4(h) B3 | M3 G3(h) G3 | M4 B3 D4 D4 |
+  // M5 E4(h) D4 | M6 B3(h) G3 | M7 G3 B3 D4 | M8 E4(h) D4 | M9 B3(h) G3 |
+  // M10 G3 B3 D4 | M11 D4(h) B3 | M12 G3(h) G3 | M13 B3 D4 D4 | M14 E4(h) D4 |
+  // M15 B3(h) G3 | M16 G3 B3 D4 | M17 G3(h) rest(q)
+  // G3 = str3 f0; B3 = str2 f0; D4 = str2 f3; E4 = str1 f0
   {
     id: 'amazing', title: 'Amazing Grace', genre: 'Hymn',
     difficulty: 'Beginner', durationEst: '1:20', pro: false, bpm: 66,
     measures: [
       // pickup (1 beat): "A-"
-      [{ string:1, fret:3, beat:3, noteName:'G4', duration:'q' }],
+      [{ string:3, fret:0, beat:3, noteName:'G3', duration:'q' }],
 
-      // ── Verse 1: "Amazing grace, how sweet the sound, that saved a wretch like me" ──
       // m1 "A-mazing grace"
       [
-        { string:1, fret:3,  beat:1, noteName:'G4', duration:'q' },
-        { string:1, fret:7,  beat:2, noteName:'B4', duration:'q' },
-        { string:1, fret:10, beat:3, noteName:'D5', duration:'q' },
+        { string:3, fret:0, beat:1, noteName:'G3', duration:'q' },
+        { string:2, fret:0, beat:2, noteName:'B3', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
       // m2 "how sweet the"
       [
-        { string:1, fret:10, beat:1, noteName:'D5', duration:'q' },
-        { string:1, fret:7,  beat:2, noteName:'B4', duration:'q' },
-        { string:1, fret:3,  beat:3, noteName:'G4', duration:'q' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
-      // m3 "sound (extension)"
+      // m3 "sound"
       [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
-        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:3, fret:0, beat:1, noteName:'G3', duration:'h' },
+        { string:3, fret:0, beat:3, noteName:'G3', duration:'q' },
       ],
-      // m4 "that"
+      // m4 "that saved a"
       [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
-        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
-        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
-      // m5 "saved a wretch"
+      // m5 "wretch like"
       [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
-        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
-      // m6 "like me (turn)"
+      // m6 "me"
       [
-        { string:1, fret:10, beat:1, noteName:'D5', duration:'q' },
-        { string:1, fret:7,  beat:2, noteName:'B4', duration:'q' },
-        { string:1, fret:3,  beat:3, noteName:'G4', duration:'q' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
+        { string:3, fret:0, beat:3, noteName:'G3', duration:'q' },
       ],
-      // m7 "me" — B held + A pickup-into-final
+      // m7 "I once was"
       [
-        { string:1, fret:7, beat:1, noteName:'B4', duration:'h' },
-        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:3, fret:0, beat:1, noteName:'G3', duration:'q' },
+        { string:2, fret:0, beat:2, noteName:'B3', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
-      // m8 "(hold)" — full-measure G4
+      // m8 "lost but now"
       [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'dh' },
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
-
-      // ── Verse 2: "I once was lost, but now am found, was blind, but now I see" ──
-      // m9 "I-once was"
+      // m9 "am found"
       [
-        { string:1, fret:3,  beat:1, noteName:'G4', duration:'q' },
-        { string:1, fret:7,  beat:2, noteName:'B4', duration:'q' },
-        { string:1, fret:10, beat:3, noteName:'D5', duration:'q' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
+        { string:3, fret:0, beat:3, noteName:'G3', duration:'q' },
       ],
-      // m10 "lost but"
+      // m10 "Was blind"
       [
-        { string:1, fret:10, beat:1, noteName:'D5', duration:'q' },
-        { string:1, fret:7,  beat:2, noteName:'B4', duration:'q' },
-        { string:1, fret:3,  beat:3, noteName:'G4', duration:'q' },
+        { string:3, fret:0, beat:1, noteName:'G3', duration:'q' },
+        { string:2, fret:0, beat:2, noteName:'B3', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
-      // m11 "now (extension)"
+      // m11 "but now"
       [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
-        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+        { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
-      // m12 "am found"
+      // m12 "I see"
       [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
-        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
-        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+        { string:3, fret:0, beat:1, noteName:'G3', duration:'h' },
+        { string:3, fret:0, beat:3, noteName:'G3', duration:'q' },
       ],
-      // m13 "was blind"
+      // m13 (extension)
       [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
-        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'q' },
+        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
-      // m14 "but now I"
+      // m14
       [
-        { string:1, fret:10, beat:1, noteName:'D5', duration:'q' },
-        { string:1, fret:7,  beat:2, noteName:'B4', duration:'q' },
-        { string:1, fret:3,  beat:3, noteName:'G4', duration:'q' },
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
-      // m15 "see" — B held + A pickup-into-final
+      // m15
       [
-        { string:1, fret:7, beat:1, noteName:'B4', duration:'h' },
-        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
+        { string:3, fret:0, beat:3, noteName:'G3', duration:'q' },
       ],
-      // m16 "(final hold)" — full-measure G4
+      // m16
       [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'dh' },
+        { string:3, fret:0, beat:1, noteName:'G3', duration:'q' },
+        { string:2, fret:0, beat:2, noteName:'B3', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+      ],
+      // m17 final hold
+      [
+        { string:3, fret:0, beat:1, noteName:'G3', duration:'h' },
+        { beat:3, noteName:'rest', duration:'qr' },
       ],
     ],
   },
 
   // ─────────────────────────── PRO ────────────────────────────────────────
-  // Happy Birthday — 3/4, key of C, 9 measures (pickup + 8)  ·  Range: C4–B4 (mid)
-  // First 8 notes: G4 G4 | A4 G4 C4 | B4 G4 G4 ...
-  // Melody: G G | A G C | B(dh) | A G D | C(dh) | G E C | B D A | G G F(e)E(e) | C D C  (all B = B4)
+  // Happy Birthday — 3/4, key of C, 9 measures (pickup + 8)  ·  Range: B3–A4 (low/mid)
+  // First 8 notes: G4 G4 | A4 G4 C4 | B3 G4 G4 ...
+  // Melody: G G | A G C | B(dh) | A G D | C(dh) | G E C | B D A | G G F(e)E(e) | C D C  (all B = B3)
   {
     id: 'happy_birthday', title: 'Happy Birthday', genre: 'Children',
     difficulty: 'Beginner', durationEst: '0:45', pro: true, bpm: 88,
@@ -311,7 +311,7 @@ const SONGS = [
       ],
       // "you" + pickup "Hap-py" (3 beats: B held 2 + e e)
       [
-        { string:1, fret:7, beat:1, noteName:'B4', duration:'h' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
         { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
         { string:1, fret:3, beat:3, noteName:'G4', duration:'e' },
       ],
@@ -335,7 +335,7 @@ const SONGS = [
       ],
       // "[name]" + pickup "Hap-py"
       [
-        { string:1, fret:7, beat:1, noteName:'B4', duration:'q' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'q' },
         { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
         { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
       ],
@@ -428,9 +428,9 @@ const SONGS = [
     ],
   },
 
-  // Silent Night — 3/4, key of G, 24 measures  ·  Range: C4–A4 (mid; all B = B4)
-  // First 8 notes: G4 A4 G4 | E4 E4 | D4 D4 C4 | B4...
-  // D4 = str2 f3; G4 = str1 f3; E4 = str1 f0; B4 = str1 f7; C4 = str2 f1; F4 = str1 f1
+  // Silent Night — 3/4, key of G, 24 measures  ·  Range: B3–A4 (low/mid; all B = B3)
+  // First 8 notes: G4 A4 G4 | E4 E4 | D4 D4 C4 | B3...
+  // D4 = str2 f3; G4 = str1 f3; E4 = str1 f0; B3 = str2 f0; C4 = str2 f1; F4 = str1 f1
   {
     id: 'silent_night', title: 'Silent Night', genre: 'Hymn',
     difficulty: 'Beginner', durationEst: '1:30', pro: true, bpm: 60,
@@ -452,7 +452,7 @@ const SONGS = [
         { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
       ],
       [
-        { string:1, fret:7, beat:1, noteName:'B4', duration:'dh' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'dh' },
       ],
       // "all is calm"
       [
@@ -471,7 +471,7 @@ const SONGS = [
         { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
       ],
       [
-        { string:1, fret:7, beat:1, noteName:'B4', duration:'dh' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'dh' },
       ],
       // "Glo-ries stream" — D4 = str2 f3 (NOT str3 f2)
       [
@@ -484,18 +484,18 @@ const SONGS = [
       ],
       // "from heav-en a-far"
       [
-        { string:1, fret:7, beat:1, noteName:'B4', duration:'dq' },
-        { string:1, fret:7, beat:2, noteName:'B4', duration:'e' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'dq' },
+        { string:2, fret:0, beat:2, noteName:'B3', duration:'e' },
         { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
       [
-        { string:1, fret:7, beat:1, noteName:'B4', duration:'dh' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'dh' },
       ],
       // "heav-en-ly hosts"
       [
         { string:1, fret:3, beat:1, noteName:'G4', duration:'dq' },
         { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
       [
         { string:2, fret:3, beat:1, noteName:'D4', duration:'dh' },
@@ -504,7 +504,7 @@ const SONGS = [
       [
         { string:1, fret:3, beat:1, noteName:'G4', duration:'dq' },
         { string:1, fret:3, beat:2, noteName:'G4', duration:'e' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
       [
         { string:2, fret:3, beat:1, noteName:'D4', duration:'dh' },
@@ -529,7 +529,7 @@ const SONGS = [
         { string:2, fret:1, beat:3, noteName:'C4', duration:'q' },
       ],
       [
-        { string:1, fret:7, beat:1, noteName:'B4', duration:'dh' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'dh' },
       ],
       // "Christ the Lord"
       [
@@ -772,8 +772,8 @@ const SONGS = [
     ],
   },
 
-  // Greensleeves — 3/4, key of Am, 20 measures  ·  Range: C4–A4 (mid; all B = B4)
-  // First 8 notes: A4 C4 D4 | E4 D4 | C4 B4 B4 | A4 A4...
+  // Greensleeves — 3/4, key of Am, 20 measures  ·  Range: B3–A4 (low/mid; all B = B3)
+  // First 8 notes: A4 C4 D4 | E4 D4 | C4 B3 B3 | A4 A4...
   {
     id: 'greensleeves', title: 'Greensleeves', genre: 'Folk',
     difficulty: 'Intermediate', durationEst: '1:30', pro: true, bpm: 72,
@@ -791,8 +791,8 @@ const SONGS = [
       // "you do me wrong"
       [
         { string:2, fret:1, beat:1, noteName:'C4', duration:'dq' },
-        { string:1, fret:7, beat:2, noteName:'B4', duration:'e' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
+        { string:2, fret:0, beat:2, noteName:'B3', duration:'e' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
       [
         { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
@@ -849,8 +849,8 @@ const SONGS = [
       ],
       [
         { string:2, fret:1, beat:1, noteName:'C4', duration:'dq' },
-        { string:1, fret:7, beat:2, noteName:'B4', duration:'e' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
+        { string:2, fret:0, beat:2, noteName:'B3', duration:'e' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
       [
         { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
@@ -1006,14 +1006,14 @@ const SONGS = [
     ],
   },
 
-  // Wildwood Flower — 4/4, key of G (Carter Family style), 8 measures  ·  Range: C4–A4 (mid; all B = B4)
-  // First 8 notes: B4 C4 D4 E4 F4 G4 | G4 G4 A4 G4...
+  // Wildwood Flower — 4/4, key of G (Carter Family style), 8 measures  ·  Range: B3–A4 (low/mid; all B = B3)
+  // First 8 notes: B3 C4 D4 E4 F4 G4 | G4 G4 A4 G4...
   {
     id: 'wildwood', title: 'Wildwood Flower', genre: 'Folk',
     difficulty: 'Intermediate', durationEst: '1:10', pro: true, bpm: 112,
     measures: [
       [
-        { string:1, fret:7, beat:1, noteName:'B4', duration:'e' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'e' },
         { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
         { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
         { string:1, fret:0, beat:3, noteName:'E4', duration:'e' },
@@ -1031,7 +1031,7 @@ const SONGS = [
         { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
         { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
         { string:2, fret:1, beat:3, noteName:'C4', duration:'e' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'e' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'e' },
         { string:2, fret:1, beat:4, noteName:'C4', duration:'q' },
       ],
       [
@@ -1062,7 +1062,7 @@ const SONGS = [
     ],
   },
 
-  // Blackbird (simplified) — 4/4, key of G, 11 measures  ·  Range: G3–B4 (fingerpicking: G3 bass, melody C4–B4)
+  // Blackbird (simplified) — 4/4, key of G, 11 measures  ·  Range: G3–B4 (fingerpicking: G3 bass, melody C4–B4; B in m10 = B3 descent)
   // First 8 notes: G3 D4 G4 D4 G4 D4 G4 | G4 A4 G4 A4...
   {
     id: 'blackbird', title: 'Blackbird (simplified)', genre: 'Folk',
@@ -1126,8 +1126,8 @@ const SONGS = [
         { string:2, fret:1, beat:4, noteName:'C4', duration:'q' },
       ],
       [
-        { string:1, fret:7, beat:1, noteName:'B4', duration:'h' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
         { string:2, fret:3, beat:4, noteName:'D4', duration:'q' },
       ],
       [
