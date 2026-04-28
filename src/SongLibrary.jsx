@@ -232,10 +232,10 @@ const SONGS = [
         { string:1, fret:2, beat:1, noteName:'F#4', duration:'h' },
         { string:1, fret:2, beat:3, noteName:'F#4', duration:'q' },
       ],
-      // m7 "like me"
+      // m7 "like me" — "me" lands on A4 (dominant climax of phrase)
       [
         { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
-        { string:3, fret:2, beat:2, noteName:'A3', duration:'h' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'h' },
       ],
       // m8 "I once"
       [
