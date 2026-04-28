@@ -182,8 +182,10 @@ const SONGS = [
     ],
   },
 
-  // Amazing Grace — 3/4, key of G, 19 measures (pickup + 18)  ·  Range: C4–D5 (mid)
-  // First 8 notes: G4(pickup) | G4 B4 | D5 D5 B4 | D5 G4 ...
+  // Amazing Grace — 3/4, key of G, 17 measures (pickup + 16)  ·  Range: C4–D5 (mid)
+  // First 8 notes: G4(pickup) | G4 B4 D5 | D5 B4 G4 | G4 ...   (matches user spec)
+  // Verse pattern repeats verbatim: pickup G4 | G4 B4 D5 | D5 B4 G4 | G4 A4 G4 |
+  //   E4 C4 E4 | G4 G4 B4 | D5 B4 G4 | B4 A4 | G4(dh)
   // G4 = str1 f3; A4 = str1 f5; B4 = str1 f7; C4 = str2 f1; D5 = str1 f10; E4 = str1 f0
   {
     id: 'amazing', title: 'Amazing Grace', genre: 'Hymn',
@@ -191,87 +193,99 @@ const SONGS = [
     measures: [
       // pickup (1 beat): "A-"
       [{ string:1, fret:3, beat:3, noteName:'G4', duration:'q' }],
-      // "Amazing grace, how sweet the sound"
+
+      // ── Verse 1: "Amazing grace, how sweet the sound, that saved a wretch like me" ──
+      // m1 "A-mazing grace"
       [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
-      ],
-      [
-        { string:1, fret:10, beat:1, noteName:'D5', duration:'dq' },
-        { string:1, fret:10, beat:2, noteName:'D5', duration:'e' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
-      ],
-      [
-        { string:1, fret:10, beat:1, noteName:'D5', duration:'h' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
-      ],
-      [
-        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
-      ],
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
-      ],
-      [
-        { string:1, fret:10, beat:1, noteName:'D5', duration:'dq' },
-        { string:1, fret:10, beat:2, noteName:'D5', duration:'e' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
-      ],
-      // "That saved a wretch like me"
-      [
-        { string:1, fret:7, beat:1, noteName:'B4', duration:'h' },
+        { string:1, fret:3,  beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:7,  beat:2, noteName:'B4', duration:'q' },
         { string:1, fret:10, beat:3, noteName:'D5', duration:'q' },
       ],
+      // m2 "how sweet the"
       [
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'dq' },
-        { string:2, fret:1, beat:2, noteName:'C4', duration:'e' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
+        { string:1, fret:10, beat:1, noteName:'D5', duration:'q' },
+        { string:1, fret:7,  beat:2, noteName:'B4', duration:'q' },
+        { string:1, fret:3,  beat:3, noteName:'G4', duration:'q' },
       ],
+      // m3 "sound (extension)"
       [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
         { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
       ],
-      // "I once was lost but now am found"
+      // m4 "that"
       [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+      ],
+      // m5 "saved a wretch"
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
         { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
       ],
+      // m6 "like me (turn)"
       [
-        { string:1, fret:10, beat:1, noteName:'D5', duration:'dq' },
-        { string:1, fret:10, beat:2, noteName:'D5', duration:'e' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
+        { string:1, fret:10, beat:1, noteName:'D5', duration:'q' },
+        { string:1, fret:7,  beat:2, noteName:'B4', duration:'q' },
+        { string:1, fret:3,  beat:3, noteName:'G4', duration:'q' },
       ],
-      [
-        { string:1, fret:10, beat:1, noteName:'D5', duration:'h' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
-      ],
-      [
-        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
-      ],
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
-      ],
-      [
-        { string:1, fret:10, beat:1, noteName:'D5', duration:'dq' },
-        { string:1, fret:10, beat:2, noteName:'D5', duration:'e' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
-      ],
-      // "Was blind but now I see"
+      // m7 "me" — B held + A pickup-into-final
       [
         { string:1, fret:7, beat:1, noteName:'B4', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+      ],
+      // m8 "(hold)" — full-measure G4
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'dh' },
+      ],
+
+      // ── Verse 2: "I once was lost, but now am found, was blind, but now I see" ──
+      // m9 "I-once was"
+      [
+        { string:1, fret:3,  beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:7,  beat:2, noteName:'B4', duration:'q' },
         { string:1, fret:10, beat:3, noteName:'D5', duration:'q' },
       ],
+      // m10 "lost but"
       [
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'dq' },
-        { string:2, fret:1, beat:2, noteName:'C4', duration:'e' },
+        { string:1, fret:10, beat:1, noteName:'D5', duration:'q' },
+        { string:1, fret:7,  beat:2, noteName:'B4', duration:'q' },
+        { string:1, fret:3,  beat:3, noteName:'G4', duration:'q' },
+      ],
+      // m11 "now (extension)"
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:5, beat:2, noteName:'A4', duration:'q' },
+        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
+      ],
+      // m12 "am found"
+      [
+        { string:1, fret:0, beat:1, noteName:'E4', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
+        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
+      ],
+      // m13 "was blind"
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
+        { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
         { string:1, fret:7, beat:3, noteName:'B4', duration:'q' },
       ],
+      // m14 "but now I"
       [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'h' },
-        { beat:3, noteName:'rest', duration:'qr' },
+        { string:1, fret:10, beat:1, noteName:'D5', duration:'q' },
+        { string:1, fret:7,  beat:2, noteName:'B4', duration:'q' },
+        { string:1, fret:3,  beat:3, noteName:'G4', duration:'q' },
+      ],
+      // m15 "see" — B held + A pickup-into-final
+      [
+        { string:1, fret:7, beat:1, noteName:'B4', duration:'h' },
+        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
+      ],
+      // m16 "(final hold)" — full-measure G4
+      [
+        { string:1, fret:3, beat:1, noteName:'G4', duration:'dh' },
       ],
     ],
   },
