@@ -720,106 +720,193 @@ const SONGS = [
     ],
   },
 
-  // Greensleeves (full verse + chorus from The Session setting 15008)
-  // 3/4 (eighth-note feel), key of Am, 12 measures, range E4–G5
-  // Source: https://thesession.org/tunes/1598#setting15008 (theme + var. 2)
-  // First 8 notes: C5 D5 E5 E5 | D5 B4 G4 | A4 B4 ...
-  // M1-M4 verse: "Alas my love, you do me wrong, to cast me off discourteously"
-  // M5-M12 chorus (var. 2 — goes up to G5): "Greensleeves was all my joy,
-  //   Greensleeves was my delight, Greensleeves was my heart of gold, ..."
-  // E4 = str1 f0; G4 = str1 f3; G#4 = str1 f4; A4 = str1 f5; B4 = str1 f7;
-  //   C5 = str1 f8; D5 = str1 f10; E5 = str1 f12; F5 = str1 f13; G5 = str1 f15
+  // Greensleeves (transcribed from 8notes.com sheet music PDF)
+  // 3/4, key of Am, 32 measures + pickup, range G4–G5
+  // Source: 8notes.com "Greensleves" Anon. arrangement (single-line melody,
+  //   sustained A drone in bass voice ignored)
+  // First 8 notes: A4 (pickup) | C5 D5 | E5 E5 D5 | D5 B4 | A4 B4 C5 ...
+  // Structure: M1-M16 verse (statement + repeat), M17-M32 chorus (statement + repeat)
+  // G4=str1 f3; G#4=str1 f4; A4=str1 f5; B4=str1 f7; C5=str1 f8;
+  //   D5=str1 f10; E5=str1 f12; F5=str1 f13; G5=str1 f15
   {
     id: 'greensleeves', title: 'Greensleeves', genre: 'Folk',
-    difficulty: 'Intermediate', durationEst: '0:30', pro: true, bpm: 60,
+    difficulty: 'Intermediate', durationEst: '1:35', pro: true, bpm: 60,
     measures: [
-      // ── Verse: "Alas my love, you do me wrong, to cast me off discourteously" ──
-      // m1 "A-las my love"
+      // pickup "A-"
+      [{ string:1, fret:5, beat:3, noteName:'A4', duration:'q' }],
+
+      // ── Verse 1 (M1-M8): "Alas my love, you do me wrong, to cast me off..." ──
+      // m1 "-las my love"
       [
-        { string:1, fret:8,  beat:1, noteName:'C5', duration:'q' },
-        { string:1, fret:10, beat:2, noteName:'D5', duration:'e' },
-        { string:1, fret:12, beat:2, noteName:'E5', duration:'q' },
-        { string:1, fret:12, beat:3, noteName:'E5', duration:'e' },
+        { string:1, fret:8,  beat:1, noteName:'C5', duration:'h' },
+        { string:1, fret:10, beat:3, noteName:'D5', duration:'q' },
       ],
-      // m2 "you do me wrong"
+      // m2 "you do me"
       [
-        { string:1, fret:10, beat:1, noteName:'D5', duration:'q' },
-        { string:1, fret:7,  beat:2, noteName:'B4', duration:'e' },
-        { string:1, fret:3,  beat:2, noteName:'G4', duration:'dq' },
+        { string:1, fret:12, beat:1, noteName:'E5', duration:'dq' },
+        { string:1, fret:12, beat:2, noteName:'E5', duration:'e' },
+        { string:1, fret:10, beat:3, noteName:'D5', duration:'q' },
       ],
-      // m3 "to cast me off dis-"
+      // m3 "wrong, to"
       [
-        { string:1, fret:5,  beat:1, noteName:'A4', duration:'e' },
-        { string:1, fret:7,  beat:1, noteName:'B4', duration:'e' },
-        { string:1, fret:8,  beat:2, noteName:'C5', duration:'e' },
-        { string:1, fret:10, beat:2, noteName:'D5', duration:'e' },
-        { string:1, fret:12, beat:3, noteName:'E5', duration:'e' },
-        { string:1, fret:8,  beat:3, noteName:'C5', duration:'e' },
-      ],
-      // m4 "-courteously"
-      [
-        { string:1, fret:7, beat:1, noteName:'B4',  duration:'q' },
-        { string:1, fret:4, beat:2, noteName:'G#4', duration:'e' },
-        { string:1, fret:0, beat:2, noteName:'E4',  duration:'dq' },
-      ],
-      // ── Chorus: "Greensleeves was all my joy..." (climbs to high G5) ──
-      // m5 "Green-sleeves was..."
-      [
-        { string:1, fret:15, beat:1, noteName:'G5', duration:'q' },
-        { string:1, fret:15, beat:2, noteName:'G5', duration:'e' },
-        { string:1, fret:15, beat:2, noteName:'G5', duration:'e' },
-        { string:1, fret:13, beat:3, noteName:'F5', duration:'e' },
-        { string:1, fret:12, beat:3, noteName:'E5', duration:'e' },
-      ],
-      // m6 "all my joy"
-      [
-        { string:1, fret:10, beat:1, noteName:'D5', duration:'q' },
-        { string:1, fret:10, beat:2, noteName:'D5', duration:'e' },
-        { string:1, fret:7,  beat:2, noteName:'B4', duration:'e' },
-        { string:1, fret:8,  beat:3, noteName:'C5', duration:'e' },
-        { string:1, fret:10, beat:3, noteName:'D5', duration:'e' },
-      ],
-      // m7 "Green-sleeves was"
-      [
-        { string:1, fret:8, beat:1, noteName:'C5', duration:'q' },
-        { string:1, fret:8, beat:2, noteName:'C5', duration:'e' },
-        { string:1, fret:5, beat:2, noteName:'A4', duration:'e' },
-        { string:1, fret:7, beat:3, noteName:'B4', duration:'e' },
-        { string:1, fret:8, beat:3, noteName:'C5', duration:'e' },
-      ],
-      // m8 "my de-light"
-      [
-        { string:1, fret:7, beat:1, noteName:'B4',  duration:'q' },
-        { string:1, fret:7, beat:2, noteName:'B4',  duration:'e' },
-        { string:1, fret:4, beat:2, noteName:'G#4', duration:'e' },
-        { string:1, fret:5, beat:3, noteName:'A4',  duration:'e' },
-        { string:1, fret:7, beat:3, noteName:'B4',  duration:'e' },
-      ],
-      // m9 "Green-sleeves was..." (chorus repeat)
-      [
-        { string:1, fret:15, beat:1, noteName:'G5', duration:'q' },
-        { string:1, fret:15, beat:2, noteName:'G5', duration:'e' },
-        { string:1, fret:15, beat:2, noteName:'G5', duration:'e' },
-        { string:1, fret:13, beat:3, noteName:'F5', duration:'e' },
-        { string:1, fret:12, beat:3, noteName:'E5', duration:'e' },
-      ],
-      // m10 "my heart of"
-      [
-        { string:1, fret:10, beat:1, noteName:'D5', duration:'q' },
-        { string:1, fret:10, beat:2, noteName:'D5', duration:'e' },
-        { string:1, fret:7,  beat:2, noteName:'B4', duration:'e' },
-        { string:1, fret:8,  beat:3, noteName:'C5', duration:'e' },
-        { string:1, fret:10, beat:3, noteName:'D5', duration:'e' },
-      ],
-      // m11 "gold and who but my..."
-      [
-        { string:1, fret:12, beat:1, noteName:'E5', duration:'e' },
-        { string:1, fret:10, beat:1, noteName:'D5', duration:'e' },
-        { string:1, fret:8,  beat:2, noteName:'C5', duration:'e' },
-        { string:1, fret:10, beat:2, noteName:'D5', duration:'e' },
+        { string:1, fret:10, beat:1, noteName:'D5', duration:'h' },
         { string:1, fret:7,  beat:3, noteName:'B4', duration:'q' },
       ],
-      // m12 "...la-dy Green-sleeves" (final hold on tonic A4)
+      // m4 "cast me off"
+      [
+        { string:1, fret:5,  beat:1, noteName:'A4', duration:'dq' },
+        { string:1, fret:7,  beat:2, noteName:'B4', duration:'e' },
+        { string:1, fret:8,  beat:3, noteName:'C5', duration:'q' },
+      ],
+      // m5 "dis- + for I have"
+      [
+        { string:1, fret:5,  beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:8,  beat:3, noteName:'C5', duration:'q' },
+      ],
+      // m6 "loved you so"
+      [
+        { string:1, fret:10, beat:1, noteName:'D5', duration:'dq' },
+        { string:1, fret:10, beat:2, noteName:'D5', duration:'e' },
+        { string:1, fret:8,  beat:3, noteName:'C5', duration:'q' },
+      ],
+      // m7 "long" (cadence with G# leading tone)
+      [
+        { string:1, fret:7, beat:1, noteName:'B4',  duration:'h' },
+        { string:1, fret:4, beat:3, noteName:'G#4', duration:'q' },
+      ],
+      // m8 (resolution to held A)
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'dh' },
+      ],
+
+      // ── Verse 2 (M9-M16): repeat of verse 1 melody ──
+      // m9 (= m1)
+      [
+        { string:1, fret:8,  beat:1, noteName:'C5', duration:'h' },
+        { string:1, fret:10, beat:3, noteName:'D5', duration:'q' },
+      ],
+      // m10 (= m2)
+      [
+        { string:1, fret:12, beat:1, noteName:'E5', duration:'dq' },
+        { string:1, fret:12, beat:2, noteName:'E5', duration:'e' },
+        { string:1, fret:10, beat:3, noteName:'D5', duration:'q' },
+      ],
+      // m11 (= m3)
+      [
+        { string:1, fret:10, beat:1, noteName:'D5', duration:'h' },
+        { string:1, fret:7,  beat:3, noteName:'B4', duration:'q' },
+      ],
+      // m12 (= m4)
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'dq' },
+        { string:1, fret:7, beat:2, noteName:'B4', duration:'e' },
+        { string:1, fret:8, beat:3, noteName:'C5', duration:'q' },
+      ],
+      // m13 (= m5)
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:8, beat:3, noteName:'C5', duration:'q' },
+      ],
+      // m14 (= m6)
+      [
+        { string:1, fret:10, beat:1, noteName:'D5', duration:'dq' },
+        { string:1, fret:10, beat:2, noteName:'D5', duration:'e' },
+        { string:1, fret:8,  beat:3, noteName:'C5', duration:'q' },
+      ],
+      // m15 (= m7)
+      [
+        { string:1, fret:7, beat:1, noteName:'B4',  duration:'h' },
+        { string:1, fret:4, beat:3, noteName:'G#4', duration:'q' },
+      ],
+      // m16 (= m8)
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'dh' },
+      ],
+
+      // ── Chorus 1 (M17-M24): "Greensleeves was all my joy" — high G5 climax ──
+      // m17 "Green-sleeves"
+      [
+        { string:1, fret:15, beat:1, noteName:'G5', duration:'h' },
+        { string:1, fret:13, beat:3, noteName:'F5', duration:'q' },
+      ],
+      // m18 "was all my"
+      [
+        { string:1, fret:12, beat:1, noteName:'E5', duration:'dq' },
+        { string:1, fret:12, beat:2, noteName:'E5', duration:'e' },
+        { string:1, fret:10, beat:3, noteName:'D5', duration:'q' },
+      ],
+      // m19 "joy"
+      [
+        { string:1, fret:10, beat:1, noteName:'D5', duration:'h' },
+        { string:1, fret:7,  beat:3, noteName:'B4', duration:'q' },
+      ],
+      // m20 "Green-sleeves" (transition)
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'dq' },
+        { string:1, fret:7, beat:2, noteName:'B4', duration:'e' },
+        { string:1, fret:8, beat:3, noteName:'C5', duration:'q' },
+      ],
+      // m21 "was my"
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:8, beat:3, noteName:'C5', duration:'q' },
+      ],
+      // m22 "de-light"
+      [
+        { string:1, fret:10, beat:1, noteName:'D5', duration:'dq' },
+        { string:1, fret:10, beat:2, noteName:'D5', duration:'e' },
+        { string:1, fret:8,  beat:3, noteName:'C5', duration:'q' },
+      ],
+      // m23 (cadence)
+      [
+        { string:1, fret:7, beat:1, noteName:'B4',  duration:'h' },
+        { string:1, fret:4, beat:3, noteName:'G#4', duration:'q' },
+      ],
+      // m24 (held resolution)
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'dh' },
+      ],
+
+      // ── Chorus 2 (M25-M32): "Greensleeves was my heart of gold..." ──
+      // m25 "Green-sleeves" (= m17)
+      [
+        { string:1, fret:15, beat:1, noteName:'G5', duration:'h' },
+        { string:1, fret:13, beat:3, noteName:'F5', duration:'q' },
+      ],
+      // m26 (= m18)
+      [
+        { string:1, fret:12, beat:1, noteName:'E5', duration:'dq' },
+        { string:1, fret:12, beat:2, noteName:'E5', duration:'e' },
+        { string:1, fret:10, beat:3, noteName:'D5', duration:'q' },
+      ],
+      // m27 (= m19)
+      [
+        { string:1, fret:10, beat:1, noteName:'D5', duration:'h' },
+        { string:1, fret:7,  beat:3, noteName:'B4', duration:'q' },
+      ],
+      // m28 (= m20)
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'dq' },
+        { string:1, fret:7, beat:2, noteName:'B4', duration:'e' },
+        { string:1, fret:8, beat:3, noteName:'C5', duration:'q' },
+      ],
+      // m29 (= m21)
+      [
+        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
+        { string:1, fret:8, beat:3, noteName:'C5', duration:'q' },
+      ],
+      // m30 (= m22)
+      [
+        { string:1, fret:10, beat:1, noteName:'D5', duration:'dq' },
+        { string:1, fret:10, beat:2, noteName:'D5', duration:'e' },
+        { string:1, fret:8,  beat:3, noteName:'C5', duration:'q' },
+      ],
+      // m31 (= m23)
+      [
+        { string:1, fret:7, beat:1, noteName:'B4',  duration:'h' },
+        { string:1, fret:4, beat:3, noteName:'G#4', duration:'q' },
+      ],
+      // m32 final hold (with fermata in source)
       [
         { string:1, fret:5, beat:1, noteName:'A4', duration:'dh' },
       ],
