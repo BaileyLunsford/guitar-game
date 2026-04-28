@@ -720,107 +720,44 @@ const SONGS = [
     ],
   },
 
-  // Greensleeves — 3/4, key of Am, 20 measures  ·  Range: B3–A4 (low/mid; all B = B3)
-  // First 8 notes: A4 C4 D4 | E4 D4 | C4 B3 B3 | A4 A4...
+  // Greensleeves (proof-of-concept from The Session setting 15008)
+  // 6/8 (or 3/4 eighth-note feel), key of Am, 4 measures, range E4–E5
+  // Source: https://thesession.org/tunes/1598#setting15008
+  // Verse phrase 1: "Alas my love, you do me wrong, to cast me off discourteously"
+  // First 8 notes: C5 D5 E5 E5 | D5 B4 G4 | A4 B4 ...
+  // C5 = str1 f8; D5 = str1 f10; E5 = str1 f12; A4 = str1 f5; B4 = str1 f7;
+  //   G4 = str1 f3; G#4 = str1 f4; E4 = str1 f0
   {
     id: 'greensleeves', title: 'Greensleeves', genre: 'Folk',
-    difficulty: 'Intermediate', durationEst: '1:30', pro: true, bpm: 72,
+    difficulty: 'Intermediate', durationEst: '0:08', pro: true, bpm: 72,
     measures: [
-      // "Alas my love"
+      // m1 "A-las my love"
       [
-        { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
-        { string:2, fret:1, beat:2, noteName:'C4', duration:'dq' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'e' },
+        { string:1, fret:8,  beat:1, noteName:'C5', duration:'q' },
+        { string:1, fret:10, beat:2, noteName:'D5', duration:'e' },
+        { string:1, fret:12, beat:2, noteName:'E5', duration:'q' },
+        { string:1, fret:12, beat:3, noteName:'E5', duration:'e' },
       ],
+      // m2 "you do me wrong"
       [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:1, fret:10, beat:1, noteName:'D5', duration:'q' },
+        { string:1, fret:7,  beat:2, noteName:'B4', duration:'e' },
+        { string:1, fret:3,  beat:2, noteName:'G4', duration:'dq' },
       ],
-      // "you do me wrong"
+      // m3 "to cast me off dis-" (six eighth notes)
       [
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'dq' },
-        { string:2, fret:0, beat:2, noteName:'B3', duration:'e' },
-        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
+        { string:1, fret:5,  beat:1, noteName:'A4', duration:'e' },
+        { string:1, fret:7,  beat:1, noteName:'B4', duration:'e' },
+        { string:1, fret:8,  beat:2, noteName:'C5', duration:'e' },
+        { string:1, fret:10, beat:2, noteName:'D5', duration:'e' },
+        { string:1, fret:12, beat:3, noteName:'E5', duration:'e' },
+        { string:1, fret:8,  beat:3, noteName:'C5', duration:'e' },
       ],
+      // m4 "-courteously"
       [
-        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
-        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
-      ],
-      // "to cast me off discourteously"
-      [
-        { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
-        { string:2, fret:3, beat:2, noteName:'D4', duration:'dq' },
-        { string:1, fret:1, beat:3, noteName:'F4', duration:'e' },
-      ],
-      [
-        { string:1, fret:1, beat:1, noteName:'F4', duration:'h' },
-        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
-      ],
-      // "for I have loved you so long"
-      [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'dq' },
+        { string:1, fret:7, beat:1, noteName:'B4',  duration:'q' },
         { string:1, fret:4, beat:2, noteName:'G#4', duration:'e' },
-        { string:1, fret:4, beat:3, noteName:'G#4', duration:'q' },
-      ],
-      [
-        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
-        { string:1, fret:3, beat:3, noteName:'G4', duration:'q' },
-      ],
-      // "delighting in your company" — chorus approach
-      [
-        { string:1, fret:1, beat:1, noteName:'F4', duration:'q' },
-        { string:2, fret:3, beat:2, noteName:'D4', duration:'dq' },
-        { string:1, fret:1, beat:3, noteName:'F4', duration:'e' },
-      ],
-      [
-        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
-        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
-      ],
-      [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'dq' },
-        { string:1, fret:4, beat:2, noteName:'G#4', duration:'e' },
-        { string:1, fret:4, beat:3, noteName:'G#4', duration:'q' },
-      ],
-      [
-        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
-        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
-      ],
-      // Chorus: "Greensleeves was all my joy"
-      [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'q' },
-        { string:2, fret:1, beat:2, noteName:'C4', duration:'dq' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'e' },
-      ],
-      [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
-      ],
-      [
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'dq' },
-        { string:2, fret:0, beat:2, noteName:'B3', duration:'e' },
-        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
-      ],
-      [
-        { string:1, fret:5, beat:1, noteName:'A4', duration:'h' },
-        { string:1, fret:5, beat:3, noteName:'A4', duration:'q' },
-      ],
-      // "Greensleeves was my delight"
-      [
-        { string:1, fret:5, beat:1, noteName:'A4', duration:'q' },
-        { string:2, fret:3, beat:2, noteName:'D4', duration:'dq' },
-        { string:1, fret:1, beat:3, noteName:'F4', duration:'e' },
-      ],
-      [
-        { string:1, fret:1, beat:1, noteName:'F4', duration:'h' },
-        { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
-      ],
-      [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'dq' },
-        { string:1, fret:4, beat:2, noteName:'G#4', duration:'e' },
-        { string:1, fret:4, beat:3, noteName:'G#4', duration:'q' },
-      ],
-      [
-        { string:1, fret:5, beat:1, noteName:'A4', duration:'h.' },
+        { string:1, fret:0, beat:2, noteName:'E4',  duration:'dq' },
       ],
     ],
   },
