@@ -729,7 +729,7 @@ const SONGS = [
   //   G4 = str1 f3; G#4 = str1 f4; E4 = str1 f0
   {
     id: 'greensleeves', title: 'Greensleeves', genre: 'Folk',
-    difficulty: 'Intermediate', durationEst: '0:08', pro: true, bpm: 72,
+    difficulty: 'Intermediate', durationEst: '0:10', pro: true, bpm: 60,
     measures: [
       // m1 "A-las my love"
       [
