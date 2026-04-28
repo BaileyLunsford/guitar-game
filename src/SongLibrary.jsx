@@ -884,7 +884,7 @@ const SONGS = [
     difficulty: 'Beginner', durationEst: '1:00', pro: true, bpm: 110,
     measures: [
       [
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'qr' },
+        { beat:1, noteName:'rest', duration:'qr' },
         { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
         { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
         { string:1, fret:1, beat:4, noteName:'F4', duration:'q' },
@@ -893,7 +893,7 @@ const SONGS = [
         { string:1, fret:3, beat:1, noteName:'G4', duration:'w' },
       ],
       [
-        { string:1, fret:3, beat:1, noteName:'G4', duration:'qr' },
+        { beat:1, noteName:'rest', duration:'qr' },
         { string:1, fret:3, beat:2, noteName:'G4', duration:'q' },
         { string:1, fret:0, beat:3, noteName:'E4', duration:'q' },
         { string:1, fret:1, beat:4, noteName:'F4', duration:'q' },
