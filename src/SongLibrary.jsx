@@ -182,27 +182,26 @@ const SONGS = [
     ],
   },
 
-  // Amazing Grace — 3/4, key of G, 18 measures (pickup + 17)  ·  Range: G3–E4 (low)
-  // First 8 notes: G3 G3 B3 D4 D4 B3 G3 G3
-  // Pickup G3 | M1 G3 B3 D4 | M2 D4(h) B3 | M3 G3(h) G3 | M4 B3 D4 D4 |
-  // M5 E4(h) D4 | M6 B3(h) G3 | M7 G3 B3 D4 | M8 E4(h) D4 | M9 B3(h) G3 |
-  // M10 G3 B3 D4 | M11 D4(h) B3 | M12 G3(h) G3 | M13 B3 D4 D4 | M14 E4(h) D4 |
-  // M15 B3(h) G3 | M16 G3 B3 D4 | M17 G3(h) rest(q)
+  // Amazing Grace — 3/4, key of G, 10 measures (pickup + 9)  ·  Range: G3–E4 (low)
+  // Vocal melody only — h+q rhythm pattern, no chord arpeggios.
+  // First 8 notes: G3 (pickup) | G3 B3 | D4 B3 | G3 (rest) | B3 D4 | E4 ...
+  // Pickup G3(q) | M1 G3(h) B3(q) | M2 D4(h) B3(q) | M3 G3(h) rest(q) |
+  // M4 B3(h) D4(q) | M5 E4(h) D4(q) | M6 B3(h) G3(q) |
+  // M7 G3(h) B3(q) | M8 D4(h) B3(q) | M9 G3(h) rest(q)
   // G3 = str3 f0; B3 = str2 f0; D4 = str2 f3; E4 = str1 f0
   {
     id: 'amazing', title: 'Amazing Grace', genre: 'Hymn',
-    difficulty: 'Beginner', durationEst: '1:20', pro: false, bpm: 66,
+    difficulty: 'Beginner', durationEst: '0:35', pro: false, bpm: 66,
     measures: [
       // pickup (1 beat): "A-"
       [{ string:3, fret:0, beat:3, noteName:'G3', duration:'q' }],
 
-      // m1 "A-mazing grace"
+      // m1 "Ma-zing... grace"
       [
-        { string:3, fret:0, beat:1, noteName:'G3', duration:'q' },
-        { string:2, fret:0, beat:2, noteName:'B3', duration:'q' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:3, fret:0, beat:1, noteName:'G3', duration:'h' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
-      // m2 "how sweet the"
+      // m2 "how... sweet"
       [
         { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
         { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
@@ -210,15 +209,14 @@ const SONGS = [
       // m3 "sound"
       [
         { string:3, fret:0, beat:1, noteName:'G3', duration:'h' },
-        { string:3, fret:0, beat:3, noteName:'G3', duration:'q' },
+        { beat:3, noteName:'rest', duration:'qr' },
       ],
-      // m4 "that saved a"
+      // m4 "that... saved"
       [
-        { string:2, fret:0, beat:1, noteName:'B3', duration:'q' },
-        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
+        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
         { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
-      // m5 "wretch like"
+      // m5 "wretch... like"
       [
         { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
         { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
@@ -228,61 +226,17 @@ const SONGS = [
         { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
         { string:3, fret:0, beat:3, noteName:'G3', duration:'q' },
       ],
-      // m7 "I once was"
+      // m7 "I... once" (= m1)
       [
-        { string:3, fret:0, beat:1, noteName:'G3', duration:'q' },
-        { string:2, fret:0, beat:2, noteName:'B3', duration:'q' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
+        { string:3, fret:0, beat:1, noteName:'G3', duration:'h' },
+        { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
-      // m8 "lost but now"
-      [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
-      ],
-      // m9 "am found"
-      [
-        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
-        { string:3, fret:0, beat:3, noteName:'G3', duration:'q' },
-      ],
-      // m10 "Was blind"
-      [
-        { string:3, fret:0, beat:1, noteName:'G3', duration:'q' },
-        { string:2, fret:0, beat:2, noteName:'B3', duration:'q' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
-      ],
-      // m11 "but now"
+      // m8 "was... lost" (= m2)
       [
         { string:2, fret:3, beat:1, noteName:'D4', duration:'h' },
         { string:2, fret:0, beat:3, noteName:'B3', duration:'q' },
       ],
-      // m12 "I see"
-      [
-        { string:3, fret:0, beat:1, noteName:'G3', duration:'h' },
-        { string:3, fret:0, beat:3, noteName:'G3', duration:'q' },
-      ],
-      // m13 (extension)
-      [
-        { string:2, fret:0, beat:1, noteName:'B3', duration:'q' },
-        { string:2, fret:3, beat:2, noteName:'D4', duration:'q' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
-      ],
-      // m14
-      [
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'h' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
-      ],
-      // m15
-      [
-        { string:2, fret:0, beat:1, noteName:'B3', duration:'h' },
-        { string:3, fret:0, beat:3, noteName:'G3', duration:'q' },
-      ],
-      // m16
-      [
-        { string:3, fret:0, beat:1, noteName:'G3', duration:'q' },
-        { string:2, fret:0, beat:2, noteName:'B3', duration:'q' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
-      ],
-      // m17 final hold
+      // m9 "found" (= m3)
       [
         { string:3, fret:0, beat:1, noteName:'G3', duration:'h' },
         { beat:3, noteName:'rest', duration:'qr' },
@@ -675,99 +629,57 @@ const SONGS = [
     ],
   },
 
-  // House of the Rising Sun — 6/8 feel, key of Am, played as 4/4 arpeggios, 8 measures  ·  Range: E2–F#4 (chord arpeggios, intentional multi-octave)
-  // First 8 notes: A2 C4 E4 C4 | A2 C4 E4 C4 (Am arpeggio — bass + treble)
+  // House of the Rising Sun — 3/4, key of Am, 8 measures  ·  Range: A3–F4
+  // Vocal melody only — single line, no chord arpeggios.
+  // First 8 notes: A3 C4 D4 | F4 D4 | C4 A3 | C4 (rest) | A3 C4 D4 | F4 D4
+  // M1-M4: "There is a house in New Orleans"
+  // M5-M8: "They call the Rising Sun" (repeats melody pattern)
+  // A3 = str3 f2; C4 = str2 f1; D4 = str2 f3; F4 = str1 f1
   {
     id: 'rising_sun', title: 'House of the Rising Sun', genre: 'Blues',
-    difficulty: 'Intermediate', durationEst: '1:30', pro: true, bpm: 76,
+    difficulty: 'Intermediate', durationEst: '0:40', pro: true, bpm: 76,
     measures: [
-      // Am chord arpeggio
+      // m1 "There is a"
       [
-        { string:5, fret:0, beat:1, noteName:'A2', duration:'e' },
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
-        { string:1, fret:0, beat:2, noteName:'E4', duration:'e' },
-        { string:2, fret:1, beat:2, noteName:'C4', duration:'e' },
-        { string:5, fret:0, beat:3, noteName:'A2', duration:'e' },
-        { string:2, fret:1, beat:3, noteName:'C4', duration:'e' },
-        { string:1, fret:0, beat:4, noteName:'E4', duration:'e' },
-        { string:2, fret:1, beat:4, noteName:'C4', duration:'e' },
+        { string:3, fret:2, beat:1, noteName:'A3', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
-      // C chord
+      // m2 "house... in"
       [
-        { string:5, fret:3, beat:1, noteName:'C3', duration:'e' },
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
-        { string:1, fret:0, beat:2, noteName:'E4', duration:'e' },
-        { string:3, fret:0, beat:2, noteName:'G3', duration:'e' },
-        { string:5, fret:3, beat:3, noteName:'C3', duration:'e' },
-        { string:2, fret:1, beat:3, noteName:'C4', duration:'e' },
-        { string:1, fret:0, beat:4, noteName:'E4', duration:'e' },
-        { string:3, fret:0, beat:4, noteName:'G3', duration:'e' },
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
-      // D chord
+      // m3 "New... Or-"
       [
-        { string:4, fret:0, beat:1, noteName:'D3', duration:'e' },
-        { string:2, fret:3, beat:1, noteName:'D4', duration:'e' },
-        { string:1, fret:2, beat:2, noteName:'F#4', duration:'e' },
-        { string:3, fret:2, beat:2, noteName:'A3', duration:'e' },
-        { string:4, fret:0, beat:3, noteName:'D3', duration:'e' },
-        { string:2, fret:3, beat:3, noteName:'D4', duration:'e' },
-        { string:1, fret:2, beat:4, noteName:'F#4', duration:'e' },
-        { string:3, fret:2, beat:4, noteName:'A3', duration:'e' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'h' },
+        { string:3, fret:2, beat:3, noteName:'A3', duration:'q' },
       ],
-      // F chord
+      // m4 "leans"
       [
-        { string:4, fret:3, beat:1, noteName:'F3', duration:'e' },
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
-        { string:1, fret:1, beat:2, noteName:'F4', duration:'e' },
-        { string:3, fret:2, beat:2, noteName:'A3', duration:'e' },
-        { string:4, fret:3, beat:3, noteName:'F3', duration:'e' },
-        { string:2, fret:1, beat:3, noteName:'C4', duration:'e' },
-        { string:1, fret:1, beat:4, noteName:'F4', duration:'e' },
-        { string:3, fret:2, beat:4, noteName:'A3', duration:'e' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'h' },
+        { beat:3, noteName:'rest', duration:'qr' },
       ],
-      // Am
+      // m5 "They call the" (= m1)
       [
-        { string:5, fret:0, beat:1, noteName:'A2', duration:'e' },
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
-        { string:1, fret:0, beat:2, noteName:'E4', duration:'e' },
-        { string:2, fret:1, beat:2, noteName:'C4', duration:'e' },
-        { string:5, fret:0, beat:3, noteName:'A2', duration:'e' },
-        { string:2, fret:1, beat:3, noteName:'C4', duration:'e' },
-        { string:1, fret:0, beat:4, noteName:'E4', duration:'e' },
-        { string:2, fret:1, beat:4, noteName:'C4', duration:'e' },
+        { string:3, fret:2, beat:1, noteName:'A3', duration:'q' },
+        { string:2, fret:1, beat:2, noteName:'C4', duration:'q' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
-      // E
+      // m6 "Ri-... -sing" (= m2)
       [
-        { string:6, fret:0, beat:1, noteName:'E2', duration:'e' },
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'e' },
-        { string:2, fret:0, beat:2, noteName:'B3', duration:'e' },
-        { string:3, fret:1, beat:2, noteName:'G#3', duration:'e' },
-        { string:6, fret:0, beat:3, noteName:'E2', duration:'e' },
-        { string:1, fret:0, beat:3, noteName:'E4', duration:'e' },
-        { string:2, fret:0, beat:4, noteName:'B3', duration:'e' },
-        { string:3, fret:1, beat:4, noteName:'G#3', duration:'e' },
+        { string:1, fret:1, beat:1, noteName:'F4', duration:'h' },
+        { string:2, fret:3, beat:3, noteName:'D4', duration:'q' },
       ],
-      // Am
+      // m7 "Sun" (= m3)
       [
-        { string:5, fret:0, beat:1, noteName:'A2', duration:'e' },
-        { string:2, fret:1, beat:1, noteName:'C4', duration:'e' },
-        { string:1, fret:0, beat:2, noteName:'E4', duration:'e' },
-        { string:2, fret:1, beat:2, noteName:'C4', duration:'e' },
-        { string:5, fret:0, beat:3, noteName:'A2', duration:'e' },
-        { string:2, fret:1, beat:3, noteName:'C4', duration:'e' },
-        { string:1, fret:0, beat:4, noteName:'E4', duration:'e' },
-        { string:2, fret:1, beat:4, noteName:'C4', duration:'e' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'h' },
+        { string:3, fret:2, beat:3, noteName:'A3', duration:'q' },
       ],
-      // E
+      // m8 (final hold)
       [
-        { string:6, fret:0, beat:1, noteName:'E2', duration:'e' },
-        { string:1, fret:0, beat:1, noteName:'E4', duration:'e' },
-        { string:2, fret:0, beat:2, noteName:'B3', duration:'e' },
-        { string:3, fret:1, beat:2, noteName:'G#3', duration:'e' },
-        { string:6, fret:0, beat:3, noteName:'E2', duration:'e' },
-        { string:1, fret:0, beat:3, noteName:'E4', duration:'e' },
-        { string:2, fret:0, beat:4, noteName:'B3', duration:'e' },
-        { string:3, fret:1, beat:4, noteName:'G#3', duration:'e' },
+        { string:2, fret:1, beat:1, noteName:'C4', duration:'h' },
+        { beat:3, noteName:'rest', duration:'qr' },
       ],
     ],
   },
