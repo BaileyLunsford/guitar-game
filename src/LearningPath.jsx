@@ -48,9 +48,11 @@ const PATH_DATA = [
   {
     id: 'barre-chords', icon: '🤘', label: 'Barre Chords', hash: '#barre-chords',
     items: [
-      { id: 'bc-bb',       target: 'Bb',  label: 'B♭ major — A-shape, fret 1' },
+      { id: 'bc-f',        target: 'F',   label: 'F major — E-shape, fret 1' },
       { id: 'bc-b',        target: 'B',   label: 'B major — A-shape, fret 2' },
       { id: 'bc-fsharpm',  target: 'F#m', label: 'F# minor — E-shape, fret 2' },
+      { id: 'bc-bm',       target: 'Bm',  label: 'B minor — A-shape, fret 2' },
+      { id: 'bc-bb',       target: 'Bb',  label: 'B♭ major — A-shape, fret 1' },
       { id: 'bc-cm',       target: 'Cm',  label: 'C minor — A-shape, fret 3' },
       { id: 'bc-ab',       target: 'Ab',  label: 'A♭ major — E-shape, fret 4' },
       { id: 'bc-csharpm',  target: 'C#m', label: 'C# minor — A-shape, fret 4' },

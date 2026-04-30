@@ -28,6 +28,13 @@ const M = {
 // ─── Chord data ───────────────────────────────────────────────────────────────
 const CHORDS = [
   {
+    name: 'F',   full: 'F Major',  shape: 'E-shape', position: '1st position',
+    frets: [1,3,3,2,1,1], baseFret: 1,
+    barre: { fret:1, from:0, to:5 },
+    notes: ['F2','C3','F3','A3','C4','F4'],
+    pro: false,
+  },
+  {
     name: 'B',   full: 'B Major',  shape: 'A-shape', position: '2nd position',
     frets: [-1,2,4,4,4,2], baseFret: 1,
     barre: { fret:2, from:1, to:5 },
@@ -39,6 +46,13 @@ const CHORDS = [
     frets: [2,4,4,3,2,2], baseFret: 1,
     barre: { fret:2, from:0, to:5 },
     notes: ['F#2','C#3','F#3','A3','C#4','F#4'],
+    pro: false,
+  },
+  {
+    name: 'Bm',  full: 'B Minor',  shape: 'A-shape', position: '2nd position',
+    frets: [-1,2,4,4,3,2], baseFret: 1,
+    barre: { fret:2, from:1, to:5 },
+    notes: ['B2','F#3','B3','D4','F#4'],
     pro: false,
   },
   {
@@ -108,7 +122,7 @@ export default function BarreChords({ isPro = false, onPurchase, onRestore, init
       features={[
         'E-shape and A-shape moveable forms',
         'Major and minor voicings',
-        'FREE: B major, F#m — PRO unlocks all shapes',
+        'FREE: F, B, F#m, Bm — PRO unlocks Bb, Cm, Ab, C#m + every key',
       ]}
       onStart={() => setPhase('chords')}
       onBack={() => { window.location.hash = ''; }}
