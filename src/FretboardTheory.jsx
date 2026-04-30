@@ -89,16 +89,35 @@ const LESSONS = [
   },
 ];
 
-// ── Piano keyboard illustration: half vs whole steps ────────────────────────
-// One-octave keyboard (C → C) with three step markers above the keys:
-//   C → D  Whole step (skips C#)
-//   E → F  Half step  (no black key between — the "aha" for beginners)
-//   F → G  Whole step (skips F#)
-// Used in Lesson 1 to make the abstract "half/whole step" concept concrete
-// before showing it on the guitar fretboard below.
-function PianoStepsDiagram() {
+// ── Step-pattern illustrations: piano + matching guitar string ──────────────
+// Each diagram shows the same one-octave (C → C) sequence with W/H labels
+// above each interval. The piano makes the half-step concept visceral
+// (E→F has no black key between them); the guitar string below shows
+// the same notes spaced by frets — half step = 1 fret, whole step = 2 frets.
+// Two presets:
+//   stepLessonHalfWhole — three example labels (C-D = W, E-F = H, F-G = W)
+//   stepLessonMajorScale — full W-W-H-W-W-W-H major-scale formula
+const STEP_PRESETS = {
+  halfwhole: [
+    { from: 0, to: 1, label: 'W', color: 'accent' },  // C → D
+    { from: 2, to: 3, label: 'H', color: 'gold'   },  // E → F
+    { from: 3, to: 4, label: 'W', color: 'accent' },  // F → G
+  ],
+  majorScale: [
+    { from: 0, to: 1, label: 'W', color: 'accent' },  // C → D
+    { from: 1, to: 2, label: 'W', color: 'accent' },  // D → E
+    { from: 2, to: 3, label: 'H', color: 'gold'   },  // E → F
+    { from: 3, to: 4, label: 'W', color: 'accent' },  // F → G
+    { from: 4, to: 5, label: 'W', color: 'accent' },  // G → A
+    { from: 5, to: 6, label: 'W', color: 'accent' },  // A → B
+    { from: 6, to: 7, label: 'H', color: 'gold'   },  // B → C
+  ],
+};
+
+// One-octave piano keyboard (C → C, 8 white keys, 5 black keys).
+function PianoStepsDiagram({ steps }) {
   const W = 290, H = 132;
-  const padTop = 30;          // room for labels above keys
+  const padTop = 30;
   const whiteW = 36, whiteH = 96;
   const blackW = 24, blackH = 60;
   const whites = [
@@ -109,27 +128,29 @@ function PianoStepsDiagram() {
   const blacks = [
     { x: 25 }, { x: 61 }, { x: 133 }, { x: 169 }, { x: 205 },
   ];
-
-  // Step bracket: small staple-shape with letter centered above
-  const StepLabel = ({ x1, x2, label, color }) => (
-    <g>
-      <line x1={x1} y1={20} x2={x2} y2={20} stroke={color} strokeWidth={1.4} />
-      <line x1={x1} y1={20} x2={x1} y2={padTop - 3} stroke={color} strokeWidth={1.4} />
-      <line x1={x2} y1={20} x2={x2} y2={padTop - 3} stroke={color} strokeWidth={1.4} />
-      <text x={(x1 + x2) / 2} y={14} textAnchor="middle"
-        fontSize="11" fontWeight="800" fill={color}
-        fontFamily="Georgia, serif">{label}</text>
-    </g>
-  );
+  // Center x of each white key — used to anchor step brackets
+  const whiteCenters = whites.map(w => w.x + whiteW / 2);
+  const colorOf = (c) => (c === 'gold' ? M.gold : M.accent);
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%"
       style={{ display: 'block', maxWidth: 320, margin: '0 auto' }}>
-      {/* Step brackets above */}
-      <StepLabel x1={18}  x2={54}  label="W" color={M.accent} />
-      <StepLabel x1={90}  x2={126} label="H" color={M.gold} />
-      <StepLabel x1={126} x2={162} label="W" color={M.accent} />
-
+      {/* Step brackets above the keys */}
+      {steps.map((s, i) => {
+        const x1 = whiteCenters[s.from] - 5;
+        const x2 = whiteCenters[s.to]   + 5;
+        const c  = colorOf(s.color);
+        return (
+          <g key={i}>
+            <line x1={x1} y1={20} x2={x2} y2={20} stroke={c} strokeWidth={1.4} />
+            <line x1={x1} y1={20} x2={x1} y2={padTop - 3} stroke={c} strokeWidth={1.4} />
+            <line x1={x2} y1={20} x2={x2} y2={padTop - 3} stroke={c} strokeWidth={1.4} />
+            <text x={(x1 + x2) / 2} y={14} textAnchor="middle"
+              fontSize="11" fontWeight="800" fill={c}
+              fontFamily="Georgia, serif">{s.label}</text>
+          </g>
+        );
+      })}
       {/* White keys */}
       {whites.map((w, i) => (
         <g key={'w' + i}>
@@ -140,13 +161,91 @@ function PianoStepsDiagram() {
             fill="#5C4738" fontWeight={600}>{w.label}</text>
         </g>
       ))}
-
-      {/* Black keys (drawn after whites so they sit on top of white edges) */}
+      {/* Black keys */}
       {blacks.map((b, i) => (
         <rect key={'b' + i} x={b.x} y={padTop} width={blackW} height={blackH}
           fill="#1A0C05" stroke="#1A0C05" strokeWidth={0.5} rx={1.5} />
       ))}
     </svg>
+  );
+}
+
+// Single-string fretboard companion. The fret positions for C major notes
+// on the high-E string are: E(0)→nut, F(1), G(3), A(5), B(7), C(8), D(10),
+// E(12), F(13). For C-to-C we use the B string: C(1) D(3) E(5) F(6) G(8)
+// A(10) B(12) C(13) — natural notes of C major on the B string.
+function GuitarStringStepsDiagram({ steps }) {
+  const W = 290, H = 70;
+  const padL = 18, padR = 8, padT = 16, padB = 22;
+  const gridW = W - padL - padR;
+  const stringY = padT + (H - padT - padB) / 2;
+  // 14 fret slots (0..13); each note slot 1 fret apart (= half step)
+  // Notes shown at frets (B string, semitones from B3):
+  //   C(1) D(3) E(5) F(6) G(8) A(10) B(12) C(13)  — natural notes only
+  const noteFrets = [1, 3, 5, 6, 8, 10, 12, 13];
+  const noteLabels = ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'];
+  const fretX = (f) => padL + (f / 13) * gridW;
+  const colorOf = (c) => (c === 'gold' ? M.gold : M.accent);
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%"
+      style={{ display: 'block', maxWidth: 320, margin: '0 auto' }}>
+      {/* Step brackets above the dots — show the fret-distance interpretation */}
+      {steps.map((s, i) => {
+        const x1 = fretX(noteFrets[s.from]) - 6;
+        const x2 = fretX(noteFrets[s.to])   + 6;
+        const c  = colorOf(s.color);
+        return (
+          <g key={i}>
+            <line x1={x1} y1={6}  x2={x2} y2={6}  stroke={c} strokeWidth={1.2} />
+            <line x1={x1} y1={6}  x2={x1} y2={padT - 2} stroke={c} strokeWidth={1.2} />
+            <line x1={x2} y1={6}  x2={x2} y2={padT - 2} stroke={c} strokeWidth={1.2} />
+          </g>
+        );
+      })}
+      {/* B string label */}
+      <text x={padL - 6} y={stringY + 3} textAnchor="end"
+        fontSize="9" fontFamily="Georgia, serif" fill={M.muted}>B</text>
+      {/* Nut */}
+      <line x1={padL} y1={padT - 4} x2={padL} y2={H - padB + 4}
+        stroke={M.text} strokeWidth={2} />
+      {/* String */}
+      <line x1={padL} y1={stringY} x2={W - padR} y2={stringY}
+        stroke="rgba(245,232,216,0.6)" strokeWidth={1.4} />
+      {/* Fret wires (every fret) */}
+      {Array.from({ length: 13 }, (_, i) => i + 1).map(f => (
+        <line key={f} x1={fretX(f)} y1={padT - 4} x2={fretX(f)} y2={H - padB + 4}
+          stroke="rgba(196,100,40,0.18)" strokeWidth={0.8} />
+      ))}
+      {/* Note dots with letter labels */}
+      {noteFrets.map((f, i) => (
+        <g key={i}>
+          <circle cx={fretX(f) - (gridW / 13) / 2} cy={stringY}
+            r={8} fill={M.accent} stroke="rgba(232,131,58,0.4)" strokeWidth={1.2} />
+          <text x={fretX(f) - (gridW / 13) / 2} y={stringY + 2.5}
+            textAnchor="middle" fontSize="8" fontWeight="800"
+            fill="#1A0C05" fontFamily="Georgia, serif">{noteLabels[i]}</text>
+          {/* Fret number under each dot */}
+          <text x={fretX(f) - (gridW / 13) / 2} y={H - 6}
+            textAnchor="middle" fontSize="7" fontFamily="Georgia, serif"
+            fill={M.muted}>{f}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+// Combined: piano + guitar side-by-side stacked. Same step pattern shown
+// twice — once on keys, once on frets. Clarifies "1 fret = 1 half step".
+function StepsLessonDiagram({ preset = 'halfwhole' }) {
+  const steps = STEP_PRESETS[preset] || STEP_PRESETS.halfwhole;
+  return (
+    <div>
+      <PianoStepsDiagram steps={steps} />
+      <div style={{ marginTop: 4 }}>
+        <GuitarStringStepsDiagram steps={steps} />
+      </div>
+    </div>
   );
 }
 
@@ -343,8 +442,9 @@ export default function FretboardTheory({ isPro, onUpgrade }) {
             {renderBody(lesson.body)}
           </div>
 
-          {/* Lesson 1 only: piano keyboard illustration to ground the
-              half/whole step concept before showing it on guitar */}
+          {/* Lesson 1 — piano + guitar string showing the same H/W steps.
+              Connects the abstract concept (piano spacing) to the concrete
+              guitar instance (1 fret = 1 half step). */}
           {lesson.id === 'halfwhole' && (
             <div style={{
               background: M.panel, borderRadius: 12, border: `1px solid ${M.border}`,
@@ -354,15 +454,41 @@ export default function FretboardTheory({ isPro, onUpgrade }) {
                 fontSize: 9, fontWeight: 800, letterSpacing: '0.1em',
                 textTransform: 'uppercase', color: M.muted,
                 marginBottom: 10, textAlign: 'center',
-              }}>On a Piano Keyboard</div>
-              <PianoStepsDiagram />
+              }}>The Same Steps on Piano & Guitar</div>
+              <StepsLessonDiagram preset="halfwhole" />
               <div style={{
                 fontSize: 11, color: M.muted, fontStyle: 'italic',
                 marginTop: 8, lineHeight: 1.5, textAlign: 'center',
               }}>
                 <span style={{ color: M.gold, fontWeight: 700 }}>E → F</span> is a
-                half step even with no black key between — same as on the guitar:
-                one fret apart.
+                half step on the piano (no black key between) — and on the guitar
+                it's just <span style={{ color: M.text }}>one fret</span>.
+              </div>
+            </div>
+          )}
+
+          {/* Lesson 2 — full W-W-H-W-W-W-H major-scale formula, same dual
+              diagram. Pattern lights up across both piano and guitar string,
+              showing why C major is "all white keys" and lands on these
+              specific frets on the B string. */}
+          {lesson.id === 'majorscale' && (
+            <div style={{
+              background: M.panel, borderRadius: 12, border: `1px solid ${M.border}`,
+              padding: '14px 12px 10px', marginBottom: 12,
+            }}>
+              <div style={{
+                fontSize: 9, fontWeight: 800, letterSpacing: '0.1em',
+                textTransform: 'uppercase', color: M.muted,
+                marginBottom: 10, textAlign: 'center',
+              }}>C Major Scale — W&nbsp;W&nbsp;H&nbsp;W&nbsp;W&nbsp;W&nbsp;H</div>
+              <StepsLessonDiagram preset="majorScale" />
+              <div style={{
+                fontSize: 11, color: M.muted, fontStyle: 'italic',
+                marginTop: 8, lineHeight: 1.5, textAlign: 'center',
+              }}>
+                The two <span style={{ color: M.gold, fontWeight: 700 }}>H</span>{' '}
+                steps are always between scale degrees 3-4 and 7-8. That's the
+                pattern. Slide it up the neck and you've changed key.
               </div>
             </div>
           )}
