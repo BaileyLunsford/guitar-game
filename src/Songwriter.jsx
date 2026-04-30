@@ -156,6 +156,115 @@ function flatMeasures(sections) {
   return out;
 }
 
+// ── MIDI export ──────────────────────────────────────────────────────────────
+// Builds a Standard MIDI File (Format 1) with one chord track. Each chord
+// becomes a held block chord lasting one full measure at the song's tempo.
+// User can open the .mid in GarageBand / Logic / any DAW and add strums,
+// drums, melody, etc. on top.
+
+function noteNameToMidi(name) {
+  const m = String(name).match(/^([A-G][#b]?)(\d+)$/);
+  if (!m) return null;
+  const SEMI = { C:0, 'C#':1, Db:1, D:2, 'D#':3, Eb:3, E:4, F:5, 'F#':6, Gb:6, G:7, 'G#':8, Ab:8, A:9, 'A#':10, Bb:10, B:11 };
+  const semi = SEMI[m[1]];
+  if (semi === undefined) return null;
+  return (parseInt(m[2]) + 1) * 12 + semi;
+}
+
+// Variable-length quantity (used for MIDI delta-times)
+function vlq(n) {
+  if (n < 0) n = 0;
+  const bytes = [n & 0x7F];
+  n >>= 7;
+  while (n > 0) { bytes.unshift((n & 0x7F) | 0x80); n >>= 7; }
+  return bytes;
+}
+
+// Big-endian uint32 / uint16 as byte arrays
+function be32(n) { return [(n >>> 24) & 0xFF, (n >>> 16) & 0xFF, (n >>> 8) & 0xFF, n & 0xFF]; }
+function be16(n) { return [(n >>> 8) & 0xFF, n & 0xFF]; }
+
+// chordResolver: (chordName) => string[] like ['C3','E3','G3'] (or [] if unknown)
+function buildSongMidi(song, chordResolver) {
+  const TPQ = 480; // ticks per quarter
+  const bpm = Math.max(40, Math.min(240, song.bpm || 120));
+  const usPerQ = Math.round(60_000_000 / bpm);
+
+  const [num, den] = String(song.timeSig || '4/4').split('/').map(s => parseInt(s) || 4);
+  const ticksPerMeasure = Math.round(TPQ * num * (4 / den));
+
+  // ── Track 0: meta (title, tempo, time signature) ──
+  const t0 = [];
+  const titleBytes = Array.from(new TextEncoder().encode((song.title || 'Untitled').slice(0, 64)));
+  t0.push(0, 0xFF, 0x03, titleBytes.length, ...titleBytes);             // sequence/track name
+  t0.push(0, 0xFF, 0x51, 0x03, (usPerQ >> 16) & 0xFF, (usPerQ >> 8) & 0xFF, usPerQ & 0xFF); // tempo
+  const dd = Math.max(0, Math.round(Math.log2(den)));
+  t0.push(0, 0xFF, 0x58, 0x04, num, dd, 24, 8);                          // time signature
+  t0.push(0, 0xFF, 0x2F, 0x00);                                          // end of track
+
+  // ── Track 1: chords ──
+  const t1 = [];
+  const trkName = Array.from(new TextEncoder().encode('Chords'));
+  t1.push(0, 0xFF, 0x03, trkName.length, ...trkName);
+  t1.push(0, 0xC0, 24);  // program change → acoustic guitar (steel)
+
+  let prevTick = 0;
+  let measureIdx = 0;
+  for (const sec of (song.sections || [])) {
+    for (const chordName of (sec.measures || [])) {
+      const startTick = measureIdx * ticksPerMeasure;
+      const endTick = startTick + ticksPerMeasure;
+
+      const noteNames = chordResolver(chordName) || [];
+      const midis = noteNames.map(noteNameToMidi).filter(n => n != null);
+
+      if (midis.length > 0) {
+        // Note ON (first event has the gap as delta, rest delta=0)
+        midis.forEach((m, i) => {
+          const delta = i === 0 ? Math.max(0, startTick - prevTick) : 0;
+          t1.push(...vlq(delta), 0x90, m, 80);
+        });
+        prevTick = startTick;
+
+        // Note OFF at end of measure
+        midis.forEach((m, i) => {
+          const delta = i === 0 ? endTick - startTick : 0;
+          t1.push(...vlq(delta), 0x80, m, 0);
+        });
+        prevTick = endTick;
+      }
+
+      measureIdx++;
+    }
+  }
+
+  t1.push(0, 0xFF, 0x2F, 0x00); // end of track
+
+  // ── Header + assembled file ──
+  const header = [
+    0x4D, 0x54, 0x68, 0x64,  // "MThd"
+    ...be32(6),
+    ...be16(1),              // format 1
+    ...be16(2),              // 2 tracks
+    ...be16(TPQ),
+  ];
+  const trk0Hdr = [0x4D, 0x54, 0x72, 0x6B, ...be32(t0.length)];
+  const trk1Hdr = [0x4D, 0x54, 0x72, 0x6B, ...be32(t1.length)];
+
+  return new Uint8Array([...header, ...trk0Hdr, ...t0, ...trk1Hdr, ...t1]);
+}
+
+function downloadBlob(bytes, filename, mime = 'audio/midi') {
+  const blob = new Blob([bytes], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 500);
+}
+
 // ── Small input helper ────────────────────────────────────────────────────────
 function Field({ label, children }) {
   return (
@@ -350,6 +459,20 @@ export default function Songwriter({ isPro = true, onUpgrade } = {}) {
     setSavedFlash(true);
     clearTimeout(savedTimerRef.current);
     savedTimerRef.current = setTimeout(() => setSavedFlash(false), 1500);
+  }
+
+  // ── Export MIDI ───────────────────────────────────────────────────────────
+  // Builds a Standard MIDI File from the current song and downloads it.
+  // Each chord = held block notes spanning one full measure at song.bpm /
+  // song.timeSig. The user opens the .mid in GarageBand / Logic / etc and
+  // adds strums, drums, melody on top. Reuses the in-component resolveNotes
+  // (which handles Nashville numerals + slash chords) for chord lookup.
+  function handleExportMidi() {
+    const bytes = buildSongMidi(activeSong, (chord) => resolveNotes(chord));
+    const safeName = (activeSong.title || 'untitled')
+      .replace(/[^a-z0-9 ._-]/gi, '')
+      .trim() || 'untitled';
+    downloadBlob(bytes, safeName + '.mid');
   }
 
   // ── Chip name editing ─────────────────────────────────────────────────────
@@ -561,6 +684,19 @@ export default function Songwriter({ isPro = true, onUpgrade } = {}) {
           cursor: 'pointer', fontFamily: "Georgia, serif", transition: 'all 0.2s', flexShrink: 0,
         }}>
           {savedFlash ? '✓ Saved' : '💾 Save'}
+        </button>
+
+        {/* Export MIDI — opens in GarageBand / Logic / any DAW */}
+        <button onClick={handleExportMidi}
+          title="Download a MIDI file you can open in GarageBand or Logic Pro"
+          style={{
+            padding: '5px 10px', borderRadius: 10, fontSize: 11, fontWeight: 700,
+            border: `1px solid ${M.border}`,
+            background: 'rgba(196,100,40,0.06)',
+            color: M.muted,
+            cursor: 'pointer', fontFamily: "Georgia, serif", flexShrink: 0,
+          }}>
+          🎹 MIDI
         </button>
 
         {/* Chords / Numbers toggle */}
