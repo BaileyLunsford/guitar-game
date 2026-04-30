@@ -99,7 +99,7 @@ function StringDiagram({ stringIdx, fretRange, highlightFrets, onFretTap }) {
   const fretGap = gridW / numFrets;
   const stringY = padT + (H - padT - padB) / 2;
   const dotY = padT + (H - padT - padB) + 10;
-  const DOTS_AT = new Set([3,5,7,9,12,15,17]);
+  const DOTS_AT = new Set([3,5,7,9,12]);
 
   function fretX(f) { return padL + (f - startFret) * fretGap; }
   function midX(f)  { return fretX(f) - fretGap / 2; }

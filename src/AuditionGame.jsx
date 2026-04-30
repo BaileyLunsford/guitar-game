@@ -208,8 +208,8 @@ const M = {
 const RING_R = 44;
 const RING_C = 2 * Math.PI * RING_R;
 
-// Standard guitar position marker frets (single dot; 12 & 24 get double dot)
-const POSITION_DOTS = new Set([3, 5, 7, 9, 12, 15, 17]);
+// Standard guitar position marker frets (single dot; 12 gets double dot)
+const POSITION_DOTS = new Set([3, 5, 7, 9, 12]);
 
 // ── Inline mini-fretboard hint ────────────────────────────────────────────────
 function FretHint({ note }) {
