@@ -84,8 +84,9 @@ const LESSONS = [
     body: `Chords are built by stacking every other note of the scale — called **thirds**.\n\nFrom C major: C-E-G = **C major chord** (1st, 3rd, 5th scale degrees)\n\nThe quality (major/minor) depends on the intervals:\n• Major: Root + 4 half steps + 3 half steps\n• Minor: Root + 3 half steps + 4 half steps\n\nThe I, IV, and V chords in any key are always major — that's why they're the power chords.`,
     stringIdx: 4, // B string showing C major triad notes
     fretRange: [0, 12],
-    highlightFrets: [1,5,10], // C E A on B string (approx triad illustration)
-    highlightNotes:  ['C','E','A'],
+    // C major triad on B string: C(1) E(5) G(8) — degrees 1, 3, 5
+    highlightFrets: [1, 5, 8],
+    highlightNotes:  ['C','E','G'],
   },
 ];
 
@@ -246,6 +247,98 @@ function StepsLessonDiagram({ preset = 'halfwhole' }) {
         <GuitarStringStepsDiagram steps={steps} />
       </div>
     </div>
+  );
+}
+
+// ── Stacked-thirds illustration (Lesson 4: Building Chords) ─────────────────
+// Shows C major scale on a treble staff with degrees 1, 3, 5 (C, E, G)
+// highlighted — the "every other note" stack that becomes a triad.
+// Reinforces why C-E-G is C major in a way that words alone don't.
+function StackedThirdsDiagram() {
+  const W = 290, H = 130;
+  const padTop = 8;
+  const STAFF_GAP = 12;
+  const HALF = STAFF_GAP / 2;
+  const STAFF_TOP_Y = padTop + 14;       // y of F5 (top staff line)
+  const sY = (pos) => STAFF_TOP_Y + (10 - pos) * HALF;
+
+  // C major scale ascending C4 → C5 (positions 0..7 on the staff)
+  const notes = [
+    { pos: 0, label: 'C', degree: 1, x: 60  },
+    { pos: 1, label: 'D', degree: 2, x: 90  },
+    { pos: 2, label: 'E', degree: 3, x: 120 },
+    { pos: 3, label: 'F', degree: 4, x: 150 },
+    { pos: 4, label: 'G', degree: 5, x: 180 },
+    { pos: 5, label: 'A', degree: 6, x: 210 },
+    { pos: 6, label: 'B', degree: 7, x: 240 },
+    { pos: 7, label: 'C', degree: 8, x: 270 },
+  ];
+  const triadDegrees = new Set([1, 3, 5]);
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%"
+      style={{ display: 'block', maxWidth: 320, margin: '0 auto' }}>
+      {/* Staff lines (positions 10, 8, 6, 4, 2 = F5, D5, B4, G4, E4) */}
+      {[10, 8, 6, 4, 2].map(p => (
+        <line key={p} x1={36} y1={sY(p)} x2={W - 8} y2={sY(p)}
+          stroke="rgba(196,100,40,0.45)" strokeWidth={1} />
+      ))}
+
+      {/* Treble clef glyph — anchored so curl wraps the G4 line */}
+      <text x={40} y={sY(2) + STAFF_GAP * 0.55}
+        fontSize={STAFF_GAP * 6.5} textAnchor="end"
+        fontFamily="'Segoe UI Symbol','Apple Symbols',serif"
+        fill={M.accent}>𝄞</text>
+
+      {/* Notes */}
+      {notes.map((n, i) => {
+        const isTriad = triadDegrees.has(n.degree);
+        const color = isTriad ? M.accent : M.muted;
+        const stemUp = n.pos < 6;
+        const stemX = stemUp ? n.x + 5 : n.x - 5;
+        const stemY2 = stemUp ? sY(n.pos) - 24 : sY(n.pos) + 24;
+        return (
+          <g key={i}>
+            {/* Ledger line for middle C (pos 0) */}
+            {n.pos === 0 && (
+              <line x1={n.x - 9} y1={sY(0)} x2={n.x + 9} y2={sY(0)}
+                stroke={color} strokeWidth={1.2} />
+            )}
+            {/* Stem */}
+            <line x1={stemX} y1={sY(n.pos)} x2={stemX} y2={stemY2}
+              stroke={color} strokeWidth={1.3}
+              opacity={isTriad ? 1 : 0.55} />
+            {/* Note head */}
+            <ellipse cx={n.x} cy={sY(n.pos)} rx={5.5} ry={3.8}
+              fill={color} opacity={isTriad ? 1 : 0.5}
+              transform={`rotate(-18, ${n.x}, ${sY(n.pos)})`} />
+            {/* Degree number */}
+            <text x={n.x} y={H - 22} textAnchor="middle"
+              fontSize="12" fontWeight={isTriad ? '900' : '600'}
+              fill={isTriad ? M.accent : M.muted}
+              fontFamily="Georgia, serif">{n.degree}</text>
+            {/* Letter */}
+            <text x={n.x} y={H - 8} textAnchor="middle"
+              fontSize="10"
+              fontWeight={isTriad ? '800' : '500'}
+              fill={isTriad ? M.hi : M.muted}
+              fontFamily="Georgia, serif">{n.label}</text>
+          </g>
+        );
+      })}
+
+      {/* Connecting arc between 1→3 and 3→5 to suggest "third" intervals.
+          Drawn as flat brackets above the highlighted notes. */}
+      {[ [60, 120], [120, 180] ].map(([x1, x2], i) => (
+        <g key={i}>
+          <path d={`M ${x1},${padTop + 2} Q ${(x1+x2)/2},${padTop - 6} ${x2},${padTop + 2}`}
+            fill="none" stroke={M.gold} strokeWidth={1.2} opacity={0.85} />
+          <text x={(x1 + x2) / 2} y={padTop + 1} textAnchor="middle"
+            fontSize="8" fontWeight="800" fill={M.gold}
+            fontFamily="Georgia, serif">3rd</text>
+        </g>
+      ))}
+    </svg>
   );
 }
 
@@ -489,6 +582,32 @@ export default function FretboardTheory({ isPro, onUpgrade }) {
                 The two <span style={{ color: M.gold, fontWeight: 700 }}>H</span>{' '}
                 steps are always between scale degrees 3-4 and 7-8. That's the
                 pattern. Slide it up the neck and you've changed key.
+              </div>
+            </div>
+          )}
+
+          {/* Lesson 4 — staff diagram showing the C major scale with
+              degrees 1, 3, 5 (C, E, G) highlighted as "stacked thirds".
+              Visual reinforcement of "stack every other note". */}
+          {lesson.id === 'chords' && (
+            <div style={{
+              background: M.panel, borderRadius: 12, border: `1px solid ${M.border}`,
+              padding: '14px 12px 10px', marginBottom: 12,
+            }}>
+              <div style={{
+                fontSize: 9, fontWeight: 800, letterSpacing: '0.1em',
+                textTransform: 'uppercase', color: M.muted,
+                marginBottom: 10, textAlign: 'center',
+              }}>Stacked Thirds in C Major</div>
+              <StackedThirdsDiagram />
+              <div style={{
+                fontSize: 11, color: M.muted, fontStyle: 'italic',
+                marginTop: 8, lineHeight: 1.5, textAlign: 'center',
+              }}>
+                Stack <span style={{ color: M.accent, fontWeight: 800 }}>1 + 3 + 5</span>{' '}
+                — that's <span style={{ color: M.hi, fontWeight: 800 }}>C&nbsp;E&nbsp;G</span>{' '}
+                = C Major. Every triad in any key is built the same way: skip a
+                note, take a note, skip a note.
               </div>
             </div>
           )}

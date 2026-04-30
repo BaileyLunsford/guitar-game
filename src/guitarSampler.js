@@ -133,6 +133,24 @@ export class InstrumentSampler {
       this._activeSources.clear();
     }
 
+    // Same-pitch retriggering: real-guitar physics. Plucking a string that's
+    // still ringing dampens the prior vibration — you don't get two copies of
+    // the same note ringing at once. Without this, songs that repeat a pitch
+    // (Twinkle's C C, Amazing Grace's held G's) build up overlapping samples
+    // that beat against each other and sound muddy/chorus-y.
+    // Always applied (even in polyphonic mode), but only for the SAME pitch —
+    // different notes still ring independently like real guitar strings.
+    const prevSamePitch = this._activeSources.get(note);
+    if (prevSamePitch) {
+      try {
+        prevSamePitch.gain.gain.cancelScheduledValues(now);
+        prevSamePitch.gain.gain.setValueAtTime(prevSamePitch.gain.gain.value, now);
+        prevSamePitch.gain.gain.linearRampToValueAtTime(0, now + 0.030);
+        prevSamePitch.source.stop(now + 0.040);
+      } catch (_) { /* already stopped */ }
+      this._activeSources.delete(note);
+    }
+
     const startAt = now + GAP;
 
     const source = ctx.createBufferSource();
