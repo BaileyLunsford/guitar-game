@@ -52,7 +52,7 @@ function btnStyle(active = false, disabled = false) {
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
-export default function SongLearnEngine({ song }) {
+export default function SongLearnEngine({ song, isPro = true, onUpgrade }) {
   const [started,    setStarted]    = useState(false);
   const [measureIdx, setMeasureIdx] = useState(0);
   const [bpm,        setBpm]        = useState(song?.bpm ?? 80);
@@ -200,6 +200,38 @@ export default function SongLearnEngine({ song }) {
   const atStart = measureIdx === 0;
   const atEnd   = measureIdx >= total - 1;
   const pct     = total > 1 ? (measureIdx / (total - 1)) * 100 : 100;
+
+  // ── PRO gate (free users see overlay only) ────────────────────────────────
+  if (!isPro) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 100,
+        background: 'rgba(18,10,4,0.96)',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', padding: 24,
+      }}>
+        <div style={{ fontSize: 56, marginBottom: 16 }}>🔒</div>
+        <h2 style={{
+          fontSize: 22, fontWeight: 900, marginBottom: 10,
+          background: `linear-gradient(135deg,${M.accent},${M.hi})`,
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+        }}>PRO Feature</h2>
+        <p style={{ fontSize: 14, color: M.muted, textAlign: 'center',
+          maxWidth: 260, lineHeight: 1.6, marginBottom: 28 }}>
+          Song Learn is part of the PRO subscription.
+        </p>
+        <button onClick={onUpgrade} style={{
+          padding: '14px 36px', borderRadius: 14,
+          border: `1px solid ${M.borderHi}`,
+          background: `linear-gradient(135deg,#C46428,${M.accent})`,
+          color: '#fff', fontFamily: "Georgia, serif",
+          fontWeight: 800, fontSize: 16, cursor: 'pointer',
+          boxShadow: '0 4px 20px rgba(232,131,58,0.3)', marginBottom: 16,
+        }}>Unlock PRO →</button>
+        <a href="#" style={{ fontSize: 13, color: M.muted, textDecoration: 'none' }}>← Back</a>
+      </div>
+    );
+  }
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (

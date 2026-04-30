@@ -178,7 +178,7 @@ function selStyle(active) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function Songwriter() {
+export default function Songwriter({ isPro = true, onUpgrade } = {}) {
   const [songs,      setSongs]      = useState(() => loadSongs().map(normalizeSong));
   const [activeSong, setActiveSong] = useState(() => {
     const saved = loadSongs().map(normalizeSong);
@@ -478,6 +478,38 @@ export default function Songwriter() {
 
   const beatsPerMeasure = parseInt(activeSong.timeSig?.split('/')[0] || '4');
   const cols = Math.min(beatsPerMeasure, 4);
+
+  // ── PRO gate (free users see overlay only) ────────────────────────────────
+  if (!isPro) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 100,
+        background: 'rgba(18,10,4,0.96)',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', padding: 24,
+      }}>
+        <div style={{ fontSize: 56, marginBottom: 16 }}>🔒</div>
+        <h2 style={{
+          fontSize: 22, fontWeight: 900, marginBottom: 10,
+          background: `linear-gradient(135deg,${M.accent},${M.hi})`,
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+        }}>PRO Feature</h2>
+        <p style={{ fontSize: 14, color: M.muted, textAlign: 'center',
+          maxWidth: 260, lineHeight: 1.6, marginBottom: 28 }}>
+          Songwriter is part of the PRO subscription.
+        </p>
+        <button onClick={onUpgrade} style={{
+          padding: '14px 36px', borderRadius: 14,
+          border: `1px solid ${M.borderHi}`,
+          background: `linear-gradient(135deg,#C46428,${M.accent})`,
+          color: '#fff', fontFamily: "Georgia, serif",
+          fontWeight: 800, fontSize: 16, cursor: 'pointer',
+          boxShadow: '0 4px 20px rgba(232,131,58,0.3)', marginBottom: 16,
+        }}>Unlock PRO →</button>
+        <a href="#" style={{ fontSize: 13, color: M.muted, textDecoration: 'none' }}>← Back</a>
+      </div>
+    );
+  }
 
   return (
     <div style={{

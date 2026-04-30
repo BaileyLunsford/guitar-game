@@ -831,7 +831,7 @@ export default function App() {
 
   if (hash === '#audition')     return <AuditionGame />;
   if (hash === '#tab-test')     return <TabTest />;
-  if (hash === '#song-learn')   return <SongLearnEngine song={ODE_TO_JOY} />;
+  if (hash === '#song-learn')   return <SongLearnEngine song={ODE_TO_JOY} isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
   if (hash === '#song-play')    return <SongPlayScreen  song={ODE_TO_JOY} />;
   if (hash === '#song-library') return <SongLibrary isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
   if (hash === '#progress')     return <ProgressTracker isPro={isPro} getTodayMinutes={getTodayMinutes} onLickOfDay={(id) => { setLickOfDayId(id); window.location.hash = '#lick-play'; setHash('#lick-play'); }} />;
@@ -844,13 +844,13 @@ export default function App() {
   if (hash === '#flashcards')   return <Flashcards   isPro={isPro} onPurchase={purchase} onRestore={restore} />;
   if (hash === '#metronome')    return <Metronome theme={GUITAR_THEME} title="Guitar Metronome" />;
   if (hash === '#triads')          return <TriadsArpeggios   isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
-  if (hash === '#backing-tracks')  return <SongBackingTracks />;
+  if (hash === '#backing-tracks')  return <SongBackingTracks isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
   if (hash === '#circle-fifths')   return <CircleOfFifths    isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
   if (hash === '#nashville')       return <NashvilleNumbers  isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
   if (hash === '#fretboard-theory')return <FretboardTheory   isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
   if (hash === '#fretboard-notes') return <FretboardNotes    isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
   if (hash === '#strum-patterns')  return <StrumPatterns     isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
-  if (hash === '#songwriter')      return <Songwriter />;
+  if (hash === '#songwriter')      return <Songwriter isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
 
   return (
     <>
