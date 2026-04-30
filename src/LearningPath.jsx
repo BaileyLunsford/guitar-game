@@ -35,34 +35,34 @@ const PATH_DATA = [
   {
     id: 'open-chords', icon: '🎸', label: 'Open Chords', hash: '#chord-play',
     items: [
-      { id: 'oc-em',  label: 'E minor (Em) — easiest, 2 fingers' },
-      { id: 'oc-am',  label: 'A minor (Am)' },
-      { id: 'oc-e',   label: 'E major' },
-      { id: 'oc-a',   label: 'A major' },
-      { id: 'oc-d',   label: 'D major' },
-      { id: 'oc-g',   label: 'G major' },
-      { id: 'oc-c',   label: 'C major' },
-      { id: 'oc-dm',  label: 'D minor (Dm)' },
+      { id: 'oc-em', target: 'Em', label: 'E minor (Em) — easiest, 2 fingers' },
+      { id: 'oc-am', target: 'Am', label: 'A minor (Am)' },
+      { id: 'oc-e',  target: 'E',  label: 'E major' },
+      { id: 'oc-a',  target: 'A',  label: 'A major' },
+      { id: 'oc-d',  target: 'D',  label: 'D major' },
+      { id: 'oc-g',  target: 'G',  label: 'G major' },
+      { id: 'oc-c',  target: 'C',  label: 'C major' },
+      { id: 'oc-dm', target: 'Dm', label: 'D minor (Dm)' },
     ],
   },
   {
     id: 'barre-chords', icon: '🤘', label: 'Barre Chords', hash: '#barre-chords',
     items: [
-      { id: 'bc-f',     label: 'F major — E-shape barre, fret 1' },
-      { id: 'bc-bb',    label: 'B♭ major — A-shape barre, fret 1' },
-      { id: 'bc-fsharpm', label: 'F# minor — E-shape minor barre' },
-      { id: 'bc-bm',    label: 'B minor — A-shape minor barre' },
+      { id: 'bc-f',       target: 'F',   label: 'F major — E-shape barre, fret 1' },
+      { id: 'bc-bb',      target: 'Bb',  label: 'B♭ major — A-shape barre, fret 1' },
+      { id: 'bc-fsharpm', target: 'F#m', label: 'F# minor — E-shape minor barre' },
+      { id: 'bc-bm',      target: 'B',   label: 'B major — A-shape barre, fret 2' },
     ],
   },
   {
     id: 'strum-patterns', icon: '🎶', label: 'Strum Patterns', hash: '#strum-patterns',
     items: [
-      { id: 'sp-all-down', label: 'All Down — quarter notes' },
-      { id: 'sp-down-up',  label: 'Down-Up — eighth notes' },
-      { id: 'sp-folk',     label: 'Folk — D-D-U-U-D-U' },
-      { id: 'sp-country',  label: 'Country — boom-chuck' },
-      { id: 'sp-waltz',    label: 'Waltz — 3/4 time' },
-      { id: 'sp-slow-rock',label: 'Slow Rock — ballad feel' },
+      { id: 'sp-all-down', target: 'all-down',  label: 'All Down — quarter notes' },
+      { id: 'sp-down-up',  target: 'down-up',   label: 'Down-Up — eighth notes' },
+      { id: 'sp-folk',     target: 'folk',      label: 'Folk — D-D-U-U-D-U' },
+      { id: 'sp-country',  target: 'country',   label: 'Country — boom-chuck' },
+      { id: 'sp-waltz',    target: 'waltz',     label: 'Waltz — 3/4 time' },
+      { id: 'sp-slow-rock',target: 'slow-rock', label: 'Slow Rock — ballad feel' },
     ],
   },
   {
@@ -91,28 +91,28 @@ const PATH_DATA = [
     id: 'songs', icon: '📚', label: 'Songs', hash: '#song-library',
     items: [
       // Beginner
-      { id: 'song-ode',         label: 'Ode to Joy', tag: 'Beginner' },
-      { id: 'song-twinkle',     label: 'Twinkle Twinkle Little Star', tag: 'Beginner' },
-      { id: 'song-mary',        label: 'Mary Had a Little Lamb', tag: 'Beginner' },
-      { id: 'song-saints',      label: 'When the Saints Go Marching In', tag: 'Beginner' },
-      { id: 'song-skip-lou',    label: 'Skip to My Lou', tag: 'Beginner' },
-      { id: 'song-amazing',     label: 'Amazing Grace', tag: 'Beginner' },
-      { id: 'song-jingle',      label: 'Jingle Bells', tag: 'Beginner' },
-      { id: 'song-silent',      label: 'Silent Night', tag: 'Beginner' },
-      { id: 'song-happy-bday',  label: 'Happy Birthday', tag: 'Beginner' },
-      { id: 'song-simple-gifts',label: 'Simple Gifts', tag: 'Beginner' },
+      { id: 'song-ode',          target: 'ode',          label: 'Ode to Joy', tag: 'Beginner' },
+      { id: 'song-twinkle',      target: 'twinkle',      label: 'Twinkle Twinkle Little Star', tag: 'Beginner' },
+      { id: 'song-mary',         target: 'mary_lamb',    label: 'Mary Had a Little Lamb', tag: 'Beginner' },
+      { id: 'song-saints',       target: 'saints',       label: 'When the Saints Go Marching In', tag: 'Beginner' },
+      { id: 'song-skip-lou',     target: 'skip_lou',     label: 'Skip to My Lou', tag: 'Beginner' },
+      { id: 'song-amazing',      target: 'amazing',      label: 'Amazing Grace', tag: 'Beginner' },
+      { id: 'song-jingle',       target: 'jingle_bells', label: 'Jingle Bells', tag: 'Beginner' },
+      { id: 'song-silent',       target: 'silent_night', label: 'Silent Night', tag: 'Beginner' },
+      { id: 'song-happy-bday',   target: 'happy_birthday', label: 'Happy Birthday', tag: 'Beginner' },
+      { id: 'song-simple-gifts', target: 'simple_gifts', label: 'Simple Gifts', tag: 'Beginner' },
       // Intermediate
-      { id: 'song-red-river',   label: 'Red River Valley', tag: 'Intermediate' },
-      { id: 'song-shady',       label: 'Shady Grove', tag: 'Intermediate' },
-      { id: 'song-circle',      label: 'Will the Circle Be Unbroken', tag: 'Intermediate' },
-      { id: 'song-wildwood',    label: 'Wildwood Flower', tag: 'Intermediate' },
-      { id: 'song-cripple',     label: 'Cripple Creek', tag: 'Intermediate' },
-      { id: 'song-rising-sun',  label: 'House of the Rising Sun', tag: 'Intermediate' },
+      { id: 'song-red-river',    target: 'red_river',    label: 'Red River Valley', tag: 'Intermediate' },
+      { id: 'song-shady',        target: 'shady',        label: 'Shady Grove', tag: 'Intermediate' },
+      { id: 'song-circle',       target: 'circle',       label: 'Will the Circle Be Unbroken', tag: 'Intermediate' },
+      { id: 'song-wildwood',     target: 'wildwood',     label: 'Wildwood Flower', tag: 'Intermediate' },
+      { id: 'song-cripple',      target: 'cripple',      label: 'Cripple Creek', tag: 'Intermediate' },
+      { id: 'song-rising-sun',   target: 'rising_sun',   label: 'House of the Rising Sun', tag: 'Intermediate' },
       // Advanced
-      { id: 'song-scarborough', label: 'Scarborough Fair', tag: 'Advanced' },
-      { id: 'song-greensleeves',label: 'Greensleeves', tag: 'Advanced' },
-      { id: 'song-danny-boy',   label: 'Danny Boy', tag: 'Advanced' },
-      { id: 'song-blackbird',   label: 'Blackbird (simplified)', tag: 'Advanced' },
+      { id: 'song-scarborough',  target: 'scarborough',  label: 'Scarborough Fair', tag: 'Advanced' },
+      { id: 'song-greensleeves', target: 'greensleeves', label: 'Greensleeves', tag: 'Advanced' },
+      { id: 'song-danny-boy',    target: 'danny_boy',    label: 'Danny Boy', tag: 'Advanced' },
+      { id: 'song-blackbird',    target: 'blackbird',    label: 'Blackbird (simplified)', tag: 'Advanced' },
     ],
   },
   {
@@ -259,12 +259,14 @@ function CategorySection({ category, completed, onToggle, collapsed, onToggleCol
                   )}
                 </div>
 
-                {/* Optional link */}
+                {/* Optional link — appends item.target to category.hash for deep-link */}
                 {category.hash && (
-                  <a href={category.hash} style={{
-                    color: M.muted, fontSize: 16, lineHeight: 1, padding: '0 4px',
-                    textDecoration: 'none', flexShrink: 0,
-                  }} title="Practice this">→</a>
+                  <a href={item.target ? `${category.hash}=${encodeURIComponent(item.target)}` : category.hash}
+                    style={{
+                      color: M.muted, fontSize: 16, lineHeight: 1, padding: '0 4px',
+                      textDecoration: 'none', flexShrink: 0,
+                    }}
+                    title={item.target ? `Practice ${item.label} →` : 'Practice this'}>→</a>
                 )}
               </div>
             );

@@ -518,9 +518,15 @@ function PatternCard({ pattern, onSelect }) {
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-export default function StrumPatterns({ isPro, onUpgrade }) {
-  const [started,  setStarted]  = useState(false);
-  const [selected, setSelected] = useState(null); // pattern object or null
+export default function StrumPatterns({ isPro, onUpgrade, initialPatternId = null }) {
+  // Deep-link target: jump to a specific pattern by id (e.g. 'folk', 'waltz')
+  const initialPattern = React.useMemo(() => {
+    if (!initialPatternId) return null;
+    return PATTERNS.find(p => p.id === initialPatternId) || null;
+  }, [initialPatternId]);
+
+  const [started,  setStarted]  = useState(initialPattern != null);
+  const [selected, setSelected] = useState(initialPattern); // pattern object or null
 
   if (!started) return (
     <LandingPage

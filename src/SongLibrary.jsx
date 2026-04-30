@@ -1899,8 +1899,18 @@ function SongDetail({ song, isPro, onUpgrade, onBack }) {
 }
 
 // ── Library list ──────────────────────────────────────────────────────────────
-export default function SongLibrary({ isPro, onUpgrade }) {
-  const [selected, setSelected] = useState(null);
+export default function SongLibrary({ isPro, onUpgrade, initialSongId = null }) {
+  // Deep-link target: jump straight to a song's detail screen by id.
+  // Free song → opens directly. PRO song → triggers the upgrade modal.
+  const initialSelected = React.useMemo(() => {
+    if (!initialSongId) return null;
+    const s = SONGS.find(x => x.id === initialSongId);
+    if (!s) return null;
+    if (s.pro && !isPro) { onUpgrade && onUpgrade(); return null; }
+    return s;
+  }, [initialSongId, isPro, onUpgrade]);
+
+  const [selected, setSelected] = useState(initialSelected);
   const freeSongs = SONGS.filter(s => !s.pro);
   const proSongs  = SONGS.filter(s => s.pro);
 

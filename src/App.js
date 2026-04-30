@@ -831,29 +831,34 @@ export default function App() {
     />
   );
 
-  if (hash === '#audition')      return <AuditionGame />;
-  if (hash === '#tab-test')      return <TabTest />;
-  if (hash === '#learning-path') return <LearningPath />;
-  if (hash === '#song-learn')   return <SongLearnEngine song={ODE_TO_JOY} isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
-  if (hash === '#song-play')    return <SongPlayScreen  song={ODE_TO_JOY} />;
-  if (hash === '#song-library') return <SongLibrary isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
-  if (hash === '#progress')     return <ProgressTracker isPro={isPro} getTodayMinutes={getTodayMinutes} onLickOfDay={(id) => { setLickOfDayId(id); window.location.hash = '#lick-play'; setHash('#lick-play'); }} />;
-  if (hash === '#tuner')        return <Tuner strings={GUITAR_STRINGS} theme={GUITAR_THEME} title="Tune Your Guitar" />;
-  if (hash === '#scale-play')   return <ScalePlay    isPro={isPro} onPurchase={purchase} onRestore={restore} />;
-  if (hash === '#lick-play')    return <LickPlay     isPro={isPro} onPurchase={purchase} onRestore={restore} initialLickId={lickOfDayId} />;
-  if (hash === '#chord-play')   return <ChordPlay    isPro={isPro} onPurchase={purchase} onRestore={restore} />;
-  if (hash === '#barre-chords') return <BarreChords  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
-  if (hash === '#caged')        return <CAGEDSystem  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
-  if (hash === '#flashcards')   return <Flashcards   isPro={isPro} onPurchase={purchase} onRestore={restore} />;
-  if (hash === '#metronome')    return <Metronome theme={GUITAR_THEME} title="Guitar Metronome" />;
-  if (hash === '#triads')          return <TriadsArpeggios   isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
-  if (hash === '#backing-tracks')  return <SongBackingTracks isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
-  if (hash === '#circle-fifths')   return <CircleOfFifths    isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
-  if (hash === '#nashville')       return <NashvilleNumbers  isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
-  if (hash === '#fretboard-theory')return <FretboardTheory   isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
-  if (hash === '#fretboard-notes') return <FretboardNotes    isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
-  if (hash === '#strum-patterns')  return <StrumPatterns     isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
-  if (hash === '#songwriter')      return <Songwriter isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
+  // Deep-link parsing: hashes can carry a target after '=' (e.g. '#chord-play=Em')
+  const eqIdx     = hash.indexOf('=');
+  const hashBase  = eqIdx < 0 ? hash : hash.slice(0, eqIdx);
+  const hashTarget= eqIdx < 0 ? null : decodeURIComponent(hash.slice(eqIdx + 1));
+
+  if (hashBase === '#audition')      return <AuditionGame />;
+  if (hashBase === '#tab-test')      return <TabTest />;
+  if (hashBase === '#learning-path') return <LearningPath />;
+  if (hashBase === '#song-learn')   return <SongLearnEngine song={ODE_TO_JOY} isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
+  if (hashBase === '#song-play')    return <SongPlayScreen  song={ODE_TO_JOY} />;
+  if (hashBase === '#song-library') return <SongLibrary isPro={isPro} onUpgrade={() => setShowUpgrade(true)} initialSongId={hashTarget} />;
+  if (hashBase === '#progress')     return <ProgressTracker isPro={isPro} getTodayMinutes={getTodayMinutes} onLickOfDay={(id) => { setLickOfDayId(id); window.location.hash = '#lick-play'; setHash('#lick-play'); }} />;
+  if (hashBase === '#tuner')        return <Tuner strings={GUITAR_STRINGS} theme={GUITAR_THEME} title="Tune Your Guitar" />;
+  if (hashBase === '#scale-play')   return <ScalePlay    isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hashBase === '#lick-play')    return <LickPlay     isPro={isPro} onPurchase={purchase} onRestore={restore} initialLickId={lickOfDayId} />;
+  if (hashBase === '#chord-play')   return <ChordPlay    isPro={isPro} onPurchase={purchase} onRestore={restore} initialChord={hashTarget} />;
+  if (hashBase === '#barre-chords') return <BarreChords  isPro={isPro} onPurchase={purchase} onRestore={restore} initialChord={hashTarget} />;
+  if (hashBase === '#caged')        return <CAGEDSystem  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hashBase === '#flashcards')   return <Flashcards   isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hashBase === '#metronome')    return <Metronome theme={GUITAR_THEME} title="Guitar Metronome" />;
+  if (hashBase === '#triads')          return <TriadsArpeggios   isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
+  if (hashBase === '#backing-tracks')  return <SongBackingTracks isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
+  if (hashBase === '#circle-fifths')   return <CircleOfFifths    isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
+  if (hashBase === '#nashville')       return <NashvilleNumbers  isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
+  if (hashBase === '#fretboard-theory')return <FretboardTheory   isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
+  if (hashBase === '#fretboard-notes') return <FretboardNotes    isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
+  if (hashBase === '#strum-patterns')  return <StrumPatterns     isPro={isPro} onUpgrade={() => setShowUpgrade(true)} initialPatternId={hashTarget} />;
+  if (hashBase === '#songwriter')      return <Songwriter isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
 
   return (
     <>

@@ -149,11 +149,40 @@ function btn(active = false, disabled = false) {
 }
 
 // ─── ChordPlay ────────────────────────────────────────────────────────────────
-export default function ChordPlay({ isPro = false, onPurchase, onRestore }) {
-  const [phase,      setPhase]      = useState('landing'); // 'landing' | 'chords'
-  const [keyIdx,     setKeyIdx]     = useState(0);
-  const [chordIdx,   setChordIdx]   = useState(0);
-  const [mode,       setMode]       = useState('essential'); // 'essential' | 'full'
+// Deep-link helper: find which key + chordIdx contains a given chord name
+// (e.g. 'Em', 'F'). Prefers the key where the chord is the I (root); falls
+// back to vi (relative minor home), then any other position. Always uses
+// the 'full' diatonic mode so all 7 degrees are reachable.
+function findChordLocation(chordName) {
+  if (!chordName) return null;
+  const target = String(chordName).trim();
+  // First pass: chord as I in some key
+  for (let ki = 0; ki < KEYS.length; ki++) {
+    const idx = KEYS[ki].chords.findIndex(c => c.name === target && c.degree === 'I');
+    if (idx >= 0) return { keyIdx: ki, chordIdx: idx };
+  }
+  // Second pass: chord as vi (relative minor home) in some key
+  for (let ki = 0; ki < KEYS.length; ki++) {
+    const idx = KEYS[ki].chords.findIndex(c => c.name === target && c.degree === 'vi');
+    if (idx >= 0) return { keyIdx: ki, chordIdx: idx };
+  }
+  // Third pass: any position
+  for (let ki = 0; ki < KEYS.length; ki++) {
+    const idx = KEYS[ki].chords.findIndex(c => c.name === target);
+    if (idx >= 0) return { keyIdx: ki, chordIdx: idx };
+  }
+  return null;
+}
+
+export default function ChordPlay({ isPro = false, onPurchase, onRestore, initialChord = null }) {
+  // If we have a deep-link target, resolve it to (keyIdx, chordIdx) and skip the landing.
+  const initialLoc = React.useMemo(() => findChordLocation(initialChord), [initialChord]);
+
+  const [phase,      setPhase]      = useState(initialLoc ? 'chords' : 'landing');
+  const [keyIdx,     setKeyIdx]     = useState(initialLoc?.keyIdx ?? 0);
+  const [chordIdx,   setChordIdx]   = useState(initialLoc?.chordIdx ?? 0);
+  // Force 'full' mode when deep-linked so non-essential degrees (Bm, Em, etc.) are reachable
+  const [mode,       setMode]       = useState(initialLoc ? 'full' : 'essential');
   const [playing,    setPlaying]    = useState(false);
   const [activeNote, setActiveNote] = useState(null);
   const [modal,      setModal]      = useState(null); // null | { feature }

@@ -85,9 +85,16 @@ function btn(active = false, disabled = false) {
   };
 }
 
-export default function BarreChords({ isPro = false, onPurchase, onRestore }) {
-  const [phase,      setPhase]      = useState('landing');
-  const [chordIdx,   setChordIdx]   = useState(0);
+export default function BarreChords({ isPro = false, onPurchase, onRestore, initialChord = null }) {
+  // Deep-link target: jump to a specific chord by name (e.g. 'F', 'Bm')
+  const initialIdx = React.useMemo(() => {
+    if (!initialChord) return null;
+    const i = CHORDS.findIndex(c => c.name === initialChord);
+    return i >= 0 ? i : null;
+  }, [initialChord]);
+
+  const [phase,      setPhase]      = useState(initialIdx != null ? 'chords' : 'landing');
+  const [chordIdx,   setChordIdx]   = useState(initialIdx ?? 0);
   const [playing,    setPlaying]    = useState(false);
   const [activeNote, setActiveNote] = useState(null);
   const [modal,      setModal]      = useState(null);
