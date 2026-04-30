@@ -230,13 +230,20 @@ function TriadsSection() {
     stopPlay();
     guitarSampler.resume?.();
     const beatMs = 60000 / triadBpm;
+    // ±20–40ms timing jitter so each pluck doesn't fall robotically on the beat
+    // (matches the humanization in ScalePlay and SongLearnEngine).
+    const jitter = () => {
+      const mag = 20 + Math.random() * 20;
+      return Math.random() < 0.5 ? mag : -mag;
+    };
     shape.guitarFrets.forEach((f, i) => {
+      const onset = Math.max(0, Math.round(i * beatMs + jitter()));
       const t = setTimeout(() => {
         guitarSampler.playNote(semToName(OPEN_SEMI[group.asc[i]] + f));
         if (i === shape.guitarFrets.length - 1) {
           playTimerRef.current = setTimeout(() => setPlayMode(null), beatMs);
         }
-      }, i * beatMs);
+      }, onset);
       arpTimersRef.current.push(t);
     });
     setPlayMode('arp');

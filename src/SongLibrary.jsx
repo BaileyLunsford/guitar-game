@@ -1735,7 +1735,10 @@ function ListenMode({ song, onBack }) {
     setNoteIdx(idx);
     const note = allNotes[idx];
     if (!REST_CODES.has(note.duration)) {
-      guitarSampler.playNote(note.noteName);
+      // Slight ±15ms jitter on attack — makes playback feel played, not metronomic.
+      // Same humanization as ScalePlay / SongLearnEngine.
+      const offsetMs = (Math.random() - 0.5) * 30;
+      setTimeout(() => guitarSampler.playNote(note.noteName), Math.max(0, offsetMs));
     }
     timerRef.current = setTimeout(() => playNote(idx + 1), beatDur(note.duration) * beatMs);
   }

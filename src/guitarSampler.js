@@ -193,13 +193,19 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden) guitarSampler.resume();
 });
 
-// Warm the open strings + key fretted notes on load so first play is instant.
-// E2–E5 chromatic range; Gleitz has samples every ~3 semitones so missing notes
-// are synthesized by the browser via pitch-shifted nearest sample (not needed here —
-// we just request what we need and let missing ones fail silently via preload's catch).
+// Warm the chromatic E2–G5 range on load so first play is instant.
+// Includes naturals + flats (Gleitz uses flat filenames). Sharps fetch and
+// fall back to enharmonic flat. Without this, the first play of any sharp
+// note (e.g. F#3 in Amazing Grace, F#4 in Greensleeves) hits the network
+// before sounding — which is heard as a "missing" or "delayed" attack and
+// makes melodic playback feel robotic or broken.
 guitarSampler.preload([
-  'E2', 'F2', 'G2', 'A2', 'B2',
-  'C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3',
-  'C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4',
-  'C5', 'D5', 'E5',
+  // Octave 2 (low E to B)
+  'E2', 'F2', 'Gb2', 'G2', 'Ab2', 'A2', 'Bb2', 'B2',
+  // Octave 3 (C3 to B3)
+  'C3', 'Db3', 'D3', 'Eb3', 'E3', 'F3', 'Gb3', 'G3', 'Ab3', 'A3', 'Bb3', 'B3',
+  // Octave 4 (middle C to B4 — most melody notes live here)
+  'C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'Gb4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4',
+  // Octave 5 (C5 to G5 — chorus high notes for Greensleeves etc.)
+  'C5', 'Db5', 'D5', 'Eb5', 'E5', 'F5', 'Gb5', 'G5',
 ]);
