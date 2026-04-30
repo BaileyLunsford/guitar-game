@@ -89,6 +89,67 @@ const LESSONS = [
   },
 ];
 
+// ── Piano keyboard illustration: half vs whole steps ────────────────────────
+// One-octave keyboard (C → C) with three step markers above the keys:
+//   C → D  Whole step (skips C#)
+//   E → F  Half step  (no black key between — the "aha" for beginners)
+//   F → G  Whole step (skips F#)
+// Used in Lesson 1 to make the abstract "half/whole step" concept concrete
+// before showing it on the guitar fretboard below.
+function PianoStepsDiagram() {
+  const W = 290, H = 132;
+  const padTop = 30;          // room for labels above keys
+  const whiteW = 36, whiteH = 96;
+  const blackW = 24, blackH = 60;
+  const whites = [
+    { x: 0,   label: 'C' }, { x: 36,  label: 'D' }, { x: 72,  label: 'E' },
+    { x: 108, label: 'F' }, { x: 144, label: 'G' }, { x: 180, label: 'A' },
+    { x: 216, label: 'B' }, { x: 252, label: 'C' },
+  ];
+  const blacks = [
+    { x: 25 }, { x: 61 }, { x: 133 }, { x: 169 }, { x: 205 },
+  ];
+
+  // Step bracket: small staple-shape with letter centered above
+  const StepLabel = ({ x1, x2, label, color }) => (
+    <g>
+      <line x1={x1} y1={20} x2={x2} y2={20} stroke={color} strokeWidth={1.4} />
+      <line x1={x1} y1={20} x2={x1} y2={padTop - 3} stroke={color} strokeWidth={1.4} />
+      <line x1={x2} y1={20} x2={x2} y2={padTop - 3} stroke={color} strokeWidth={1.4} />
+      <text x={(x1 + x2) / 2} y={14} textAnchor="middle"
+        fontSize="11" fontWeight="800" fill={color}
+        fontFamily="Georgia, serif">{label}</text>
+    </g>
+  );
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%"
+      style={{ display: 'block', maxWidth: 320, margin: '0 auto' }}>
+      {/* Step brackets above */}
+      <StepLabel x1={18}  x2={54}  label="W" color={M.accent} />
+      <StepLabel x1={90}  x2={126} label="H" color={M.gold} />
+      <StepLabel x1={126} x2={162} label="W" color={M.accent} />
+
+      {/* White keys */}
+      {whites.map((w, i) => (
+        <g key={'w' + i}>
+          <rect x={w.x} y={padTop} width={whiteW} height={whiteH}
+            fill="#F5E8D8" stroke={M.muted} strokeWidth={0.8} rx={1.5} />
+          <text x={w.x + whiteW / 2} y={padTop + whiteH - 6}
+            textAnchor="middle" fontSize="10" fontFamily="Georgia, serif"
+            fill="#5C4738" fontWeight={600}>{w.label}</text>
+        </g>
+      ))}
+
+      {/* Black keys (drawn after whites so they sit on top of white edges) */}
+      {blacks.map((b, i) => (
+        <rect key={'b' + i} x={b.x} y={padTop} width={blackW} height={blackH}
+          fill="#1A0C05" stroke="#1A0C05" strokeWidth={0.5} rx={1.5} />
+      ))}
+    </svg>
+  );
+}
+
 // ── Fretboard diagram for a single string ─────────────────────────────────────
 function StringDiagram({ stringIdx, fretRange, highlightFrets, onFretTap }) {
   const [startFret, endFret] = fretRange;
@@ -281,6 +342,30 @@ export default function FretboardTheory({ isPro, onUpgrade }) {
           <div style={{ fontSize: 12, color: M.muted, lineHeight: 1.7, marginBottom: 16 }}>
             {renderBody(lesson.body)}
           </div>
+
+          {/* Lesson 1 only: piano keyboard illustration to ground the
+              half/whole step concept before showing it on guitar */}
+          {lesson.id === 'halfwhole' && (
+            <div style={{
+              background: M.panel, borderRadius: 12, border: `1px solid ${M.border}`,
+              padding: '14px 12px 10px', marginBottom: 12,
+            }}>
+              <div style={{
+                fontSize: 9, fontWeight: 800, letterSpacing: '0.1em',
+                textTransform: 'uppercase', color: M.muted,
+                marginBottom: 10, textAlign: 'center',
+              }}>On a Piano Keyboard</div>
+              <PianoStepsDiagram />
+              <div style={{
+                fontSize: 11, color: M.muted, fontStyle: 'italic',
+                marginTop: 8, lineHeight: 1.5, textAlign: 'center',
+              }}>
+                <span style={{ color: M.gold, fontWeight: 700 }}>E → F</span> is a
+                half step even with no black key between — same as on the guitar:
+                one fret apart.
+              </div>
+            </div>
+          )}
 
           {/* Fretboard diagram */}
           <div style={{
