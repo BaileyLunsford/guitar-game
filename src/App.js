@@ -16,6 +16,7 @@ import useAmbience from './useAmbience';
 import LandingPage from './LandingPage';
 import AuditionGame from './AuditionGame';
 import LickPlay from './LickPlay';
+import LearningPath from './LearningPath';
 import { guitarSampler } from './guitarSampler';
 import OnboardingTour from './OnboardingTour';
 import Flashcards from './Flashcards';
@@ -493,6 +494,7 @@ const HOME_SECTIONS = [
       { icon: '⏱',  title: 'Metronome',           desc: 'Tap tempo, subdivisions & accent control',            hash: '#metronome',     pro: false },
       { icon: '🎯', title: 'Music Reading Game',  desc: 'Sight-read notes with real-time mic pitch detection', hash: '#audition',      pro: false },
       { icon: '🎼', title: 'Tab & Notation',      desc: 'Standard notation with guitar tablature overlay',     hash: '#tab-test',      pro: false },
+      { icon: '🗺', title: 'Learning Path',       desc: 'Track every chord, scale, song & theory milestone',   hash: '#learning-path', pro: false },
     ],
   },
   {
@@ -829,8 +831,9 @@ export default function App() {
     />
   );
 
-  if (hash === '#audition')     return <AuditionGame />;
-  if (hash === '#tab-test')     return <TabTest />;
+  if (hash === '#audition')      return <AuditionGame />;
+  if (hash === '#tab-test')      return <TabTest />;
+  if (hash === '#learning-path') return <LearningPath />;
   if (hash === '#song-learn')   return <SongLearnEngine song={ODE_TO_JOY} isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
   if (hash === '#song-play')    return <SongPlayScreen  song={ODE_TO_JOY} />;
   if (hash === '#song-library') return <SongLibrary isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
