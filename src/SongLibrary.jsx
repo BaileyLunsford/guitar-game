@@ -1665,7 +1665,12 @@ function NotePositionDiagram({ string, fret }) {
 function ListenMode({ song, onBack }) {
   const [playing,      setPlaying]      = useState(false);
   const [noteIdx,      setNoteIdx]      = useState(-1);
-  const [trackEnabled, setTrackEnabled] = useState(true);
+  // Backing track (drums + bass) defaults OFF so the user hears clean
+  // sampled guitar — same default as SongLearnEngine. Tap the 🥁 Track
+  // button below to mix in the rhythm section. Previously defaulted ON,
+  // which made Song Library sound completely different from ScalePlay /
+  // SongLearn / Triads even though it uses the same guitar sampler.
+  const [trackEnabled, setTrackEnabled] = useState(false);
   const [loopSong,     setLoopSong]     = useState(false);
   const [repeatOnce,   setRepeatOnce]   = useState(false);
   const loopRef    = useRef(false);
