@@ -494,14 +494,13 @@ const HOME_SECTIONS = [
       { icon: '⏱',  title: 'Metronome',           desc: 'Tap tempo, subdivisions & accent control',            hash: '#metronome',     pro: false },
       { icon: '🎯', title: 'Music Reading Game',  desc: 'Sight-read notes with real-time mic pitch detection', hash: '#audition',      pro: false },
       { icon: '🎼', title: 'Tab & Notation',      desc: 'Standard notation with guitar tablature overlay',     hash: '#tab-test',      pro: false },
-      { icon: '🗺', title: 'Learning Path',       desc: 'Track every chord, scale, song & theory milestone',   hash: '#learning-path', pro: false },
     ],
   },
   {
     label: 'Beginner', sectionBadge: 'PRO', sectionBadgeClass: 'badge-pro',
     items: [
       { icon: '📈', title: 'Progress Tracker',    desc: 'Daily streak, goals & practice calendar',             hash: '#progress',      pro: true },
-      { icon: '🎵', title: 'Lick Play',           desc: 'Lick of the day + classic riffs by style',            hash: '#lick-play',     pro: true },
+      { icon: '🗺', title: 'Learning Path',       desc: 'Track every chord, scale, song & theory milestone',   hash: '#learning-path', pro: false },
       { icon: '🎵', title: 'Song Learn',          desc: 'Measure-by-measure playback with notation & tab',     hash: '#song-learn',    pro: true },
       { icon: '📚', title: 'Song Library',        desc: '20+ traditional melodies with notation & tab',        hash: '#song-library',  pro: true },
       { icon: '🃏', title: 'Flashcards',          desc: 'Drill notes, chords, tab & theory — flip to check',   hash: '#flashcards',    pro: true },
@@ -514,6 +513,7 @@ const HOME_SECTIONS = [
     label: 'Intermediate', sectionBadge: 'PRO', sectionBadgeClass: 'badge-pro',
     items: [
       { icon: '🎹', title: 'Scale Play',          desc: 'Interactive scale patterns across the fretboard',     hash: '#scale-play',    pro: true },
+      { icon: '🎵', title: 'Lick Play',           desc: 'Lick of the day + classic riffs by style',            hash: '#lick-play',     pro: true },
       { icon: '🤘', title: 'Barre Chords',        desc: 'Moveable E and A shapes in every key',                hash: '#barre-chords',  pro: true },
       { icon: '🎛', title: 'Song Backing Tracks', desc: 'Drums, bass & click for every genre',                 hash: '#backing-tracks',pro: true,  soon: false },
       { icon: '🎼', title: 'Nashville Numbers',   desc: '1-4-5 chord charts in any key',                       hash: '#nashville',     pro: true,  soon: false },
