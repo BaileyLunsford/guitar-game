@@ -48,10 +48,12 @@ const PATH_DATA = [
   {
     id: 'barre-chords', icon: '🤘', label: 'Barre Chords', hash: '#barre-chords',
     items: [
-      { id: 'bc-f',       target: 'F',   label: 'F major — E-shape barre, fret 1' },
-      { id: 'bc-bb',      target: 'Bb',  label: 'B♭ major — A-shape barre, fret 1' },
-      { id: 'bc-fsharpm', target: 'F#m', label: 'F# minor — E-shape minor barre' },
-      { id: 'bc-bm',      target: 'B',   label: 'B major — A-shape barre, fret 2' },
+      { id: 'bc-bb',       target: 'Bb',  label: 'B♭ major — A-shape, fret 1' },
+      { id: 'bc-b',        target: 'B',   label: 'B major — A-shape, fret 2' },
+      { id: 'bc-fsharpm',  target: 'F#m', label: 'F# minor — E-shape, fret 2' },
+      { id: 'bc-cm',       target: 'Cm',  label: 'C minor — A-shape, fret 3' },
+      { id: 'bc-ab',       target: 'Ab',  label: 'A♭ major — E-shape, fret 4' },
+      { id: 'bc-csharpm',  target: 'C#m', label: 'C# minor — A-shape, fret 4' },
     ],
   },
   {
@@ -68,11 +70,11 @@ const PATH_DATA = [
   {
     id: 'caged', icon: '🎸', label: 'CAGED System', hash: '#caged',
     items: [
-      { id: 'caged-c', label: 'C-shape — open and moveable' },
-      { id: 'caged-a', label: 'A-shape — moveable barre' },
-      { id: 'caged-g', label: 'G-shape — wide stretch' },
-      { id: 'caged-e', label: 'E-shape — root-6 barre' },
-      { id: 'caged-d', label: 'D-shape — root-4 voicing' },
+      { id: 'caged-c', target: 'C', label: 'C-shape — open and moveable' },
+      { id: 'caged-a', target: 'A', label: 'A-shape — moveable barre' },
+      { id: 'caged-g', target: 'G', label: 'G-shape — wide stretch' },
+      { id: 'caged-e', target: 'E', label: 'E-shape — root-6 barre' },
+      { id: 'caged-d', target: 'D', label: 'D-shape — root-4 voicing' },
     ],
   },
   {

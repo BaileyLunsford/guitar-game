@@ -227,10 +227,18 @@ function btn(active = false, disabled = false) {
   };
 }
 
-export default function CAGEDSystem({ isPro = false, onPurchase, onRestore }) {
-  const [phase,      setPhase]      = useState('landing');
+export default function CAGEDSystem({ isPro = false, onPurchase, onRestore, initialShape = null }) {
+  // Deep-link target: jump to a specific shape (e.g. 'C', 'A', 'G', 'E', 'D')
+  // SHAPES array is ['C-shape','A-shape',...] so the target letter maps to its index in ROOTS.
+  const initialShapeIdx = React.useMemo(() => {
+    if (!initialShape) return null;
+    const i = ROOTS.indexOf(String(initialShape).toUpperCase());
+    return i >= 0 ? i : null;
+  }, [initialShape]);
+
+  const [phase,      setPhase]      = useState(initialShapeIdx != null ? 'chords' : 'landing');
   const [rootIdx,    setRootIdx]    = useState(0);
-  const [shapeIdx,   setShapeIdx]   = useState(0);
+  const [shapeIdx,   setShapeIdx]   = useState(initialShapeIdx ?? 0);
   const [playing,    setPlaying]    = useState(false);
   const [activeNote, setActiveNote] = useState(null);
   const [modal,      setModal]      = useState(null);

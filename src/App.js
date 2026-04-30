@@ -848,7 +848,7 @@ export default function App() {
   if (hashBase === '#lick-play')    return <LickPlay     isPro={isPro} onPurchase={purchase} onRestore={restore} initialLickId={lickOfDayId} />;
   if (hashBase === '#chord-play')   return <ChordPlay    isPro={isPro} onPurchase={purchase} onRestore={restore} initialChord={hashTarget} />;
   if (hashBase === '#barre-chords') return <BarreChords  isPro={isPro} onPurchase={purchase} onRestore={restore} initialChord={hashTarget} />;
-  if (hashBase === '#caged')        return <CAGEDSystem  isPro={isPro} onPurchase={purchase} onRestore={restore} />;
+  if (hashBase === '#caged')        return <CAGEDSystem  isPro={isPro} onPurchase={purchase} onRestore={restore} initialShape={hashTarget} />;
   if (hashBase === '#flashcards')   return <Flashcards   isPro={isPro} onPurchase={purchase} onRestore={restore} />;
   if (hashBase === '#metronome')    return <Metronome theme={GUITAR_THEME} title="Guitar Metronome" />;
   if (hashBase === '#triads')          return <TriadsArpeggios   isPro={isPro} onUpgrade={() => setShowUpgrade(true)} />;
